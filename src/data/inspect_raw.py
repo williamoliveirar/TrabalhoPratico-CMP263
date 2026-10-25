@@ -27,6 +27,7 @@ def column_stats(lf: pl.LazyFrame, c: str) -> dict:
         x.is_nan().sum().alias("n_nan"),
         (x == float("inf")).sum().alias("n_pos_inf"),
         (x == float("-inf")).sum().alias("n_neg_inf"),
+        (finite < 0).sum().alias("n_negative_finite"),
         finite.min().alias("min_finite"),
         finite.max().alias("max_finite"),
         x.drop_nulls().n_unique().alias("n_unique"),
