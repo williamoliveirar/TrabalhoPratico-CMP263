@@ -11,6 +11,8 @@ paths:
   kaggle_parquet: data/external/ciciot2023.parquet
   kaggle_report: data/external/cleaning_report.json
   interim_dir: data/interim
+  # All CSV rows with values unaltered, plus label34, category8, y, source_file, row_idx (make ingest, D15)
+  interim_parquet: data/interim/ciciot2023_raw.parquet
   processed_dir: data/processed
   splits_dir: data/splits
   raw_manifest: data/raw_manifest.csv
@@ -23,6 +25,12 @@ columns:
   category: category8  # attack category (8 values) — never a feature
   target: y            # 1 = attack, 0 = benign
   provenance: [source_file, row_idx]
+
+ingest:  # Etapa 1, D15
+  parquet_compression: zstd
+
+inspection:  # Etapa 1
+  top_values: 20  # most frequent values listed for columns that look like counts (e.g. Number)
 
 sampling:  # D3 — adjustable to machine memory; record changes in docs/DIARIO.md
   E: {benign: 25000, attack: 25000}

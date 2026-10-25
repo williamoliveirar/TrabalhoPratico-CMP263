@@ -11,7 +11,7 @@ endif
 PY ?= $(VENV_PY)
 BOOTSTRAP_PY ?= python
 
-.PHONY: env lock check-mirror inspect sample eda splits spotcheck tune evaluate interpret ablation final report test all
+.PHONY: env lock check-mirror ingest inspect check-ingest sample eda splits spotcheck tune evaluate interpret ablation final report test all
 
 env:            ## Etapa 0 — create the virtual env and install the pinned requirements
 	$(BOOTSTRAP_PY) -m venv $(VENV)
@@ -25,8 +25,14 @@ lock:           ## Etapa 0 — reinstall from requirements.in and re-pin require
 check-mirror:   ## D15 — compare the Kaggle Parquet with the official CSVs
 	$(PY) -m src.data.check_kaggle_mirror
 
-inspect:        ## Etapa 1 — manifest, label counts, schema
+ingest:         ## Etapa 1 (D15) — raw CSVs → data/interim Parquet (values unaltered) + data/raw_manifest.csv
+	$(PY) -m src.data.ingest
+
+inspect:        ## Etapa 1 — label counts, schema, missing/infinite values (reads the ingested Parquet)
 	$(PY) -m src.data.inspect_raw
+
+check-ingest:   ## D15 — compare the ingested Parquet with the Kaggle mirror, row by row (optional)
+	$(PY) -m src.data.check_ingest
 
 sample:         ## Etapa 2 — samples E and M
 	$(PY) -m src.data.make_sample
@@ -63,4 +69,4 @@ report:         ## Etapa 10 — paper tables (CSV/LaTeX) and figures
 test:
 	$(PY) -m pytest -q tests
 
-all: inspect sample eda splits spotcheck tune evaluate interpret ablation final report
+all: ingest inspect sample eda splits spotcheck tune evaluate interpret ablation final report

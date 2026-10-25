@@ -6,7 +6,7 @@ Final project for **CMP263 – Machine Learning** (PPGC/UFRGS, 2026/2). We build
 - **Q2 (where it fails):** which attack types escape the best model (recall per type), and what is its false-alarm rate on benign traffic?
 - **Q3 (shortcuts):** does performance rely on features that identify the capture environment (e.g. TTL) rather than the attack itself?
 
-> **Status:** work in progress (Etapa 0 — project setup). The full plan is in [`docs/PLANO.md`](docs/PLANO.md), and the logbook with every decision and number is in [`docs/DIARIO.md`](docs/DIARIO.md). Both are in Portuguese. Code, figures and the paper are in English.
+> **Status:** work in progress (Etapa 1 — data ingestion and inspection). The full plan is in [`docs/PLANO.md`](docs/PLANO.md), and the logbook with every decision and number is in [`docs/DIARIO.md`](docs/DIARIO.md). Both are in Portuguese. Code, figures and the paper are in English.
 
 ## Data
 
@@ -21,8 +21,8 @@ The raw data is **not** redistributed here. To reproduce:
 
 1. Download the `CSV` folder from the official page and place it at `data/raw/CSV/` (one sub-folder per label).
    If you keep the data elsewhere, copy `configs/local.example.yaml` to `configs/local.yaml` and set the paths there.
-2. Optional: download the Kaggle mirror into `data/external/` to run `make check-mirror`.
-3. `make inspect` writes `data/raw_manifest.csv` with the SHA-256 of every file. Compare it with the versioned copy to make sure you have the same data.
+2. Optional: download the Kaggle mirror into `data/external/` to run `make check-mirror` and `make check-ingest`.
+3. `make ingest` writes `data/raw_manifest.csv` with the SHA-256 of every file. Compare it with the versioned copy to make sure you have the same data.
 
 ## Environment
 
@@ -37,7 +37,8 @@ The raw data is **not** redistributed here. To reproduce:
 
 | Target | Stage | What it does |
 |---|---|---|
-| `make inspect` | 1 | Manifest, label counts, schema of the raw CSVs |
+| `make ingest` | 1 | Raw CSVs → one typed Parquet with values unaltered (labels, source file and row added); manifest with SHA-256; malformed rows logged |
+| `make inspect` | 1 | Label counts per file and in total, schema, missing and infinite values |
 | `make sample` | 2 | Deterministic exploration (E) and modelling (M) samples, deduplicated and disjoint |
 | `make eda` | 3 | EDA tables and figures, on sample E only |
 | `make splits` | 5 | Frozen fold indices (spot-checking, outer and inner CV) |
@@ -47,14 +48,15 @@ The raw data is **not** redistributed here. To reproduce:
 | `make interpret` / `make ablation` | 9 | Permutation importance, SHAP, shortcut ablation |
 | `make final` / `make report` | 10 | Final model and every table and figure of the paper |
 | `make all` | — | Everything above, from the raw CSVs |
-| `make test` | — | Split and leakage tests |
+| `make test` | — | Ingestion, split and leakage tests |
+| `make check-mirror` / `make check-ingest` | — | Optional cross-checks against the Kaggle mirror |
 
 ## Reproducibility rules
 
 - One seed and every path and size live in `configs/*.yaml`; no magic numbers in code.
 - Folds are generated once and versioned (`data/splits/`). All algorithms use the same folds.
 - Preprocessing is fitted inside scikit-learn `Pipeline`s, on training folds only. Outer test folds never inform a decision.
-- Every run writes a `run.json` with timestamp, git commit, config hash, library versions, seed and runtime.
+- Every run writes a `<script>.run.json` next to its results, with timestamp, git commit, config hash, library versions, seed, runtime and output hashes.
 - Results are never overwritten silently. Every number in the paper points to the result file that produced it.
 - Text files use LF line endings (`.gitattributes`), so result hashes match across Windows and Linux.
 
