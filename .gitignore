@@ -1,0 +1,41 @@
+# --- Data: never versioned, except the items re-included below (docs/PLANO.md §5.4) ---
+data/**
+!data/**/
+!data/**/.gitkeep
+!data/raw_manifest.csv
+!data/sample_index.csv.gz
+!data/splits/**
+
+# --- Models: size decided in Etapa 10 (GitHub rejects files > 100 MB) ---
+models/*.joblib
+
+# --- Machine-specific settings (templates: configs/local.example.yaml, Makefile header) ---
+configs/local.yaml
+local.mk
+
+# --- Python / environment ---
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+*.egg-info/
+
+# --- LaTeX build artifacts ---
+docs/artigo/**/*.aux
+docs/artigo/**/*.bbl
+docs/artigo/**/*.blg
+docs/artigo/**/*.log
+docs/artigo/**/*.out
+docs/artigo/**/*.dvi
+docs/artigo/**/*.synctex.gz
+docs/artigo/**/*.fls
+docs/artigo/**/*.fdb_latexmk
+
+# --- OS / editors ---
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

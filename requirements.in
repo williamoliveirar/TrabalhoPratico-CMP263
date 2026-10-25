@@ -1,0 +1,15 @@
+# Top-level dependencies. The pinned, complete list lives in requirements.txt
+# (regenerate with `make lock` and record the change in docs/DIARIO.md).
+numpy
+pandas
+pyarrow
+polars
+scikit-learn
+lightgbm
+shap
+scipy
+matplotlib
+pyyaml
+joblib
+ipykernel  # notebooks are opened in VS Code; add `jupyter` for the browser UI
+pytest

@@ -1,0 +1,66 @@
+# Pipeline targets (docs/PLANO.md §5.3). Each target runs one stage; `make all` runs everything from the raw CSVs.
+# Skeleton: most modules are created in the stage named next to the target.
+
+-include local.mk  # optional, not versioned; e.g. `VENV := C:/Users/me/.venvs/cmp263` (short path, Windows MAX_PATH)
+VENV ?= .venv
+ifeq ($(OS),Windows_NT)
+  VENV_PY := "$(VENV)/Scripts/python.exe"
+else
+  VENV_PY := $(VENV)/bin/python
+endif
+PY ?= $(VENV_PY)
+BOOTSTRAP_PY ?= python
+
+.PHONY: env lock check-mirror inspect sample eda splits spotcheck tune evaluate interpret ablation final report test all
+
+env:            ## Etapa 0 — create the virtual env and install the pinned requirements
+	$(BOOTSTRAP_PY) -m venv $(VENV)
+	$(PY) -m pip install --upgrade pip
+	$(PY) -m pip install -r requirements.txt
+
+lock:           ## Etapa 0 — reinstall from requirements.in and re-pin requirements.txt (record in DIARIO)
+	$(PY) -m pip install -r requirements.in
+	$(PY) -m pip freeze > requirements.txt
+
+check-mirror:   ## D15 — compare the Kaggle Parquet with the official CSVs
+	$(PY) -m src.data.check_kaggle_mirror
+
+inspect:        ## Etapa 1 — manifest, label counts, schema
+	$(PY) -m src.data.inspect_raw
+
+sample:         ## Etapa 2 — samples E and M
+	$(PY) -m src.data.make_sample
+
+eda:            ## Etapa 3 — EDA tables and figures (sample E only)
+	$(PY) -m src.data.eda
+
+splits:         ## Etapa 5 — frozen folds
+	$(PY) -m src.experiments.make_splits
+
+spotcheck:      ## Etapa 6 — spot-checking on sample E
+	$(PY) -m src.experiments.spotcheck
+
+tune:           ## Etapa 7 — nested CV on sample M
+	$(PY) -m src.experiments.nested_cv
+
+evaluate:       ## Etapa 8 — comparison, statistical tests, per-attack recall
+	$(PY) -m src.evaluation.evaluate
+
+interpret:      ## Etapa 9 — permutation importance and SHAP
+	$(PY) -m src.interpretation.permutation
+	$(PY) -m src.interpretation.shap_analysis
+
+ablation:       ## Etapa 9 — shortcut ablation (full vs no_shortcut)
+	$(PY) -m src.experiments.ablation
+
+final:          ## Etapa 10 — final model trained on all of M
+	$(PY) -m src.experiments.final_model
+
+report:         ## Etapa 10 — paper tables (CSV/LaTeX) and figures
+	$(PY) -m src.reporting.tables
+	$(PY) -m src.reporting.figures
+
+test:
+	$(PY) -m pytest -q tests
+
+all: inspect sample eda splits spotcheck tune evaluate interpret ablation final report

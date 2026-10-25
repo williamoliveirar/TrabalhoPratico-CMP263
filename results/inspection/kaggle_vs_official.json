@@ -1,0 +1,505 @@
+{
+  "generated_at": "2026-10-25T22:28:37+00:00",
+  "csv": {
+    "n_files": 309,
+    "n_rows": 46776700,
+    "columns": [
+      "Header_Length",
+      "Protocol Type",
+      "Time_To_Live",
+      "Rate",
+      "fin_flag_number",
+      "syn_flag_number",
+      "rst_flag_number",
+      "psh_flag_number",
+      "ack_flag_number",
+      "ece_flag_number",
+      "cwr_flag_number",
+      "ack_count",
+      "syn_count",
+      "fin_count",
+      "rst_count",
+      "HTTP",
+      "HTTPS",
+      "DNS",
+      "Telnet",
+      "SMTP",
+      "SSH",
+      "IRC",
+      "TCP",
+      "UDP",
+      "DHCP",
+      "ARP",
+      "ICMP",
+      "IGMP",
+      "IPv",
+      "LLC",
+      "Tot sum",
+      "Min",
+      "Max",
+      "AVG",
+      "Std",
+      "Tot size",
+      "IAT",
+      "Number",
+      "Variance"
+    ]
+  },
+  "parquet": {
+    "n_files": 309,
+    "n_rows": 46776697,
+    "feature_columns": [
+      "header_length",
+      "protocol_type",
+      "time_to_live",
+      "rate",
+      "fin_flag_number",
+      "syn_flag_number",
+      "rst_flag_number",
+      "psh_flag_number",
+      "ack_flag_number",
+      "ece_flag_number",
+      "cwr_flag_number",
+      "ack_count",
+      "syn_count",
+      "fin_count",
+      "rst_count",
+      "http",
+      "https",
+      "dns",
+      "telnet",
+      "smtp",
+      "ssh",
+      "irc",
+      "tcp",
+      "udp",
+      "dhcp",
+      "arp",
+      "icmp",
+      "igmp",
+      "ipv",
+      "llc",
+      "total_sum",
+      "min_packet_size",
+      "max_packet_size",
+      "mean_packet_size",
+      "std_packet_size",
+      "inter_arrival_time",
+      "packet_count",
+      "packet_size_variance"
+    ],
+    "rename_csv_to_parquet": {
+      "Header_Length": "header_length",
+      "Protocol Type": "protocol_type",
+      "Time_To_Live": "time_to_live",
+      "Rate": "rate",
+      "fin_flag_number": "fin_flag_number",
+      "syn_flag_number": "syn_flag_number",
+      "rst_flag_number": "rst_flag_number",
+      "psh_flag_number": "psh_flag_number",
+      "ack_flag_number": "ack_flag_number",
+      "ece_flag_number": "ece_flag_number",
+      "cwr_flag_number": "cwr_flag_number",
+      "ack_count": "ack_count",
+      "syn_count": "syn_count",
+      "fin_count": "fin_count",
+      "rst_count": "rst_count",
+      "HTTP": "http",
+      "HTTPS": "https",
+      "DNS": "dns",
+      "Telnet": "telnet",
+      "SMTP": "smtp",
+      "SSH": "ssh",
+      "IRC": "irc",
+      "TCP": "tcp",
+      "UDP": "udp",
+      "DHCP": "dhcp",
+      "ARP": "arp",
+      "ICMP": "icmp",
+      "IGMP": "igmp",
+      "IPv": "ipv",
+      "LLC": "llc",
+      "Tot sum": "total_sum",
+      "Min": "min_packet_size",
+      "Max": "max_packet_size",
+      "AVG": "mean_packet_size",
+      "Std": "std_packet_size",
+      "IAT": "inter_arrival_time",
+      "Number": "packet_count",
+      "Variance": "packet_size_variance"
+    }
+  },
+  "files_without_match": 0,
+  "files_with_different_counts": [
+    {
+      "source_file": "DoS-UDP_Flood/DoS-UDP_Flood7.pcap.csv",
+      "n_csv": 175920,
+      "n_parquet": 175919
+    },
+    {
+      "source_file": "DoS-UDP_Flood/DoS-UDP_Flood9.pcap.csv",
+      "n_csv": 125552,
+      "n_parquet": 125551
+    },
+    {
+      "source_file": "DoS-UDP_Flood/DoS-UDP_Flood8.pcap.csv",
+      "n_csv": 160835,
+      "n_parquet": 160834
+    }
+  ],
+  "value_check": {
+    "head_rows_per_file": 1000,
+    "rel_tol": 1e-06,
+    "files_with_differences": [
+      {
+        "source_file": "DDoS-ACK_Fragmentation/DDoS-ACK_Fragmentation4.pcap.csv",
+        "rows_compared": 1000,
+        "cells_differing": 3,
+        "columns_differing": [
+          "rate",
+          "std_packet_size",
+          "packet_size_variance"
+        ]
+      },
+      {
+        "source_file": "DDoS-ICMP_Fragmentation/DDoS-ICMP_Fragmentation3.pcap.csv",
+        "rows_compared": 1000,
+        "cells_differing": 3,
+        "columns_differing": [
+          "rate",
+          "std_packet_size",
+          "packet_size_variance"
+        ]
+      },
+      {
+        "source_file": "DDoS-ICMP_Fragmentation/DDoS-ICMP_Fragmentation7.pcap.csv",
+        "rows_compared": 1000,
+        "cells_differing": 3,
+        "columns_differing": [
+          "rate",
+          "std_packet_size",
+          "packet_size_variance"
+        ]
+      },
+      {
+        "source_file": "DDoS-ICMP_Fragmentation/DDoS-ICMP_Fragmentation8.pcap.csv",
+        "rows_compared": 1000,
+        "cells_differing": 3,
+        "columns_differing": [
+          "rate",
+          "std_packet_size",
+          "packet_size_variance"
+        ]
+      },
+      {
+        "source_file": "DDoS-UDP_Fragmentation/DDoS-UDP_Fragmentation.pcap.csv",
+        "rows_compared": 1000,
+        "cells_differing": 3,
+        "columns_differing": [
+          "rate",
+          "std_packet_size",
+          "packet_size_variance"
+        ]
+      },
+      {
+        "source_file": "DDoS-UDP_Fragmentation/DDoS-UDP_Fragmentation4.pcap.csv",
+        "rows_compared": 1000,
+        "cells_differing": 3,
+        "columns_differing": [
+          "rate",
+          "std_packet_size",
+          "packet_size_variance"
+        ]
+      },
+      {
+        "source_file": "DoS-UDP_Flood/DoS-UDP_Flood6.pcap.csv",
+        "rows_compared": 1000,
+        "cells_differing": 1,
+        "columns_differing": [
+          "rate"
+        ]
+      },
+      {
+        "source_file": "Mirai-greip_flood/Mirai-greip_flood2.pcap.csv",
+        "rows_compared": 1000,
+        "cells_differing": 3,
+        "columns_differing": [
+          "rate",
+          "std_packet_size",
+          "packet_size_variance"
+        ]
+      },
+      {
+        "source_file": "Mirai-greip_flood/Mirai-greip_flood3.pcap.csv",
+        "rows_compared": 1000,
+        "cells_differing": 3,
+        "columns_differing": [
+          "rate",
+          "std_packet_size",
+          "packet_size_variance"
+        ]
+      }
+    ],
+    "total_cells_compared": 11742000,
+    "total_cells_differing": 25
+  },
+  "by_label": [
+    {
+      "folder": "Uploading_Attack",
+      "label": "Uploading_Attack",
+      "n_files": 1,
+      "n_csv": 1252,
+      "n_parquet": 1252
+    },
+    {
+      "folder": "Recon-PingSweep",
+      "label": "Recon-PingSweep",
+      "n_files": 1,
+      "n_csv": 2262,
+      "n_parquet": 2262
+    },
+    {
+      "folder": "Backdoor_Malware",
+      "label": "Backdoor_Malware",
+      "n_files": 1,
+      "n_csv": 3218,
+      "n_parquet": 3218
+    },
+    {
+      "folder": "XSS",
+      "label": "XSS",
+      "n_files": 1,
+      "n_csv": 3846,
+      "n_parquet": 3846
+    },
+    {
+      "folder": "SqlInjection",
+      "label": "SqlInjection",
+      "n_files": 1,
+      "n_csv": 5245,
+      "n_parquet": 5245
+    },
+    {
+      "folder": "CommandInjection",
+      "label": "CommandInjection",
+      "n_files": 1,
+      "n_csv": 5409,
+      "n_parquet": 5409
+    },
+    {
+      "folder": "BrowserHijacking",
+      "label": "BrowserHijacking",
+      "n_files": 1,
+      "n_csv": 5859,
+      "n_parquet": 5859
+    },
+    {
+      "folder": "DictionaryBruteForce",
+      "label": "DictionaryBruteForce",
+      "n_files": 1,
+      "n_csv": 13064,
+      "n_parquet": 13064
+    },
+    {
+      "folder": "DDoS-SlowLoris",
+      "label": "DDoS-SlowLoris",
+      "n_files": 1,
+      "n_csv": 23426,
+      "n_parquet": 23426
+    },
+    {
+      "folder": "DDoS-HTTP_Flood",
+      "label": "DDoS-HTTP_Flood",
+      "n_files": 1,
+      "n_csv": 28790,
+      "n_parquet": 28790
+    },
+    {
+      "folder": "DoS-HTTP_Flood",
+      "label": "DoS-HTTP_Flood",
+      "n_files": 2,
+      "n_csv": 71861,
+      "n_parquet": 71861
+    },
+    {
+      "folder": "Recon-PortScan",
+      "label": "Recon-PortScan",
+      "n_files": 1,
+      "n_csv": 82284,
+      "n_parquet": 82284
+    },
+    {
+      "folder": "Recon-OSScan",
+      "label": "Recon-OSScan",
+      "n_files": 1,
+      "n_csv": 98259,
+      "n_parquet": 98259
+    },
+    {
+      "folder": "Recon-HostDiscovery",
+      "label": "Recon-HostDiscovery",
+      "n_files": 1,
+      "n_csv": 134378,
+      "n_parquet": 134378
+    },
+    {
+      "folder": "DNS_Spoofing",
+      "label": "DNS_Spoofing",
+      "n_files": 1,
+      "n_csv": 178898,
+      "n_parquet": 178898
+    },
+    {
+      "folder": "DDoS-ACK_Fragmentation",
+      "label": "DDoS-ACK_Fragmentation",
+      "n_files": 13,
+      "n_csv": 285075,
+      "n_parquet": 285075
+    },
+    {
+      "folder": "DDoS-UDP_Fragmentation",
+      "label": "DDoS-UDP_Fragmentation",
+      "n_files": 13,
+      "n_csv": 286925,
+      "n_parquet": 286925
+    },
+    {
+      "folder": "MITM-ArpSpoofing",
+      "label": "MITM-ArpSpoofing",
+      "n_files": 2,
+      "n_csv": 307560,
+      "n_parquet": 307560
+    },
+    {
+      "folder": "VulnerabilityScan",
+      "label": "VulnerabilityScan",
+      "n_files": 1,
+      "n_csv": 373351,
+      "n_parquet": 373351
+    },
+    {
+      "folder": "DDoS-ICMP_Fragmentation",
+      "label": "DDoS-ICMP_Fragmentation",
+      "n_files": 20,
+      "n_csv": 452490,
+      "n_parquet": 452490
+    },
+    {
+      "folder": "Mirai-greip_flood",
+      "label": "Mirai-greip_flood",
+      "n_files": 22,
+      "n_csv": 751646,
+      "n_parquet": 751646
+    },
+    {
+      "folder": "Mirai-udpplain",
+      "label": "Mirai-udpplain",
+      "n_files": 25,
+      "n_csv": 890574,
+      "n_parquet": 890574
+    },
+    {
+      "folder": "Mirai-greeth_flood",
+      "label": "Mirai-greeth_flood",
+      "n_files": 29,
+      "n_csv": 991834,
+      "n_parquet": 991834
+    },
+    {
+      "folder": "Benign_Final",
+      "label": "BenignTraffic",
+      "n_files": 4,
+      "n_csv": 1098191,
+      "n_parquet": 1098191
+    },
+    {
+      "folder": "DoS-SYN_Flood",
+      "label": "DoS-SYN_Flood",
+      "n_files": 8,
+      "n_csv": 2028836,
+      "n_parquet": 2028836
+    },
+    {
+      "folder": "DoS-TCP_Flood",
+      "label": "DoS-TCP_Flood",
+      "n_files": 11,
+      "n_csv": 2671430,
+      "n_parquet": 2671430
+    },
+    {
+      "folder": "DoS-UDP_Flood",
+      "label": "DoS-UDP_Flood",
+      "n_files": 17,
+      "n_csv": 3072993,
+      "n_parquet": 3072990
+    },
+    {
+      "folder": "DDoS-SynonymousIP_Flood",
+      "label": "DDoS-SynonymousIP_Flood",
+      "n_files": 14,
+      "n_csv": 3598133,
+      "n_parquet": 3598133
+    },
+    {
+      "folder": "DDoS-RSTFINFLOOD",
+      "label": "DDoS-RSTFINFlood",
+      "n_files": 16,
+      "n_csv": 4045279,
+      "n_parquet": 4045279
+    },
+    {
+      "folder": "DDoS-SYN_Flood",
+      "label": "DDoS-SYN_Flood",
+      "n_files": 16,
+      "n_csv": 4059179,
+      "n_parquet": 4059179
+    },
+    {
+      "folder": "DDoS-PSHACK_FLOOD",
+      "label": "DDoS-PSHACK_Flood",
+      "n_files": 16,
+      "n_csv": 4094772,
+      "n_parquet": 4094772
+    },
+    {
+      "folder": "DDoS-TCP_Flood",
+      "label": "DDoS-TCP_Flood",
+      "n_files": 18,
+      "n_csv": 4497649,
+      "n_parquet": 4497649
+    },
+    {
+      "folder": "DDoS-UDP_Flood",
+      "label": "DDoS-UDP_Flood",
+      "n_files": 21,
+      "n_csv": 5412231,
+      "n_parquet": 5412231
+    },
+    {
+      "folder": "DDoS-ICMP_Flood",
+      "label": "DDoS-ICMP_Flood",
+      "n_files": 27,
+      "n_csv": 7200501,
+      "n_parquet": 7200501
+    }
+  ],
+  "by_class": [
+    {
+      "binary_label": "Attack",
+      "n_rows": 45678506,
+      "iat_p01": 7.469654083251953e-06,
+      "iat_median": 4.00996208190918e-05,
+      "iat_p99": 0.010961103439331,
+      "ttl_median": 64.0
+    },
+    {
+      "binary_label": "Benign",
+      "n_rows": 1098191,
+      "iat_p01": 6.34908676147461e-05,
+      "iat_median": 0.0066090106964111,
+      "iat_p99": 0.0425656080245971,
+      "ttl_median": 98.80000305175781
+    }
+  ],
+  "note": "by_class statistics use the full dataset, before the E/M split; descriptive only, no modelling decision is based on them (formal EDA runs on sample E, Etapa 3)."
+}

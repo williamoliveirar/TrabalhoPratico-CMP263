@@ -1,0 +1,9 @@
+# LF everywhere, so result files hash identically on Windows and Linux (cross-reproduction, Etapa 10).
+* text=auto eol=lf
+
+*.pdf     binary
+*.png     binary
+*.jpg     binary
+*.parquet binary
+*.gz      binary
+*.joblib  binary

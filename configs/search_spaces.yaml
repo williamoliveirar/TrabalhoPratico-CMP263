@@ -1,0 +1,50 @@
+# Hyperparameter search spaces (docs/PLANO.md, Etapa 7). Adjust if the search hits the bounds,
+# and record the change in docs/DIARIO.md.
+# dist: loguniform {low, high} | randint {low, high} (inclusive) | uniform {low, high} | choice {values}
+# `fixed` holds non-searched parameters passed to the estimator.
+
+logreg:
+  fixed: {solver: lbfgs, max_iter: 2000}
+  params:
+    C: {dist: loguniform, low: 1.0e-3, high: 1.0e2}
+
+gaussian_nb:
+  params:
+    var_smoothing: {dist: loguniform, low: 1.0e-12, high: 1.0e-3}
+
+knn:
+  params:
+    n_neighbors: {dist: choice, values: [3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47, 49, 51]}
+    weights: {dist: choice, values: [uniform, distance]}
+    p: {dist: choice, values: [1, 2]}
+
+decision_tree:
+  params:
+    max_depth: {dist: choice, values: [3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, null]}
+    min_samples_leaf: {dist: randint, low: 1, high: 200}
+    criterion: {dist: choice, values: [gini, entropy]}
+
+mlp:
+  fixed: {early_stopping: true}
+  params:
+    hidden_layer_sizes: {dist: choice, values: [[32], [64], [64, 32], [128, 64]]}
+    alpha: {dist: loguniform, low: 1.0e-6, high: 1.0e-2}
+    learning_rate_init: {dist: loguniform, low: 1.0e-4, high: 1.0e-2}
+
+random_forest:
+  params:
+    n_estimators: {dist: randint, low: 100, high: 500}
+    max_depth: {dist: choice, values: [10, 20, 30, null]}
+    max_features: {dist: choice, values: [sqrt, log2, 0.5]}
+    min_samples_leaf: {dist: randint, low: 1, high: 50}
+
+lightgbm:
+  fixed: {subsample_freq: 1, deterministic: true, force_row_wise: true, verbose: -1}
+  params:
+    n_estimators: {dist: randint, low: 100, high: 1000}
+    learning_rate: {dist: loguniform, low: 0.01, high: 0.3}
+    num_leaves: {dist: randint, low: 15, high: 255}
+    min_child_samples: {dist: randint, low: 10, high: 200}
+    subsample: {dist: uniform, low: 0.6, high: 1.0}
+    colsample_bytree: {dist: uniform, low: 0.6, high: 1.0}
+    reg_lambda: {dist: loguniform, low: 1.0e-3, high: 10.0}

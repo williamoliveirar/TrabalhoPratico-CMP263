@@ -1,0 +1,16 @@
+# Feature sets (docs/PLANO.md D12, D13). Filled in Etapa 3 (EDA on sample E only).
+# Each removed feature must have a reason and a pointer to the diary entry that justifies it.
+
+drop: []
+# - name: <feature>
+#   reason: constant | quasi-constant | redundant with <feature> | ...
+#   diary: "DIARIO.md — AAAA-MM-DD — Etapa 3 — ..."
+
+log1p: []  # heavy-tailed non-negative features (only for LR, kNN, MLP, NB pipelines)
+
+feature_sets:
+  full: all  # every feature not in `drop`
+  # Shortcut candidates. The plan names `Duration` (TTL) and `IAT`; in the per-capture CSV version the
+  # columns are `Time_To_Live` and `IAT` (see DIARIO 2026-10-25). Confirm the list in Etapa 3.
+  no_shortcut:
+    exclude: []

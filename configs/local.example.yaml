@@ -1,0 +1,7 @@
+# Copy to configs/local.yaml (not versioned) to point to data stored outside the repository.
+# Only the keys you set here override configs/base.yaml.
+paths:
+  raw_csv_dir: D:/datasets/CICIoT2023/CSV
+  kaggle_parquet: D:/datasets/CICIoT2023-kaggle/ciciot2023.parquet
+  kaggle_report: D:/datasets/CICIoT2023-kaggle/cleaning_report.json
+n_jobs: 4

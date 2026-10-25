@@ -1,0 +1,45 @@
+# Global configuration (docs/PLANO.md §5.1, D3, D8, D9, D14).
+# Every script reads seeds, paths and sizes from here; no magic numbers in code.
+
+seed: 42
+n_jobs: 6  # fixed for determinism (LightGBM, joblib); dev machine has 12 logical cores
+
+paths:
+  # Official CICIoT2023 per-capture CSVs (309 files, one folder per label) — source of record (D15)
+  raw_csv_dir: data/raw/CSV
+  # Kaggle mirror (dhoogla/ciciotdataset2023), used only as an independent cross-check (D15)
+  kaggle_parquet: data/external/ciciot2023.parquet
+  kaggle_report: data/external/cleaning_report.json
+  interim_dir: data/interim
+  processed_dir: data/processed
+  splits_dir: data/splits
+  raw_manifest: data/raw_manifest.csv
+  sample_index: data/sample_index.csv.gz
+  results_dir: results
+  models_dir: models
+
+columns:
+  label: label34       # original label (34 values) — never a feature
+  category: category8  # attack category (8 values) — never a feature
+  target: y            # 1 = attack, 0 = benign
+  provenance: [source_file, row_idx]
+
+sampling:  # D3 — adjustable to machine memory; record changes in docs/DIARIO.md
+  E: {benign: 25000, attack: 25000}
+  M: {benign: 100000, attack: 100000}
+  oversample_factor: 1.3   # selection slack for duplicate removal (Etapa 2, step 3)
+  rare_fraction_E: 0.2     # rare attack types: all rows, split 20% E / 80% M
+  read_chunk_rows: 500000
+
+validation:  # D8
+  spotcheck: {n_splits: 5, n_repeats: 2}
+  outer: {n_splits: 5}
+  inner: {n_splits: 3}
+
+search:  # D9
+  n_iter: 30
+  finalists: 3
+
+interpretation:  # D11
+  permutation_repeats: 10
+  shap_rows_per_fold: 2000
