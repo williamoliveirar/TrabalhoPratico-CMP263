@@ -58,3 +58,26 @@ Modelo:
 - *Limitação:* o plano, redigido com ajuda de IA a partir de memória, descreve 46 atributos (versão `MERGED_CSV`), mas a versão baixada (CSVs por captura) tem 39 colunas, com nomes diferentes (por exemplo, `Time_To_Live` em vez de `Duration`). A convenção `[verificar]` do plano e a regra "os dados vencem" evitaram que o erro se propagasse.
 - *Limitação:* a primeira tentativa de criar o ambiente falhou pelo limite de 260 caracteres de caminho do Windows. A ferramenta não previu o problema e só o contornou depois do erro (ambiente num caminho curto).
 - *Potencialidade:* a comparação automática entre as duas versões (contagens por arquivo e valores) foi rápida e deixou um artefato versionado que serve de fonte para os números do diário.
+
+## 2026-10-25 — Claude Code (Claude Opus 5.5, app desktop) — fechamento da Etapa 0 e Etapa 1
+
+**Finalidade:** criar os utilitários de semente e de metadados de execução (Etapa 0); implementar a ingestão dos CSVs oficiais (D15) e a inspeção dos dados brutos (`make inspect`); conferir a ingestão contra o espelho do Kaggle.
+
+**Prompt (texto integral):**
+
+> Confirmo a D15. Feche a Etapa 0 (seed.py e run_metadata.py) e comece a Etapa 1 com a ingestão e o make inspect.
+
+**O que a ferramenta produziu:**
+- `src/utils/seed.py`, `src/utils/run_metadata.py` (registro `<script>.run.json` com commit, hash da configuração, versões e tempo) e `src/utils/io.py`;
+- `src/data/labels.py` (pasta → `label34` → `category8` → `y`), `src/data/ingest.py` (CSVs → Parquet com valores inalterados, manifesto com SHA-256, linhas malformadas registradas), `src/data/inspect_raw.py` e `src/data/check_ingest.py` (conferência linha a linha com o Kaggle);
+- alvos `ingest` e `check-ingest` no `Makefile`, testes em `tests/test_ingest.py`;
+- teste da receita de `make env` num clone limpo (sem o binário do Make) e as entradas do diário desta sessão.
+
+**O que foi aproveitado:** [a preencher pela dupla]
+
+**O que foi rejeitado ou corrigido, e por quê:** [a preencher pela dupla]
+
+**Limitações ou potencialidades observadas:**
+- *Potencialidade:* o teste do mapeamento de rótulos, escrito a partir da tabela do plano (§3.3), falhou contra os dados e revelou um erro do próprio plano: a categoria DDoS tem 12 ataques, e não 11 (falta `DDoS-ICMP_Fragmentation`).
+- *Potencialidade:* a ferramenta notou que o leitor de CSV do polars completa com nulos, sem aviso, as linhas truncadas, e trocou para o leitor do pyarrow, que reporta essas linhas.
+- *Limitação:* a primeira tentativa de testar `make env` numa pasta limpa falhou de novo pelo limite de 260 caracteres de caminho do Windows (o clone foi feito numa pasta temporária profunda), um problema que a ferramenta já tinha encontrado na sessão anterior.
