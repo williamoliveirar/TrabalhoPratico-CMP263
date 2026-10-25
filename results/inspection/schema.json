@@ -1,0 +1,688 @@
+{
+  "source": "data/interim/ciciot2023_raw.parquet (make ingest)",
+  "n_files": 309,
+  "n_rows_csv": 46776700,
+  "n_malformed_skipped": 3,
+  "n_rows": 46776697,
+  "header": {
+    "n_columns": 39,
+    "same_in_every_file": true,
+    "columns": [
+      "Header_Length",
+      "Protocol Type",
+      "Time_To_Live",
+      "Rate",
+      "fin_flag_number",
+      "syn_flag_number",
+      "rst_flag_number",
+      "psh_flag_number",
+      "ack_flag_number",
+      "ece_flag_number",
+      "cwr_flag_number",
+      "ack_count",
+      "syn_count",
+      "fin_count",
+      "rst_count",
+      "HTTP",
+      "HTTPS",
+      "DNS",
+      "Telnet",
+      "SMTP",
+      "SSH",
+      "IRC",
+      "TCP",
+      "UDP",
+      "DHCP",
+      "ARP",
+      "ICMP",
+      "IGMP",
+      "IPv",
+      "LLC",
+      "Tot sum",
+      "Min",
+      "Max",
+      "AVG",
+      "Std",
+      "Tot size",
+      "IAT",
+      "Number",
+      "Variance"
+    ]
+  },
+  "added_columns": [
+    "label34",
+    "category8",
+    "y",
+    "source_file",
+    "row_idx"
+  ],
+  "features": [
+    {
+      "name": "Header_Length",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 60.0,
+      "n_unique": 5795,
+      "integer_valued": false
+    },
+    {
+      "name": "Protocol Type",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 47.0,
+      "n_unique": 6,
+      "integer_valued": true
+    },
+    {
+      "name": "Time_To_Live",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 255.0,
+      "n_unique": 23654,
+      "integer_valued": false
+    },
+    {
+      "name": "Rate",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 1037,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 1.272070358718431e-05,
+      "max_finite": 15728640.0,
+      "n_unique": 1079253,
+      "integer_valued": false
+    },
+    {
+      "name": "fin_flag_number",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 1.0,
+      "n_unique": 456,
+      "integer_valued": false
+    },
+    {
+      "name": "syn_flag_number",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 1.0,
+      "n_unique": 813,
+      "integer_valued": false
+    },
+    {
+      "name": "rst_flag_number",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 1.0,
+      "n_unique": 859,
+      "integer_valued": false
+    },
+    {
+      "name": "psh_flag_number",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 1.0,
+      "n_unique": 971,
+      "integer_valued": false
+    },
+    {
+      "name": "ack_flag_number",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 1.0,
+      "n_unique": 1518,
+      "integer_valued": false
+    },
+    {
+      "name": "ece_flag_number",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 1.0,
+      "n_unique": 67,
+      "integer_valued": false
+    },
+    {
+      "name": "cwr_flag_number",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 1.0,
+      "n_unique": 40,
+      "integer_valued": false
+    },
+    {
+      "name": "ack_count",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 100.0,
+      "n_unique": 101,
+      "integer_valued": true
+    },
+    {
+      "name": "syn_count",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 100.0,
+      "n_unique": 101,
+      "integer_valued": true
+    },
+    {
+      "name": "fin_count",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 100.0,
+      "n_unique": 101,
+      "integer_valued": true
+    },
+    {
+      "name": "rst_count",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 100.0,
+      "n_unique": 101,
+      "integer_valued": true
+    },
+    {
+      "name": "HTTP",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 1.0,
+      "n_unique": 681,
+      "integer_valued": false
+    },
+    {
+      "name": "HTTPS",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 1.0,
+      "n_unique": 870,
+      "integer_valued": false
+    },
+    {
+      "name": "DNS",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 1.0,
+      "n_unique": 409,
+      "integer_valued": false
+    },
+    {
+      "name": "Telnet",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 0.6,
+      "n_unique": 23,
+      "integer_valued": false
+    },
+    {
+      "name": "SMTP",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 0.9,
+      "n_unique": 24,
+      "integer_valued": false
+    },
+    {
+      "name": "SSH",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 1.0,
+      "n_unique": 78,
+      "integer_valued": false
+    },
+    {
+      "name": "IRC",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 0.9,
+      "n_unique": 35,
+      "integer_valued": false
+    },
+    {
+      "name": "TCP",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 1.0,
+      "n_unique": 1275,
+      "integer_valued": false
+    },
+    {
+      "name": "UDP",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 1.0,
+      "n_unique": 1218,
+      "integer_valued": false
+    },
+    {
+      "name": "DHCP",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 1.0,
+      "n_unique": 162,
+      "integer_valued": false
+    },
+    {
+      "name": "ARP",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 1.0,
+      "n_unique": 476,
+      "integer_valued": false
+    },
+    {
+      "name": "ICMP",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 1.0,
+      "n_unique": 1018,
+      "integer_valued": false
+    },
+    {
+      "name": "IGMP",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 1.0,
+      "n_unique": 40,
+      "integer_valued": false
+    },
+    {
+      "name": "IPv",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 1.0,
+      "n_unique": 476,
+      "integer_valued": false
+    },
+    {
+      "name": "LLC",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 1.0,
+      "n_unique": 476,
+      "integer_valued": false
+    },
+    {
+      "name": "Tot sum",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 60.0,
+      "max_finite": 316492.0,
+      "n_unique": 112786,
+      "integer_valued": true
+    },
+    {
+      "name": "Min",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 42.0,
+      "max_finite": 13583.0,
+      "n_unique": 1471,
+      "integer_valued": true
+    },
+    {
+      "name": "Max",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 46.0,
+      "max_finite": 52194.0,
+      "n_unique": 8634,
+      "integer_valued": true
+    },
+    {
+      "name": "AVG",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 46.0,
+      "max_finite": 13583.0,
+      "n_unique": 134269,
+      "integer_valued": false
+    },
+    {
+      "name": "Std",
+      "dtype": "Float64",
+      "n_null": 702,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 11655.404669079491,
+      "n_unique": 2779706,
+      "integer_valued": false
+    },
+    {
+      "name": "Tot size",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 46.0,
+      "max_finite": 13583.0,
+      "n_unique": 134269,
+      "integer_valued": false
+    },
+    {
+      "name": "IAT",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 2,
+      "min_finite": -0.0178179788589477,
+      "max_finite": 78612.00389949084,
+      "n_unique": 1117479,
+      "integer_valued": false
+    },
+    {
+      "name": "Number",
+      "dtype": "Float64",
+      "n_null": 0,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 1.0,
+      "max_finite": 100.0,
+      "n_unique": 100,
+      "integer_valued": true
+    },
+    {
+      "name": "Variance",
+      "dtype": "Float64",
+      "n_null": 702,
+      "n_nan": 0,
+      "n_pos_inf": 0,
+      "n_neg_inf": 0,
+      "n_negative_finite": 0,
+      "min_finite": 0.0,
+      "max_finite": 135848458.0,
+      "n_unique": 2959307,
+      "integer_valued": false
+    }
+  ],
+  "checks": {
+    "tot_size_vs_avg": {
+      "n_equal": 46776697,
+      "n_different": 0,
+      "n_with_null": 0
+    },
+    "number_rate_dispersion_crosstab": [
+      {
+        "number_is_1": false,
+        "rate_is_inf": false,
+        "std_is_null": false,
+        "variance_is_null": false,
+        "n_rows": 46775660
+      },
+      {
+        "number_is_1": false,
+        "rate_is_inf": true,
+        "std_is_null": false,
+        "variance_is_null": false,
+        "n_rows": 335
+      },
+      {
+        "number_is_1": true,
+        "rate_is_inf": true,
+        "std_is_null": true,
+        "variance_is_null": true,
+        "n_rows": 702
+      }
+    ],
+    "number_top_values": [
+      {
+        "Number": 100.0,
+        "n_rows": 44406786
+      },
+      {
+        "Number": 10.0,
+        "n_rows": 2312616
+      },
+      {
+        "Number": 8.0,
+        "n_rows": 777
+      },
+      {
+        "Number": 9.0,
+        "n_rows": 730
+      },
+      {
+        "Number": 5.0,
+        "n_rows": 707
+      },
+      {
+        "Number": 1.0,
+        "n_rows": 702
+      },
+      {
+        "Number": 3.0,
+        "n_rows": 693
+      },
+      {
+        "Number": 4.0,
+        "n_rows": 684
+      },
+      {
+        "Number": 2.0,
+        "n_rows": 676
+      },
+      {
+        "Number": 7.0,
+        "n_rows": 676
+      },
+      {
+        "Number": 6.0,
+        "n_rows": 662
+      },
+      {
+        "Number": 26.0,
+        "n_rows": 631
+      },
+      {
+        "Number": 44.0,
+        "n_rows": 626
+      },
+      {
+        "Number": 42.0,
+        "n_rows": 624
+      },
+      {
+        "Number": 39.0,
+        "n_rows": 613
+      },
+      {
+        "Number": 47.0,
+        "n_rows": 612
+      },
+      {
+        "Number": 94.0,
+        "n_rows": 611
+      },
+      {
+        "Number": 49.0,
+        "n_rows": 608
+      },
+      {
+        "Number": 41.0,
+        "n_rows": 607
+      },
+      {
+        "Number": 31.0,
+        "n_rows": 604
+      }
+    ],
+    "file_name_differs_from_label": [
+      {
+        "source_file": "DDoS-HTTP_Flood/DDoS-HTTP_Flood-.pcap.csv",
+        "file_stem": "DDoS-HTTP_Flood-",
+        "label34": "DDoS-HTTP_Flood"
+      }
+    ]
+  },
+  "note": "Global statistics over every row. No per-class feature statistics: that is EDA, on sample E only (Etapa 3)."
+}

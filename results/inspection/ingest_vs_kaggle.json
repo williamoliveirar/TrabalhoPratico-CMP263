@@ -1,0 +1,112 @@
+{
+  "n_rows_ours": 46776697,
+  "n_rows_kaggle": 46776697,
+  "n_files_ours": 309,
+  "n_files_kaggle": 309,
+  "files_with_different_counts": [],
+  "files_with_different_label34": [],
+  "category8_vs_kaggle_category": [
+    {
+      "category8": "Benign",
+      "category": "Benign"
+    },
+    {
+      "category8": "BruteForce",
+      "category": "BruteForce"
+    },
+    {
+      "category8": "DDoS",
+      "category": "DDoS"
+    },
+    {
+      "category8": "DoS",
+      "category": "DoS"
+    },
+    {
+      "category8": "Mirai",
+      "category": "Mirai"
+    },
+    {
+      "category8": "Recon",
+      "category": "Recon"
+    },
+    {
+      "category8": "Spoofing",
+      "category": "Spoofing"
+    },
+    {
+      "category8": "Web",
+      "category": "Web"
+    }
+  ],
+  "y_vs_kaggle_binary_label": [
+    {
+      "y": 0,
+      "binary_label": "Benign"
+    },
+    {
+      "y": 1,
+      "binary_label": "Attack"
+    }
+  ],
+  "value_check": {
+    "rows_compared": 46776697,
+    "cells_compared": 1777514486,
+    "rel_tol": 1e-06,
+    "rename_ours_to_kaggle": {
+      "Header_Length": "header_length",
+      "Protocol Type": "protocol_type",
+      "Time_To_Live": "time_to_live",
+      "Rate": "rate",
+      "fin_flag_number": "fin_flag_number",
+      "syn_flag_number": "syn_flag_number",
+      "rst_flag_number": "rst_flag_number",
+      "psh_flag_number": "psh_flag_number",
+      "ack_flag_number": "ack_flag_number",
+      "ece_flag_number": "ece_flag_number",
+      "cwr_flag_number": "cwr_flag_number",
+      "ack_count": "ack_count",
+      "syn_count": "syn_count",
+      "fin_count": "fin_count",
+      "rst_count": "rst_count",
+      "HTTP": "http",
+      "HTTPS": "https",
+      "DNS": "dns",
+      "Telnet": "telnet",
+      "SMTP": "smtp",
+      "SSH": "ssh",
+      "IRC": "irc",
+      "TCP": "tcp",
+      "UDP": "udp",
+      "DHCP": "dhcp",
+      "ARP": "arp",
+      "ICMP": "icmp",
+      "IGMP": "igmp",
+      "IPv": "ipv",
+      "LLC": "llc",
+      "Tot sum": "total_sum",
+      "Min": "min_packet_size",
+      "Max": "max_packet_size",
+      "AVG": "mean_packet_size",
+      "Std": "std_packet_size",
+      "IAT": "inter_arrival_time",
+      "Number": "packet_count",
+      "Variance": "packet_size_variance"
+    },
+    "per_column": {
+      "Rate": {
+        "cells_differing": 1037,
+        "of_which_nonfinite_in_csv": 1037
+      },
+      "Std": {
+        "cells_differing": 702,
+        "of_which_nonfinite_in_csv": 702
+      },
+      "Variance": {
+        "cells_differing": 702,
+        "of_which_nonfinite_in_csv": 702
+      }
+    },
+    "cells_differing_with_finite_csv_value": 0
+  }
+}

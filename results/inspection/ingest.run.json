@@ -1,0 +1,34 @@
+{
+  "script": "src.data.ingest",
+  "started_at": "2026-10-25T23:46:36+00:00",
+  "git_commit": "e53365bb1a8cab9525dbb65cbec9af021841a6d8",
+  "git_dirty": false,
+  "config_sha256": "1011adbc85d16d7befad80b21c07b6612d55284f6545c0d7504563a558e08a73",
+  "seed": 42,
+  "n_jobs": 6,
+  "python": "3.12.7",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "libraries": {
+    "numpy": "2.5.4",
+    "pandas": "3.1.0",
+    "pyarrow": "26.0.0",
+    "polars": "2.1.0",
+    "scikit-learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "shap": "0.54.1",
+    "scipy": "1.18.1",
+    "matplotlib": "3.11.2",
+    "PyYAML": "6.0.3",
+    "joblib": "1.6.0"
+  },
+  "n_files": 309,
+  "n_rows_csv": 46776700,
+  "n_rows_valid": 46776697,
+  "n_malformed": 3,
+  "outputs": {
+    "data/interim/ciciot2023_raw.parquet": "ddd03a902184fcb09aae74c5fcc23d1200b3c515a87874b6aead97d0e1f1029b",
+    "data/raw_manifest.csv": "20e39d567516f3ccda1c352a4518c5d61f572d3c395e7eed66651c1aba6d7541",
+    "results/inspection/malformed_rows.csv": "b6dc3cfcfc5266f9b6b9b1d6b247d01050aff1f254db5d762443748d56869c44"
+  },
+  "elapsed_s": 254.1
+}
