@@ -1,0 +1,73 @@
+{
+  "source": "data/interim/ciciot2023_raw.parquet (make ingest)",
+  "design": {
+    "E": {
+      "benign": 25000,
+      "attack": 25000
+    },
+    "M": {
+      "benign": 100000,
+      "attack": 100000
+    },
+    "n_attack_types": 33,
+    "per_type_target": {
+      "E": 757,
+      "M": 3030
+    },
+    "oversample_factor": 1.3,
+    "rare_fraction_E": 0.2
+  },
+  "candidates": 315874,
+  "duplicates": {
+    "scope": "among the drawn candidates, not over the whole dataset",
+    "exact_copies_removed": 1988,
+    "conflicting_rows_removed": 651,
+    "ambiguous_type_rows_removed": 2701
+  },
+  "rare_types": [
+    "Backdoor_Malware",
+    "Recon-PingSweep",
+    "Uploading_Attack"
+  ],
+  "samples": {
+    "E": {
+      "n_rows": 48104,
+      "by_y": {
+        "0": 24052,
+        "1": 24052
+      },
+      "by_category": {
+        "Benign": 24052,
+        "BruteForce": 757,
+        "DDoS": 9084,
+        "DoS": 3028,
+        "Mirai": 2271,
+        "Recon": 3480,
+        "Spoofing": 1514,
+        "Web": 3918
+      }
+    },
+    "M": {
+      "n_rows": 192550,
+      "by_y": {
+        "0": 96275,
+        "1": 96275
+      },
+      "by_category": {
+        "Benign": 96275,
+        "BruteForce": 3030,
+        "DDoS": 36360,
+        "DoS": 12120,
+        "Mirai": 9090,
+        "Recon": 13930,
+        "Spoofing": 6060,
+        "Web": 15685
+      }
+    }
+  },
+  "files_sha256": {
+    "data/processed/sample_E.parquet": "005fc0e08d88dc0115b76afb2582f75ad7512348a6d95e69bacecad9b37a80d3",
+    "data/processed/sample_M.parquet": "d09ef25ad2e35aadf90173525d909dc3104ed62bf3f9b5755ed605f9c07deb25",
+    "data/sample_index.csv.gz": "e2b1d24a32847fe7f318dba127c3d3052a54b50619e3b3a3fbc54f54bdd61b4e"
+  }
+}
