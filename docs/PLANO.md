@@ -165,7 +165,7 @@ Na literatura, a detecção binária no CICIoT2023 costuma reportar desempenho p
 
 | Categoria | Ataques |
 |---|---|
-| DDoS (11) | ACK fragmentation, UDP flood, SlowLoris, ICMP flood, RSTFIN flood, PSHACK flood, HTTP flood, UDP fragmentation, TCP flood, SYN flood, SynonymousIP flood |
+| DDoS (12) | ACK fragmentation, UDP flood, SlowLoris, ICMP flood, ICMP fragmentation, RSTFIN flood, PSHACK flood, HTTP flood, UDP fragmentation, TCP flood, SYN flood, SynonymousIP flood |
 | DoS (4) | TCP flood, HTTP flood, SYN flood, UDP flood |
 | Recon (5) | Ping sweep, OS scan, Vulnerability scan, Port scan, Host discovery |
 | Web-based (6) | SQL injection, Command injection, Backdoor malware, Uploading attack, XSS, Browser hijacking |
@@ -183,6 +183,8 @@ A grafia exata dos rótulos nos CSVs (por exemplo, `BenignTraffic`, `DDoS-ICMP_F
 4. **Supplementary material:** código e descrição das ferramentas de coleta e processamento.
 
 ### 3.5 Os 46 atributos
+
+> **Correção (Etapa 1, ver `docs/DIARIO.md`, 2026-10-25):** a versão usada (CSVs por captura, D15) tem 39 colunas, e não os 46 atributos abaixo, que são os da versão misturada. `Duration` chama-se `Time_To_Live`; não existem `flow_duration`, `Srate`, `Drate`, `urg_count`, `Magnitue`, `Radius`, `Covariance` e `Weight`; existe `IGMP`. Os nomes exatos estão em `results/inspection/schema.json`.
 
 Nomes exatos a confirmar no cabeçalho dos CSVs **[verificar]**.
 
@@ -439,7 +441,7 @@ Cada etapa traz **objetivo**, **tarefas**, **saídas**, **critério de pronto** 
 4. Remover duplicatas exatas (atributos + `label34`). Identificar duplicatas conflitantes (mesmos atributos e `y` diferente), contar, remover todas as cópias e registrar a contagem.
 5. Cortar cada rótulo para o alvo exato com `sample(n, random_state=SEED)` e separar E e M. Como a deduplicação foi feita na união, E e M são disjuntas.
 6. Se o total de ataque ficar abaixo do alvo (tipos raros), reduzir o benigno para manter a proporção 1:1.
-7. Salvar `data/processed/sample_E.parquet` e `sample_M.parquet` (46 atributos + `label34` + `category8` + `y` + `source_file` + `row_idx`), `data/sample_index.csv.gz`, os SHA-256 dos parquets e `results/sampling/sampling_report.json` com as contagens finais por rótulo em cada amostra.
+7. Salvar `data/processed/sample_E.parquet` e `sample_M.parquet` (39 atributos da versão por captura + `label34` + `category8` + `y` + `source_file` + `row_idx`), `data/sample_index.csv.gz`, os SHA-256 dos parquets e `results/sampling/sampling_report.json` com as contagens finais por rótulo em cada amostra.
 
 **O que deve constar no artigo:** a proporção 50/50 e a distribuição uniforme entre os tipos de ataque são escolhas de desenho do estudo, e não reproduzem a distribuição original nem a de uma casa real. Por isso, TPR, FPR e recall por tipo são as métricas mais transferíveis, e a precisão não se transfere.
 
