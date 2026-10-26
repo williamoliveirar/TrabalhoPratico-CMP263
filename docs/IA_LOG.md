@@ -134,3 +134,24 @@ Modelo:
 - *Potencialidade:* a ferramenta olhou as figuras geradas antes de commitar e corrigiu dois problemas: a escala log que achatava o `IAT` e a legenda que cobria as barras.
 - *Limitação:* a primeira versão da regra de cauda pesada marcava frações em [0, 1] e o código categórico `Protocol Type` como candidatos a `log1p`. Só a revisão das tabelas mostrou o erro, corrigido antes dos resultados finais.
 - *Limitação:* a proposta da D13 envolve escolhas de julgamento (por exemplo, qual coluna manter em cada par redundante e remover `Rate` em vez de `IAT`). A ferramenta as justificou, mas a decisão é da dupla.
+
+## 2026-10-26 — Claude Code (Claude Opus 5.5, app desktop) — confirmação da D13 e guia prático
+
+**Finalidade:** registrar a confirmação da D13 e escrever um guia didático do que já foi feito, com instruções para rodar e validar tudo sem ajuda.
+
+**Prompt (texto integral):**
+
+> Faça os pushs dos novos commits e Confirmo a D13. Em paralelo, para eu não me perder, quero que você me explique, passo a passo e de forma bem didática, TUDO o que já foi feito e construído em relação ao projeto, os códigos e o ambiente implementado, e me ensine como rodar os códigos (quais e como) e validar tudo por conta própria, testar e chegar às mesmas conclusões que você já chegou, de forma prática e simples.
+
+**O que a ferramenta produziu:**
+- registro da D13 no diário e no `features.yaml`;
+- `docs/GUIA.md`: conceitos, ambiente, mapa do repositório, pipeline etapa por etapa, cinco níveis de validação, as conclusões com a evidência de cada uma, o fluxo do Git e problemas comuns.
+- Antes de escrever, a ferramenta rodou de novo `make sample` e `make eda` e confirmou que só os `.run.json` mudam. Também executou todos os trechos de Python do guia e conferiu as saídas esperadas.
+
+**O que foi aproveitado:** [a preencher pela dupla]
+
+**O que foi rejeitado ou corrigido, e por quê:** [a preencher pela dupla]
+
+**Limitações ou potencialidades observadas:**
+- *Potencialidade:* o guia transforma o determinismo do pipeline num teste simples: refazer as etapas e verificar com `git diff` que nenhum resultado versionado mudou.
+- *Limitação:* o guia descreve o estado em 26/10 e precisa ser atualizado a cada etapa. Os níveis 3 e 4 de validação só funcionam numa máquina que tenha os CSVs brutos e já tenha rodado `make ingest` e `make sample`.
