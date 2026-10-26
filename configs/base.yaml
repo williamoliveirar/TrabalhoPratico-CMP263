@@ -42,6 +42,16 @@ sampling:  # D3 — adjustable to machine memory; record changes in docs/DIARIO.
   rare_fraction_E: 0.2     # rare attack types: all rows, split 20% E / 80% M
   parquet_compression: zstd
 
+eda:  # Etapa 3 — sample E only
+  quasi_constant_share: 0.999  # most frequent value in more than this share of rows → quasi-constant (task 3)
+  corr_threshold: 0.99         # |Pearson| or |Spearman| above this → redundant pair (task 4)
+  heavy_tail_skew: 2.0         # unbounded non-negative features with skewness above this → log1p candidate (Etapa 4)
+  categorical_features: [Protocol Type]  # IP protocol codes (0, 1, 6, 17, 47): never log-transformed
+  single_feature_depth: 2      # depth of the one-feature trees (task 7)
+  cv_splits: 5                 # folds for the one-feature trees, stratified by label34
+  distribution_features: [Time_To_Live, IAT, Number, Rate, Header_Length, Tot sum, AVG, Std, Protocol Type]
+  by_type_features: [Time_To_Live, IAT, Number]
+
 validation:  # D8: split by row, stratified by label34; no grouping by capture (15 attack types have one capture)
   spotcheck: {n_splits: 5, n_repeats: 2}
   outer: {n_splits: 5}

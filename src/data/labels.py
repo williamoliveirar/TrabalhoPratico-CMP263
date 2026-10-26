@@ -50,6 +50,16 @@ CATEGORY = {
 }
 
 
+# Dataset paper, §4: features are summarised over windows of 100 packets for the DDoS, DoS and Mirai attacks and of
+# 10 packets for benign traffic and every other attack (D12: window size is a shortcut candidate).
+WINDOW_100_CATEGORIES = frozenset({"DDoS", "DoS", "Mirai"})
+
+
+def window_of(label: str) -> int:
+    """Packet-window size the dataset paper reports for this label (10 or 100)."""
+    return 100 if CATEGORY[label] in WINDOW_100_CATEGORIES else 10
+
+
 def label_of_folder(folder: str) -> str:
     label = FOLDER_RENAMES.get(folder, folder)
     if label not in CATEGORY:

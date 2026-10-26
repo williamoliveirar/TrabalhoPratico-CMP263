@@ -6,7 +6,7 @@ Final project for **CMP263 – Machine Learning** (PPGC/UFRGS, 2026/2). We build
 - **Q2 (where it fails):** which attack types escape the best model (recall per type), and what is its false-alarm rate on benign traffic?
 - **Q3 (shortcuts):** does performance rely on features that identify the capture environment (e.g. TTL) rather than the attack itself?
 
-> **Status:** work in progress (Etapa 2 — sampling). The full plan is in [`docs/PLANO.md`](docs/PLANO.md), and the logbook with every decision and number is in [`docs/DIARIO.md`](docs/DIARIO.md). Both are in Portuguese. Code, figures and the paper are in English.
+> **Status:** work in progress (Etapa 3 — exploratory analysis on sample E). The full plan is in [`docs/PLANO.md`](docs/PLANO.md), and the logbook with every decision and number is in [`docs/DIARIO.md`](docs/DIARIO.md). Both are in Portuguese. Code, figures and the paper are in English.
 
 ## Data
 
@@ -69,7 +69,7 @@ src/          data/, features/, models/, experiments/, evaluation/, interpretati
 notebooks/    exploration and visualisation only; logic lives in src/
 results/      inspection/, sampling/, eda/, spotcheck/, nested/, ablation/, interpretation/, figures/, tables/
 models/       final model and metadata
-tests/        ingestion, sampling, split and leakage tests
+tests/        ingestion, sampling, EDA, split and leakage tests
 docs/         PLANO.md, DIARIO.md, IA_LOG.md, enunciado.pdf, artigo/
 ```
 
