@@ -109,3 +109,28 @@ Modelo:
 - *Limitação:* a leitura do artigo passou por um resumo automático da página. As citações usadas no diário foram pedidas literalmente numa segunda leitura, mas convém conferir no PDF antes de citá-las no artigo.
 - *Limitação:* o material suplementar (scripts de extração), que responderia se as linhas estão em ordem cronológica, fica atrás de um formulário com dados pessoais; a ferramenta não o preenche, e a pendência ficou com a dupla.
 - *Limitação:* a ferramenta tomou uma decisão que o plano não previa (remover vetores compartilhados por dois tipos de ataque) para poder executar a Etapa 2. Ela foi registrada como proposta, mas já está nos arquivos gerados; se a dupla preferir a alternativa, a amostragem precisa ser refeita.
+
+## 2026-10-25 — Claude Code (Claude Opus 5.5, app desktop) — Etapa 3 (EDA na amostra E)
+
+**Finalidade:** registrar as confirmações da D4 e da D12; rodar `make env` com o Make instalado; fazer a EDA da Etapa 3 e propor o pré-processamento (D13).
+
+**Prompts (texto integral):**
+
+> Confirmo a D4 refinada, remover como já está implementado. Faça o Push dos 4 commits, e concordo com a revisão da D12 para incluir Number entre os candidatos a atalho. Prossiga.
+
+> eu já instalei o Make, rode o make env também.
+
+**O que a ferramenta produziu:**
+- registro das confirmações no diário; execução de `make env`, `make test` e `make eda`;
+- `src/data/eda.py` (tabelas e figuras em `results/eda/`), `src/reporting/style.py` (estilo e paleta das figuras), `window_of` em `src/data/labels.py` e `tests/test_eda.py`;
+- a proposta de `configs/features.yaml` (D13) e a entrada da Etapa 3 no diário.
+
+**O que foi aproveitado:** [a preencher pela dupla]
+
+**O que foi rejeitado ou corrigido, e por quê:** [a preencher pela dupla]
+
+**Limitações ou potencialidades observadas:**
+- *Potencialidade:* a ferramenta testou relações exatas entre colunas (contagem = fração × `Number`, `Tot sum` = `AVG` × `Number`, `ARP` = 1 − `IPv`, `Variance` = `Std`²) em vez de parar nas correlações. Assim, a remoção dessas colunas tem justificativa de identidade, e não só de correlação alta.
+- *Potencialidade:* a ferramenta olhou as figuras geradas antes de commitar e corrigiu dois problemas: a escala log que achatava o `IAT` e a legenda que cobria as barras.
+- *Limitação:* a primeira versão da regra de cauda pesada marcava frações em [0, 1] e o código categórico `Protocol Type` como candidatos a `log1p`. Só a revisão das tabelas mostrou o erro, corrigido antes dos resultados finais.
+- *Limitação:* a proposta da D13 envolve escolhas de julgamento (por exemplo, qual coluna manter em cada par redundante e remover `Rate` em vez de `IAT`). A ferramenta as justificou, mas a decisão é da dupla.
