@@ -39,7 +39,7 @@ sampling:  # D3 — adjustable to machine memory; record changes in docs/DIARIO.
   rare_fraction_E: 0.2     # rare attack types: all rows, split 20% E / 80% M
   read_chunk_rows: 500000
 
-validation:  # D8
+validation:  # D8: split by row, stratified by label34; no grouping by capture (15 attack types have one capture)
   spotcheck: {n_splits: 5, n_repeats: 2}
   outer: {n_splits: 5}
   inner: {n_splits: 3}
