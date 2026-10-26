@@ -81,3 +81,31 @@ Modelo:
 - *Potencialidade:* o teste do mapeamento de rótulos, escrito a partir da tabela do plano (§3.3), falhou contra os dados e revelou um erro do próprio plano: a categoria DDoS tem 12 ataques, e não 11 (falta `DDoS-ICMP_Fragmentation`).
 - *Potencialidade:* a ferramenta notou que o leitor de CSV do polars completa com nulos, sem aviso, as linhas truncadas, e trocou para o leitor do pyarrow, que reporta essas linhas.
 - *Limitação:* a primeira tentativa de testar `make env` numa pasta limpa falhou de novo pelo limite de 260 caracteres de caminho do Windows (o clone foi feito numa pasta temporária profunda), um problema que a ferramenta já tinha encontrado na sessão anterior.
+
+## 2026-10-25 — Claude Code (Claude Opus 5.5, app desktop) — D8, fechamento da Etapa 1 e Etapa 2
+
+**Finalidade:** registrar a confirmação da D8; ler o artigo do dataset para fechar a Etapa 1; implementar e executar a amostragem da Etapa 2.
+
+**Prompts (texto integral):**
+
+> Confirmo a D8: folds por linha estratificados por label34, com leave-capture-out e blocos contíguos como análises complementares a decidir na Etapa 5.
+
+> o que significa exatamente, os folds por linha serem "estratificados por label34"? Me explique melhor.
+
+> Continue. Faça o push do commit da D8, e prossiga para as próximas etapas, me atualizando do cronograma.
+
+**O que a ferramenta produziu:**
+- registro da D8 no diário e na configuração;
+- explicação, no chat, do que é estratificar os folds por `label34` (sem arquivo);
+- leitura do artigo do dataset (texto completo na PubMed Central, porque a MDPI recusou o acesso automatizado) e da página oficial, com as respostas da Etapa 1 no diário e correções pontuais no plano (§3.3, §3.5 e Etapa 2);
+- `src/data/make_sample.py`, `tests/test_sample.py`, as amostras E e M, o índice e o relatório da amostragem.
+
+**O que foi aproveitado:** [a preencher pela dupla]
+
+**O que foi rejeitado ou corrigido, e por quê:** [a preencher pela dupla]
+
+**Limitações ou potencialidades observadas:**
+- *Potencialidade:* ao ler o artigo, a ferramenta cruzou a lista de tamanhos de janela por ataque (10 ou 100 pacotes) com as contagens já versionadas. Daí saiu a hipótese de um atalho criado pela própria extração (`Number` e os atributos que crescem com a janela), mais forte que a suspeita do plano sobre o TTL. A ferramenta não olhou a relação entre atributo e classe no dataset inteiro e deixou a confirmação para a amostra E.
+- *Limitação:* a leitura do artigo passou por um resumo automático da página. As citações usadas no diário foram pedidas literalmente numa segunda leitura, mas convém conferir no PDF antes de citá-las no artigo.
+- *Limitação:* o material suplementar (scripts de extração), que responderia se as linhas estão em ordem cronológica, fica atrás de um formulário com dados pessoais; a ferramenta não o preenche, e a pendência ficou com a dupla.
+- *Limitação:* a ferramenta tomou uma decisão que o plano não previa (remover vetores compartilhados por dois tipos de ataque) para poder executar a Etapa 2. Ela foi registrada como proposta, mas já está nos arquivos gerados; se a dupla preferir a alternativa, a amostragem precisa ser refeita.
