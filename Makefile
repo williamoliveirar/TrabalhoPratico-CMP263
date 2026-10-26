@@ -34,7 +34,7 @@ inspect:        ## Etapa 1 — label counts, schema, missing/infinite values (re
 check-ingest:   ## D15 — compare the ingested Parquet with the Kaggle mirror, row by row (optional)
 	$(PY) -m src.data.check_ingest
 
-sample:         ## Etapa 2 — samples E and M
+sample:         ## Etapa 2 (D3, D4) — samples E and M: deduplicated, disjoint, byte-identical across runs
 	$(PY) -m src.data.make_sample
 
 eda:            ## Etapa 3 — EDA tables and figures (sample E only)
