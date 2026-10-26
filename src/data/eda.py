@@ -219,7 +219,7 @@ def fig_number_by_type(nbl: pl.DataFrame, order: list[str], label: str, target) 
     ax.set_title("Number by attack type, sample E (window size per the dataset paper)", loc="left")
     ax.grid(axis="y", visible=False)
     ax.legend(handles=[plt.Rectangle((0, 0), 1, 1, color=BENIGN_COLOR), plt.Rectangle((0, 0), 1, 1, color=ATTACK_COLOR)],
-              labels=["benign", "attack"], loc="lower right")
+              labels=["benign", "attack"], loc="upper right")
     save(fig, target)
 
 
