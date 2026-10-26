@@ -1,6 +1,6 @@
 # Feature sets (docs/PLANO.md D12, D13), decided on sample E only (make eda, results/eda/, commit c3b2bf2).
 # Each removed feature has a reason and a pointer to the diary entry that justifies it.
-# Status: proposal awaiting confirmation (DIARIO.md — 2026-10-25 — Etapa 3 — EDA na amostra E).
+# Status: decided (D13 confirmed on 2026-10-26; DIARIO.md — 2026-10-25 — Etapa 3 — EDA na amostra E).
 
 drop:  # removed before any split, in every pipeline (fixed: no learned parameters)
   - name: Tot size
