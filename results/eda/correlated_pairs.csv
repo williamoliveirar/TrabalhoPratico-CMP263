@@ -1,0 +1,10 @@
+feature_a,feature_b,identical,pearson,spearman
+Rate,IAT,false,-0.008612,-0.993745
+fin_flag_number,fin_count,false,0.962174,0.997297
+syn_flag_number,syn_count,false,0.937946,0.996402
+rst_flag_number,rst_count,false,0.910253,0.999417
+ARP,IPv,false,-1.0,-1.0
+ARP,LLC,false,-1.0,-1.0
+IPv,LLC,true,1.0,1.0
+AVG,Tot size,true,1.0,1.0
+Std,Variance,false,0.829049,1.0

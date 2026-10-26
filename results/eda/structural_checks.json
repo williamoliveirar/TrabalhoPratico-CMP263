@@ -1,0 +1,26 @@
+{
+  "counts_never_exceed_Number": {
+    "ack_count": true,
+    "syn_count": true,
+    "fin_count": true,
+    "rst_count": true
+  },
+  "count_vs_flag_number_times_Number_max_abs_diff": {
+    "ack_count": 7.105427357601002e-15,
+    "syn_count": 7.105427357601002e-15,
+    "fin_count": 5.329070518200751e-15,
+    "rst_count": 7.105427357601002e-15
+  },
+  "ARP_plus_IPv_minus_1_max_abs_diff": 2.220446049250313e-16,
+  "Protocol_Type_values": [
+    0.0,
+    1.0,
+    6.0,
+    17.0,
+    47.0
+  ],
+  "Tot_sum_vs_AVG_times_Number_max_rel_diff": 1.5446581212176088e-16,
+  "Variance_vs_Std_squared_max_rel_diff": 2.0816681711721788e-15,
+  "Std_null_iff_Number_is_1": true,
+  "n_Std_null": 3
+}

@@ -1,0 +1,40 @@
+{
+  "script": "src.data.eda",
+  "started_at": "2026-10-26T02:54:55+00:00",
+  "git_commit": "c420fd9684c7fbba5387ac0d76923d1fcceb8261",
+  "git_dirty": false,
+  "config_sha256": "a201f1d9b0fb7ea363a31ac7e1427680ddc1b5f8cbec351b5c4737aa2812c213",
+  "seed": 42,
+  "n_jobs": 6,
+  "python": "3.12.7",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "libraries": {
+    "numpy": "2.5.4",
+    "pandas": "3.1.0",
+    "pyarrow": "26.0.0",
+    "polars": "2.1.0",
+    "scikit-learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "shap": "0.54.1",
+    "scipy": "1.18.1",
+    "matplotlib": "3.11.2",
+    "PyYAML": "6.0.3",
+    "joblib": "1.6.0"
+  },
+  "outputs": {
+    "results/eda/by_type_summary.csv": "c4bdda4e589ef190f7b567519ca46bedfa51fe5b4952328e98fd429ac18040ee",
+    "results/eda/composition.csv": "3a83ba056aa69d7d721bea351860c2ab74b95793d976f3bf03b1cf92ba917684",
+    "results/eda/correlated_pairs.csv": "fa57354e706b98004fa79dbb2a8c6debc286255024a56471b5cf5cba41f28d8c",
+    "results/eda/feature_summary.csv": "2fa59bc57072821649c617fc74ec0f93624dcca9a36042127db4ce248a47734f",
+    "results/eda/fig_by_type.png": "3309da5f9a45e212accf01e270862ec9753b0e638f9598de76d734cafcbe3545",
+    "results/eda/fig_distributions.png": "82b28235d93a2b9a44b8b29daf195e243bdc9857de303773409fc88687858d3d",
+    "results/eda/fig_number_by_type.png": "3e2169087b2684d99c793b9c2825bc5bad84ea1ec543cc8e376f66575bcb956f",
+    "results/eda/fig_single_feature_mcc.png": "19e11d157ec44136ccb02226960514181b5ceb7509db330e24980a34c7aa4bcc",
+    "results/eda/fig_spearman.png": "78d5457b738212a3a389b77509909fc093762769e23490fc560722a3dffe3bf6",
+    "results/eda/number_by_label.csv": "755164123dfe6bed7908ecc57f41c805bc2d240aed5645126afc8223a57b159e",
+    "results/eda/single_feature_models.csv": "3d86b3053dcb20a06b855e8d22bc11cab27804a149b7fe7c18889e93ed0982ad",
+    "results/eda/structural_checks.json": "7ba53822fe0beefbfbc3b5e26d2dd1a708b42a95e2c5c07bef8f54b3e8a4a163",
+    "results/eda/univariate.csv": "128e9c037c1f6a93aef01bbcfcb4e80996d433dd2c23266f929d7b931d79c44d"
+  },
+  "elapsed_s": 7.2
+}
