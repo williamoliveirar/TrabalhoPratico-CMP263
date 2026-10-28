@@ -1,6 +1,6 @@
 # Guia prático do projeto (Etapas 0 a 3)
 
-*Situação em 26/10/2026, commit `525dc47`. Atualize este guia ao fim de cada etapa.*
+*Situação em 26/10/2026, commit `efea946`. Atualize este guia ao fim de cada etapa.*
 
 Este guia explica, do zero, o que já foi construído, como rodar cada parte e como conferir sozinho os resultados e as conclusões. O plano completo está em `docs/PLANO.md`; as decisões e os números, com fonte, em `docs/DIARIO.md`. Aqui o foco é prático: o que é cada coisa, que comando rodar e o que você deve ver.
 
