@@ -178,3 +178,24 @@ Modelo:
 - *Potencialidade:* a leitura sistemática dos slides achou desvios que não estavam no pedido. Os folds de teste com distribuição 50/50, contra a regra da aula de desbalanceamento de classes, e o SVM, que está no programa e faltava entre os algoritmos.
 - *Limitação:* a ferramenta não reescreveu as entradas antigas do diário, apesar do pedido. A regra de somente acréscimo do próprio projeto impede isso. No lugar, ela acrescentou uma tabela de correspondência entre os termos antigos e os das aulas. Se a dupla quiser reescrever as entradas antigas, precisa revogar a regra explicitamente.
 - *Limitação:* a extração automática de texto dos PDFs perde figuras e embaralha algumas colunas dos slides. Os diagramas, como o da validação cruzada aninhada, foram interpretados pelo texto ao redor.
+
+## 2026-11-05 — Claude Code (Claude Opus 5.5, app desktop) — push da Etapa 4 e Etapa 5
+
+**Finalidade:** enviar ao GitHub os commits da Etapa 4 e implementar a Etapa 5 (divisão dos dados em treino, validação e teste).
+
+**Prompt (texto integral):** resposta à pergunta da ferramenta "Posso fazer o push dos 2 commits novos?", escolhida entre as opções oferecidas:
+
+> Push e Etapa 5
+
+**O que a ferramenta produziu:**
+- `src/experiments/make_splits.py` e `tests/test_splits.py`: folds do spot-checking em E, da validação cruzada aninhada em M e de uma divisão complementar por captura em M, congelados em `data/splits/`;
+- entrada da Etapa 5 no diário, com o tamanho de cada partição e duas propostas para as análises complementares da D8: adotar o *leave-capture-out* e não adotar os blocos contíguos de `row_idx`;
+- atualização do guia, do README e do plano.
+
+**O que foi aproveitado:** [a preencher pela dupla]
+
+**O que foi rejeitado ou corrigido, e por quê:** [a preencher pela dupla]
+
+**Limitações ou potencialidades observadas:**
+- *Potencialidade:* a ferramenta propôs um desenho pareado para o *leave-capture-out*. Só os tipos com capturas suficientes mudam de fold, e o efeito da captura pode ser medido sem mudar o resto da divisão.
+- *Limitação:* a ferramenta gerou os folds do *leave-capture-out* antes da confirmação da dupla, para que todas as divisões ficassem congeladas antes de qualquer treino. Se a dupla recusar a proposta, o arquivo precisa ser removido.

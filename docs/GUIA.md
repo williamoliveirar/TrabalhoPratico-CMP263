@@ -1,6 +1,6 @@
-# Guia prático do projeto (Etapas 0 a 4)
+# Guia prático do projeto (Etapas 0 a 5)
 
-*Situação em 05/11/2026; código da Etapa 4 no commit `e16e460`. Atualize este guia ao fim de cada etapa.*
+*Situação em 05/11/2026; código da Etapa 5 no commit `436173a` e folds congelados no commit `5d693b0`. Atualize este guia ao fim de cada etapa.*
 
 Este guia explica, do zero, o que já foi construído, como rodar cada parte e como conferir sozinho os resultados e as conclusões. O plano completo está em `docs/PLANO.md`; as decisões e os números, com fonte, em `docs/DIARIO.md`. Aqui o foco é prático: o que é cada coisa, que comando rodar e o que você deve ver. Os termos são os das aulas. O glossário completo está no PLANO, §1.4, e o mapa das etapas formais do treinamento de modelos no PLANO, §1.3.
 
@@ -35,9 +35,10 @@ Sumário:
 | 2 | Amostragem; limpeza (duplicatas) | Sortear as amostras E (exploração) e M (modelagem), sem duplicatas e sem instâncias em comum | Concluída |
 | 3 | Análise exploratória (EDA) | Só em E; decidir o pré-processamento (`configs/features.yaml`) | Concluída |
 | 4 | Pré-processamento | Antes da divisão (regras fixas) e dentro do `Pipeline` (ajustado no treino de cada fold) | Concluída |
-| 5 | Divisão em treino, validação e teste | Folds congelados para o spot-checking (E) e para a validação cruzada aninhada (M) | Próxima |
+| 5 | Divisão em treino, validação e teste | Folds congelados para o spot-checking (E) e para a validação cruzada aninhada (M) | Concluída |
+| 6 | Treinamento e spot-checking | 7 algoritmos + Dummy com hiperparâmetros padrão em E; 3 finalistas | Próxima |
 
-**O caminho dos dados**, do arquivo bruto até a decisão de pré-processamento:
+**O caminho dos dados**, do arquivo bruto até os folds congelados:
 
 ```
 309 CSVs oficiais (8,9 GB, fora do repositório)
@@ -56,6 +57,9 @@ results/eda/  (tabelas e figuras)  →  configs/features.yaml  (D13: o que remov
    ▼
 prepare()          antes da divisão: 27 atributos, Std ausente → 0 (linha a linha)
 build_pipeline()   dentro de cada fold: log1p + padronização + one-hot ajustados só no treino, depois o modelo
+   │  make splits   (≈ 15 s, E e M)
+   ▼
+data/splits/   folds de treino, validação e teste, gerados uma vez e versionados (Etapa 5)
 ```
 
 ---
@@ -80,6 +84,8 @@ build_pipeline()   dentro de cada fold: log1p + padronização + one-hot ajustad
   - *laço externo* (5 folds): 4 folds de treino e 1 fold de **teste**, para a estimativa de desempenho;
   - *laço interno* (3 folds, dentro do treino externo): 2 folds de treino e 1 de **validação**, para o ajuste de hiperparâmetros.
 - **Estratificar por `label34`.** Ao dividir em folds, sortear separadamente dentro de cada um dos 34 rótulos, para que cada fold tenha a mesma proporção de cada tipo de ataque. Isso garante também a proporção de `y`.
+- **Folds congelados.** Todas as divisões são geradas uma vez (`make splits`, Etapa 5), antes de qualquer treino, e versionadas em `data/splits/`. Assim, todos os algoritmos usam exatamente os mesmos conjuntos de treinamento, de validação e de teste em cada iteração, como pede o enunciado.
+- ***Leave-capture-out*** (análise complementar, proposta na Etapa 5). Divide por captura, e não por instância, os 16 tipos de ataque com pelo menos 5 capturas. Assim, o modelo é testado em capturas que não viu no treino, e a comparação com a divisão principal mede o efeito de janelas quase duplicadas entre treino e teste.
 
 **O pré-processamento** (Aulas 02b, 13–14 e 15–16)
 - **Antes da divisão:** operações que removem instâncias ou atributos, ou que aplicam uma regra fixa sem parâmetro estimado dos dados. Podem rodar no conjunto inteiro sem data leakage. Aqui:
@@ -186,16 +192,20 @@ TrabalhoPratico-CPM263/
 │   │   ├── registry.py       Etapa 4: os 7 algoritmos de D7 + Dummy, com hiperparâmetros padrão
 │   │   └── pipelines.py      Etapa 4: prepare() antes da divisão; build_pipeline() = pré-processamento + modelo
 │   ├── reporting/style.py    estilo e cores das figuras (benigno azul, ataque laranja)
-│   └── features/, experiments/, evaluation/, interpretation/   (vazios; Etapas 5 a 10)
-├── tests/                    test_ingest.py, test_sample.py, test_eda.py, test_no_leakage.py (19 testes)
+│   ├── experiments/
+│   │   └── make_splits.py    Etapa 5: folds congelados; funções que os entregam ao scikit-learn (cv=)
+│   └── features/, evaluation/, interpretation/   (vazios; Etapas 6 a 10)
+├── tests/                    test_ingest.py, test_sample.py, test_eda.py, test_no_leakage.py, test_splits.py (26 testes)
 ├── data/
 │   ├── raw_manifest.csv      versionado: tamanho, SHA-256 e linhas de cada um dos 309 CSVs
 │   ├── sample_index.csv.gz   versionado: quais linhas (source_file, row_idx) estão em E e em M
+│   ├── splits/               versionado: folds de treino, validação e teste de E e de M (Etapa 5)
 │   └── interim/, processed/  não versionados: Parquet da ingestão e amostras
 ├── results/
 │   ├── inspection/           saídas da Etapa 1
 │   ├── sampling/             saídas da Etapa 2
-│   └── eda/                  saídas da Etapa 3 (tabelas CSV, JSON e figuras PNG)
+│   ├── eda/                  saídas da Etapa 3 (tabelas CSV, JSON e figuras PNG)
+│   └── splits/               saídas da Etapa 5 (tamanho de cada partição, conferências, hashes)
 └── docs/
     ├── PLANO.md              o plano do trabalho (pt-BR)
     ├── DIARIO.md             diário de bordo: decisões e números com fonte (pt-BR)
@@ -217,7 +227,7 @@ Nenhum número "mágico" fica no código: semente, caminhos e tamanhos vêm de `
 | `columns` | nomes das colunas auxiliares | `label34`, `category8`, `y`, `source_file`, `row_idx` |
 | `sampling` (D3) | tamanhos de E e M, folga para duplicatas, regra dos tipos raros | E: 25.000 + 25.000; M: 100.000 + 100.000; folga 1,3; raros 20% E / 80% M |
 | `eda` | limiares da EDA | quase constante > 99,9%; correlação > 0,99; assimetria > 2; árvore de profundidade 2; 5 folds |
-| `validation` (D8) | número de folds da divisão em treino, validação e teste | spot-checking 5 × 2 (validação cruzada repetida); laço externo 5 (teste); laço interno 3 (validação) |
+| `validation` (D8) | número de folds da divisão em treino, validação e teste | spot-checking 5 × 2 (validação cruzada repetida); laço externo 5 (teste); laço interno 3 (validação); a divisão por captura usa os 5 folds do laço externo |
 
 `configs/features.yaml` (D13, decidido em 26/10) diz o que acontece com cada coluna antes dos modelos:
 - `drop`: 12 colunas removidas, cada uma com o motivo e a entrada do diário. Ficam 27 atributos (limpeza, antes da divisão);
@@ -314,7 +324,7 @@ Não tem alvo no Makefile: é código usado pelas etapas seguintes (`src/models/
 | Balanceamento de classes | Feito pelo desenho da amostra (D3: 50/50) | Antes da divisão (Etapa 2) |
 | Redução de dimensionalidade | Não aplicada (27 atributos; PCA impediria a análise de atalhos) | — |
 
-Como usar (é o que as Etapas 6 a 10 vão fazer):
+Como usar (é o que as Etapas 6 a 10 vão fazer com o pré-processamento):
 
 ```python
 from src.models.pipelines import auxiliary_columns, build_pipeline, feature_names, prepare
@@ -327,19 +337,50 @@ pipe.predict_proba(X.iloc[teste])            # aplicados, sem novo ajuste, ao te
 
 Árvores, Random Forest, LightGBM e o Dummy recebem os atributos como estão. Dentro de uma validação cruzada (`cross_validate`, `RandomizedSearchCV`), o `Pipeline` é clonado e reajustado em cada fold. Por isso não há data leakage do pré-processamento.
 
+### Etapa 5 — Divisão dos dados: treino, validação e teste
+
+```powershell
+make splits
+```
+
+Gera todas as divisões uma vez, antes de qualquer treino (≈ 15 s). Cada arquivo de `data/splits/` tem uma linha por instância da amostra, na mesma ordem dela, e diz em qual fold a instância fica de fora:
+
+| Arquivo | Divisão | Colunas | Papel dos folds |
+|---|---|---|---|
+| `spotcheck_E.csv.gz` | Validação cruzada repetida em E (5 folds × 2) | `repeat0`, `repeat1` | Treino × **validação**: escolhe os finalistas (Etapa 6) |
+| `nested_M.csv.gz` | Validação cruzada aninhada em M | `outer` (laço externo); `inner0` a `inner4` (laço interno de cada fold externo; −1 = instância do teste daquele fold) | Laço externo: treino × **teste** (estimativa de desempenho). Laço interno: treino × **validação** (ajuste de hiperparâmetros) |
+| `capture_M.csv.gz` | Divisão por captura em M (complementar, proposta) | `capture_outer`, `grouped` | Treino × teste, com capturas inéditas no teste para os 16 tipos agrupados (Etapa 9) |
+
+Tamanhos (`results/splits/partition_sizes.csv`):
+- laço externo: 154.040 instâncias de treino e 38.510 de teste;
+- laço interno: cerca de 102.693 de treino e 51.347 de validação;
+- spot-checking: cerca de 38.483 de treino e 9.621 de validação.
+
+Nas divisões estratificadas, cada um dos 34 rótulos mantém a proporção: a contagem de um rótulo difere em no máximo uma instância entre dois folds.
+
+Como usar (é o que as Etapas 6 a 9 vão fazer):
+
+```python
+from src.experiments.make_splits import NESTED, SPOTCHECK, inner_folds, load_assignment, outer_folds, spotcheck_folds
+cv_E = spotcheck_folds(load_assignment(cfg, SPOTCHECK, E))   # 10 pares (treino, validação), para cross_validate
+assign = load_assignment(cfg, NESTED, M)                     # falha se M não estiver na ordem dos folds
+for k, (treino, teste) in enumerate(outer_folds(assign)):    # laço externo
+    cv_interno = inner_folds(assign, k)                      # 3 pares, posições relativas a X.iloc[treino]
+```
+
 ---
 
 ## 7. Como validar tudo por conta própria
 
 São cinco níveis, do mais rápido ao mais completo. Rode no terminal do VS Code, na raiz do repositório.
 
-### Nível 1 — Os testes passam (≈ 10 s)
+### Nível 1 — Os testes passam (≈ 15 s)
 
 ```powershell
 make test
 ```
 
-Esperado: `19 passed`. Os testes conferem, com dados pequenos inventados:
+Esperado: `26 passed`. Os testes conferem, com dados pequenos inventados:
 - que a ingestão preserva valores e descarta só linhas malformadas;
 - que o mapeamento de rótulos tem 34 rótulos e 12 ataques DDoS;
 - que a deduplicação segue as três regras e que E e M saem disjuntas e 50/50;
@@ -349,9 +390,15 @@ Esperado: `19 passed`. Os testes conferem, com dados pequenos inventados:
   - as médias e os desvios da padronização e as categorias do *one-hot* vêm só das instâncias de treino;
   - mudar as instâncias de teste não muda nada do que foi ajustado;
   - a validação cruzada reajusta o pré-processamento em cada fold;
-  - os 8 algoritmos (7 + Dummy) treinam e predizem.
+  - os 8 algoritmos (7 + Dummy) treinam e predizem;
+- (`test_splits.py`, Etapa 5) que:
+  - os folds lidos dos arquivos são os mesmos do scikit-learn com a mesma semente;
+  - os folds externos são disjuntos e cobrem a amostra, e nenhuma instância de teste entra no laço interno;
+  - cada rótulo mantém a sua proporção em todos os folds;
+  - na divisão por captura, cada captura dos tipos agrupados fica inteira num fold;
+  - os arquivos versionados de `data/splits/` cumprem os critérios de pronto da Etapa 5.
 
-### Nível 2 — Refazer as Etapas 2 e 3 e obter os mesmos arquivos (≈ 30 s)
+### Nível 2 — Refazer as Etapas 2, 3 e 5 e obter os mesmos arquivos (≈ 45 s)
 
 ```powershell
 make sample
@@ -362,16 +409,20 @@ make eda
 ```
 
 ```powershell
+make splits
+```
+
+```powershell
 git status --short
 ```
 
-Esperado: só aparecem os dois registros de execução (`results/eda/eda.run.json` e `results/sampling/make_sample.run.json`), que mudam porque guardam o horário. Para confirmar que **nenhum resultado** mudou:
+Esperado: só aparecem os três registros de execução (`results/eda/eda.run.json`, `results/sampling/make_sample.run.json` e `results/splits/make_splits.run.json`), que mudam porque guardam o horário. Para confirmar que **nenhum resultado** mudou:
 
 ```powershell
 git diff --stat -- results data ":(exclude)*.run.json"
 ```
 
-Esperado: nenhuma saída. Isso prova que as amostras, as tabelas e as figuras que você acabou de gerar são idênticas, byte a byte, às versionadas. Depois, descarte os registros de execução da sua rodada:
+Esperado: nenhuma saída. Isso prova que as amostras, os folds, as tabelas e as figuras que você acabou de gerar são idênticas, byte a byte, às versionadas. Depois, descarte os registros de execução da sua rodada:
 
 ```powershell
 git restore -- "*.run.json"
@@ -500,6 +551,30 @@ Esperado:
 - `True`: elas não são as de E inteira;
 - `(10104, 31)`: o teste recebe 31 colunas, isto é, 26 numéricas mais 5 colunas *one-hot* de `Protocol Type`.
 
+**4.8 — Os folds congelados são os do scikit-learn e não misturam teste com treino (Etapa 5):**
+
+```python
+import polars as pl
+from sklearn.model_selection import StratifiedKFold
+M = pl.read_parquet("data/processed/sample_M.parquet", columns=["source_file", "row_idx", "label34"])
+f = pl.read_csv("data/splits/nested_M.csv.gz")
+print(f.select("source_file", "row_idx").equals(M.select("source_file", "row_idx")))   # True
+print(f["outer"].value_counts().sort("outer")["count"].to_list())                      # [38510, 38510, 38510, 38510, 38510]
+print(f.group_by("label34", "outer").len().group_by("label34")
+      .agg((pl.col("len").max() - pl.col("len").min()).alias("spread"))["spread"].max())   # 1
+print(f.filter(pl.col("outer") == 0)["inner0"].unique().to_list())                    # [-1]
+y = M["label34"].to_numpy()
+sk = [teste for _, teste in StratifiedKFold(n_splits=5, shuffle=True, random_state=42).split(y, y)]
+print(all((f["outer"].to_numpy()[t] == k).all() for k, t in enumerate(sk)))           # True
+```
+
+Esperado:
+- `True`: o arquivo está na mesma ordem de M, instância por instância;
+- `[38510, ...]`: os 5 folds de teste têm o mesmo tamanho e, juntos, cobrem as 192.550 instâncias;
+- `1`: a contagem de um rótulo difere em no máximo uma instância entre dois folds (estratificação por `label34`);
+- `[-1]`: as instâncias de teste do fold externo 0 não estão em nenhum fold do laço interno dele;
+- `True`: o próprio scikit-learn, com a semente 42, gera os mesmos folds de teste.
+
 ### Nível 5 — Olhar as figuras e comparar com o diário
 
 Abra as figuras de `results/eda/` (clique no explorador do VS Code, ou `start results\eda\fig_number_by_type.png`). Para cada afirmação da entrada "Etapa 3 — EDA na amostra E" do diário, o arquivo citado deve mostrar o número citado. Por exemplo, a afirmação "MCC 0,653 com `Number`" está na primeira linha de `single_feature_models.csv` e na primeira barra de `fig_single_feature_mcc.png`.
@@ -527,6 +602,7 @@ Cada conclusão abaixo tem a evidência, onde ela está e como conferir.
 | 5 | Contagens, `Tot sum`, `Variance`, `Tot size`, `IPv` e `LLC` são cópias exatas de outras colunas; `Rate` quase espelha `IAT`; `Telnet` e `SMTP` são quase constantes. Ficam 27 atributos (D13) | `structural_checks.json`, `correlated_pairs.csv`, `feature_summary.csv` | Nível 4.4 |
 | 6 | TTL é atalho só em parte: vale 64 nas inundações, mas se sobrepõe ao benigno nos demais tipos. `IAT` não é marcador temporal. `HTTPS` é forte, mas sem evidência de artefato | `by_type_summary.csv`, `univariate.csv`, `fig_by_type.png` | Nível 4.5 |
 | 7 | O pré-processamento não tem data leakage: o que é feito antes da divisão é linha a linha, e o que estima parâmetros é ajustado só no treino de cada fold | `tests/test_no_leakage.py` | Níveis 1 e 4.7 |
+| 8 | A divisão dos dados está congelada: todos os algoritmos vão usar os mesmos folds, nenhuma instância de teste entra no laço interno, e cada rótulo mantém a proporção em todos os folds | `data/splits/`, `results/splits/splits_report.json`, `tests/test_splits.py` | Níveis 1 e 4.8 |
 
 **Consequência para o trabalho:** um modelo pode ter MCC alto aprendendo só "janela grande = ataque". Por isso:
 - a Etapa 9 compara `full` com `no_window`, `no_ttl` e `no_shortcut`;
@@ -571,14 +647,15 @@ Regras que valem sempre (estão no `CLAUDE.md`):
 
 | Etapa | Previsto no plano | O que será feito |
 |---|---|---|
-| 5 | 01–02/11 | `make splits`: divisão em treino, validação e teste; folds congelados e versionados em `data/splits/` |
 | 6 | 03–04/11 | Spot-checking em E: 7 algoritmos + Dummy; 3 finalistas |
 | 7 | 04–08/11 | Validação cruzada aninhada em M para os finalistas: ajuste de hiperparâmetros (laço interno) e estimativa de desempenho (laço externo) |
+| 8 | 08–10/11 | Estimativa de desempenho e comparação de modelos: tabelas, figuras e testes de hipóteses; Q1 e Q2 respondidas |
 
 **Pendências da dupla:**
-- responder às propostas da entrada "2026-11-05 — Revisão metodológica à luz das aulas" do diário (D16 sobre a distribuição dos folds de teste, SVM na D7 e as demais);
+- responder às propostas da entrada "2026-11-05 — Revisão metodológica à luz das aulas" do diário (D16 sobre a distribuição dos folds de teste, SVM na D7 e as demais). P2 (SVM), P3, P4 e P6 mudam o spot-checking e precisam ser decididas antes da Etapa 6;
+- confirmar ou recusar as análises complementares da D8 propostas na entrada da Etapa 5: (a) *leave-capture-out*, adotar; (b) blocos contíguos de `row_idx`, não adotar;
 - preencher, no `docs/IA_LOG.md`, os campos "O que foi aproveitado" e "O que foi rejeitado" de cada entrada, e registrar as conversas de planejamento no claude.ai;
-- baixar a pasta *Supplementary material* do dataset (o formulário pede nome, e-mail e instituição) para confirmar se as linhas estão em ordem cronológica. Isso só pesa na Etapa 5, para a análise complementar de blocos contíguos;
+- baixar a pasta *Supplementary material* do dataset (o formulário pede nome, e-mail e instituição) para confirmar se as linhas estão em ordem cronológica. Isso decide a análise complementar (b) da D8, de blocos contíguos, que fica de fora enquanto a ordem não for confirmada;
 - escolher a licença do repositório e pôr o nome do(a) colega no README.
 
 ---

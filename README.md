@@ -6,7 +6,7 @@ Final project for **CMP263 – Machine Learning** (PPGC/UFRGS, 2026/2). We build
 - **Q2 (where it fails):** which attack types escape the best model (sensitivity per attack type), and what is its false positive rate on benign traffic?
 - **Q3 (shortcuts):** does performance rely on features that identify the capture environment or the data processing (TTL, packet-window size) rather than the attack itself?
 
-> **Status:** work in progress (Etapas 0–4 done; next: Etapa 5, frozen training/validation/test splits). The full plan is in [`docs/PLANO.md`](docs/PLANO.md), the logbook with every decision and number is in [`docs/DIARIO.md`](docs/DIARIO.md), and a hands-on guide to running and validating everything is in [`docs/GUIA.md`](docs/GUIA.md). All three are in Portuguese and use the terminology of the course (glossary in `docs/PLANO.md` §1.4). Code, figures and the paper are in English.
+> **Status:** work in progress (Etapas 0–5 done; next: Etapa 6, spot-checking on sample E). The full plan is in [`docs/PLANO.md`](docs/PLANO.md), the logbook with every decision and number is in [`docs/DIARIO.md`](docs/DIARIO.md), and a hands-on guide to running and validating everything is in [`docs/GUIA.md`](docs/GUIA.md). All three are in Portuguese and use the terminology of the course (glossary in `docs/PLANO.md` §1.4). Code, figures and the paper are in English.
 
 ## Machine learning workflow
 
@@ -60,20 +60,20 @@ The raw data is **not** redistributed here. To reproduce:
 | `make sample` | 2 | Deterministic exploration (E) and modelling (M) samples, deduplicated and disjoint |
 | `make eda` | 3 | EDA tables and figures, on sample E only |
 | — | 4 | Pre-processing pipelines (`src/models/pipelines.py`, `src/models/registry.py`); no target of its own, checked by `make test` |
-| `make splits` | 5 | Frozen training/validation/test folds: spot-checking on E, outer (test) and inner (validation) folds on M |
+| `make splits` | 5 | Frozen training/validation/test folds: spot-checking on E, outer (test) and inner (validation) folds on M, and complementary leave-capture-out folds on M (proposal) |
 | `make spotcheck` | 6 | 7 algorithms + dummy baseline with default hyperparameters on E |
 | `make tune` | 7 | Hyperparameter tuning and model selection with nested CV (5 outer × 3 inner folds, randomized search) for the 3 finalists on M |
 | `make evaluate` | 8 | Performance estimates on the outer test folds, corrected resampled t-test, per-attack sensitivity, PR/ROC |
 | `make interpret` / `make ablation` | 9 | Permutation importance, SHAP, shortcut ablation |
 | `make final` / `make report` | 10 | Final model and every table and figure of the paper |
 | `make all` | — | Everything above, from the raw CSVs |
-| `make test` | — | Ingestion, sampling, EDA and data-leakage tests (split tests come with Etapa 5) |
+| `make test` | — | Ingestion, sampling, EDA, data-leakage and split tests |
 | `make check-mirror` / `make check-ingest` | — | Optional cross-checks against the Kaggle mirror |
 
 ## Reproducibility rules
 
 - One seed and every path and size live in `configs/*.yaml`; no magic numbers in code.
-- Folds are generated once and versioned (`data/splits/`). All algorithms use the same folds.
+- Folds are generated once, before any model is trained, and versioned (`data/splits/`). All algorithms use the same folds. Each file stores the fold of every instance in the row order of its sample, and the loaders refuse a sample in a different order (`tests/test_splits.py`).
 - Pre-processing has two parts. Steps with no parameter estimated from data (dropping redundant columns, filling `Std` of one-packet windows with 0) run before the split, row by row. Standardisation and one-hot encoding are fitted inside scikit-learn `Pipeline`s on the training rows of each fold only, and applied unchanged to its validation or test rows (`tests/test_no_leakage.py`).
 - Outer test folds never inform a decision: not the pre-processing, the attributes, the hyperparameters nor the threshold.
 - Every run writes a `<script>.run.json` next to its results, with timestamp, git commit, config hash, library versions, seed, runtime and output hashes.
@@ -89,7 +89,7 @@ src/          data/, features/, models/, experiments/, evaluation/, interpretati
 notebooks/    exploration and visualisation only; logic lives in src/
 results/      inspection/, sampling/, eda/, spotcheck/, nested/, ablation/, interpretation/, figures/, tables/
 models/       final model and metadata
-tests/        ingestion, sampling, EDA and data-leakage tests (split tests in Etapa 5)
+tests/        ingestion, sampling, EDA, data-leakage and split tests
 docs/         PLANO.md, DIARIO.md, IA_LOG.md, enunciado.pdf, artigo/
 ```
 

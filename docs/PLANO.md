@@ -660,13 +660,14 @@ mcc_scorer = make_scorer(matthews_corrcoef)
 features = feature_names(M.columns, feature_cfg, "full", auxiliary_columns(cfg))
 X, y = prepare(M, features, feature_cfg), M["y"].to_numpy()
 
-for k, (train_idx, test_idx) in enumerate(outer_folds):       # laço externo: treino × teste
+assign = load_assignment(cfg, NESTED, M)                      # folds congelados da Etapa 5 (make_splits.py)
+for k, (train_idx, test_idx) in enumerate(outer_folds(assign)):   # laço externo: treino × teste
     search = RandomizedSearchCV(
         estimator=build_pipeline(model_name, features, feature_cfg, search_cfg, SEED, cfg["n_jobs"]),
         param_distributions=search_spaces[model_name],        # chaves com o prefixo model__
         n_iter=cfg["search"]["n_iter"],                       # 30 configurações
         scoring=mcc_scorer,
-        cv=inner_folds[k],            # laço interno: treino × validação, índices relativos ao treino do fold k
+        cv=inner_folds(assign, k),    # laço interno: treino × validação, posições relativas ao treino do fold k
         refit=True,                   # retreina a melhor configuração em todo o treino externo
         return_train_score=True,      # diagnóstico de overfitting (proposta P4)
         random_state=SEED,
@@ -796,7 +797,7 @@ for k, (train_idx, test_idx) in enumerate(outer_folds):       # laço externo: t
 
 Hoje é **25/10/2026 (domingo)**. Restam quatro semanas até a meta interna de entrega (20/11, sexta-feira), com dois dias de folga antes do prazo oficial (22/11, 23h59).
 
-> **Situação em 05/11/2026:** Etapas 0 a 4 concluídas. A Etapa 4 terminou em 05/11, e o previsto era 01–02/11. Como as Etapas 5 e 6 também estavam previstas para 01–04/11, o trabalho está cerca de 3 dias atrás deste cronograma. O plano de contingência (§8.2) continua valendo. O cronograma da disciplina (v2) confirma a revisão por pares em 24/11 e a apresentação em 01/12.
+> **Situação em 05/11/2026:** Etapas 0 a 5 concluídas. As Etapas 4 e 5 terminaram em 05/11, e o previsto era 01–02/11. Como a Etapa 6 estava prevista para 03–04/11, o trabalho está cerca de 3 dias atrás deste cronograma. O plano de contingência (§8.2) continua valendo. O cronograma da disciplina (v2) confirma a revisão por pares em 24/11 e a apresentação em 01/12.
 
 | Período | Etapa(s) | Marco (pronto quando) |
 |---|---|---|
