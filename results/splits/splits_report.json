@@ -1,0 +1,140 @@
+{
+  "source": {
+    "data/processed/sample_E.parquet": "005fc0e08d88dc0115b76afb2582f75ad7512348a6d95e69bacecad9b37a80d3",
+    "data/processed/sample_M.parquet": "d09ef25ad2e35aadf90173525d909dc3104ed62bf3f9b5755ed605f9c07deb25"
+  },
+  "design": {
+    "spotcheck_E": {
+      "cv": "RepeatedStratifiedKFold",
+      "n_splits": 5,
+      "n_repeats": 2,
+      "stratified_by": "label34",
+      "role": "training × validation (choice of finalists)"
+    },
+    "nested_M": {
+      "outer": {
+        "cv": "StratifiedKFold",
+        "n_splits": 5,
+        "role": "training × test"
+      },
+      "inner": {
+        "cv": "StratifiedKFold",
+        "n_splits": 3,
+        "role": "training × validation",
+        "drawn_on": "training set of each outer fold"
+      },
+      "stratified_by": "label34"
+    },
+    "capture_M": {
+      "cv": "GroupKFold by source_file for the grouped labels; outer folds of nested_M for the others",
+      "rule": "a label is grouped when it has at least as many captures as outer folds",
+      "grouped_labels": {
+        "DDoS-ACK_Fragmentation": 13,
+        "DDoS-ICMP_Flood": 27,
+        "DDoS-ICMP_Fragmentation": 20,
+        "DDoS-PSHACK_Flood": 16,
+        "DDoS-RSTFINFlood": 16,
+        "DDoS-SYN_Flood": 16,
+        "DDoS-SynonymousIP_Flood": 14,
+        "DDoS-TCP_Flood": 18,
+        "DDoS-UDP_Flood": 21,
+        "DDoS-UDP_Fragmentation": 13,
+        "DoS-SYN_Flood": 8,
+        "DoS-TCP_Flood": 11,
+        "DoS-UDP_Flood": 17,
+        "Mirai-greeth_flood": 29,
+        "Mirai-greip_flood": 22,
+        "Mirai-udpplain": 25
+      },
+      "n_grouped_instances": 48480,
+      "status": "proposal (D8 (a), diary 2026-11-05)"
+    },
+    "seed": 42
+  },
+  "checks": {
+    "max_label_spread_between_folds": {
+      "spotcheck_E": 1,
+      "nested_M outer": 1,
+      "nested_M inner": 1
+    }
+  },
+  "sizes": {
+    "spotcheck_E": {
+      "training": {
+        "n_iterations": 10,
+        "n_instances": [
+          38483,
+          38484
+        ],
+        "min_per_label": 200
+      },
+      "validation": {
+        "n_iterations": 10,
+        "n_instances": [
+          9620,
+          9621
+        ],
+        "min_per_label": 50
+      }
+    },
+    "nested_M": {
+      "training": {
+        "n_iterations": 5,
+        "n_instances": [
+          154040,
+          154040
+        ],
+        "min_per_label": 801
+      },
+      "test": {
+        "n_iterations": 5,
+        "n_instances": [
+          38510,
+          38510
+        ],
+        "min_per_label": 200
+      }
+    },
+    "nested_M inner": {
+      "training": {
+        "n_iterations": 15,
+        "n_instances": [
+          102693,
+          102694
+        ],
+        "min_per_label": 534
+      },
+      "validation": {
+        "n_iterations": 15,
+        "n_instances": [
+          51346,
+          51347
+        ],
+        "min_per_label": 267
+      }
+    },
+    "capture_M": {
+      "training": {
+        "n_iterations": 5,
+        "n_instances": [
+          153725,
+          154529
+        ],
+        "min_per_label": 801
+      },
+      "test": {
+        "n_iterations": 5,
+        "n_instances": [
+          38021,
+          38825
+        ],
+        "min_per_label": 200
+      }
+    }
+  },
+  "files_sha256": {
+    "data/splits/spotcheck_E.csv.gz": "4a641ccd3eca924d52cc3e97258ca5218ad5748e8a9f824f0cb2f34cce2dcb62",
+    "data/splits/nested_M.csv.gz": "de5b30e174b5e06f02be7895206ef3acf498333830e7a65f3554d193564de11e",
+    "data/splits/capture_M.csv.gz": "1c163b0ff4fb4221e9a29bc3fb352ccf6db0a9657b36ccf62fa698f4b91ed7c9"
+  }
+}
