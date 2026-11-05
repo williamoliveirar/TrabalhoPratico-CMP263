@@ -5,6 +5,8 @@ e as últimas entradas de docs/DIARIO.md.
 
 ## Regras permanentes
 - Converse e escreva o diário em português (pt-BR). Código, comentários, figuras e artigo em inglês.
+- Use a terminologia das aulas (glossário em docs/PLANO.md §1.4; etapas formais em §1.3) no diário, no guia e no plano;
+  no código e no artigo, o equivalente em inglês da mesma tabela.
 - Ao concluir uma etapa, tomar uma decisão, encontrar algo inesperado ou encerrar uma sessão,
   acrescente uma entrada em docs/DIARIO.md (modelo na seção 6 do plano). Nunca edite entradas antigas.
 - Registre em docs/IA_LOG.md os pedidos relevantes feitos à IA na sessão (exigência do enunciado).

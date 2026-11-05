@@ -156,3 +156,25 @@ Modelo:
 - *Potencialidade:* o guia transforma o determinismo do pipeline num teste simples: refazer as etapas e verificar com `git diff` que nenhum resultado versionado mudou.
 - *Limitação:* o guia descreve o estado em 26/10 e precisa ser atualizado a cada etapa. Os níveis 3 e 4 de validação só funcionam numa máquina que tenha os CSVs brutos e já tenha rodado `make ingest` e `make sample`.
 
+## 2026-11-05 — Claude Code (Claude Opus 5.5, app desktop) — Etapa 4 e revisão da terminologia pelas aulas
+
+**Finalidade:** implementar a Etapa 4 (pré-processamento sem data leakage) e reescrever a documentação com a terminologia das aulas, conferindo se todas as etapas formais do treinamento de modelos estão cobertas.
+
+**Prompt (texto integral):**
+
+> Faça Push e inicie a Etapa 4. Também, quero que você analise e reescreva as informações dos arquivos de texto do Github, incluindo os em /docs (README, DIÁRIO, GUIA, etc) utilizando as terminologias que a professora Mariana utilizou ao longo das aulas, por exemplo: Separação dos dados em treino, teste e validação; as etapas específicas que fazem parte do tratamento dos dados, até o pré-treino, e então o treino, etc. Certifique-se de que todas as etapas formais de Treinamento de modelos de Aprendizagem de Máquina estão sendo seguidas, e usando a terminologia adequada das auals. Utilize como fonte os materiais de aula que estão disponíveis no diretório "Mestrado PPGC UFRGS\Disciplinas\Aprendizagem de Máquina". Cito como as melhores fontes, os arquivos em .pdf dos diretórios "Avaliação de Modelos Preditivos" e "Pré-processamento de Dados". Você encontrará todos os arquivos de aula no diretório "\Aprendizagem de Máquina\P1 Estudos".
+
+**O que a ferramenta produziu:**
+- extração do texto dos slides (Aulas 01b a 15–16, material extra sobre validação cruzada aninhada e data leakage, provas antigas, cronograma v2) e comparação com o plano;
+- `src/models/pipelines.py`, `src/models/registry.py` e `tests/test_no_leakage.py` (Etapa 4);
+- PLANO v1.1 com o mapa das etapas formais, o glossário, a Etapa 4 reescrita e o quadro dos tipos de data leakage; README, GUIA e quadro "Decisões vigentes" do diário reescritos com os termos das aulas;
+- uma entrada de revisão metodológica no diário, com seis propostas. A mais importante é a P1 (D16): a distribuição de classes dos folds de teste não é a original, o que contraria a regra da aula de desbalanceamento.
+
+**O que foi aproveitado:** [a preencher pela dupla]
+
+**O que foi rejeitado ou corrigido, e por quê:** [a preencher pela dupla]
+
+**Limitações ou potencialidades observadas:**
+- *Potencialidade:* a leitura sistemática dos slides achou desvios que não estavam no pedido. Os folds de teste com distribuição 50/50, contra a regra da aula de desbalanceamento de classes, e o SVM, que está no programa e faltava entre os algoritmos.
+- *Limitação:* a ferramenta não reescreveu as entradas antigas do diário, apesar do pedido. A regra de somente acréscimo do próprio projeto impede isso. No lugar, ela acrescentou uma tabela de correspondência entre os termos antigos e os das aulas. Se a dupla quiser reescrever as entradas antigas, precisa revogar a regra explicitamente.
+- *Limitação:* a extração automática de texto dos PDFs perde figuras e embaralha algumas colunas dos slides. Os diagramas, como o da validação cruzada aninhada, foram interpretados pelo texto ao redor.

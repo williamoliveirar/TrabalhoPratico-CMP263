@@ -1,8 +1,10 @@
 # Trabalho Final CMP263 — Detecção binária de ataques em redes IoT com o CICIoT2023
 
-**Documento de contexto e plano de execução** · versão 1.0 · 25/10/2026
+**Documento de contexto e plano de execução** · versão 1.1 · 05/11/2026
 Disciplina: CMP263 – Aprendizagem de Máquina (PPGC/UFRGS), Profa. Mariana Recamonde Mendoza · Trabalho em dupla
 Entrega do artigo e do código: **22/11/2026, 23h59** (meta interna: **20/11/2026**)
+
+> **Versão 1.1 (05/11/2026):** a terminologia foi alinhada à das aulas, e as seções 1.3 e 1.4 foram acrescentadas: o mapa das etapas formais do treinamento de modelos e o glossário. A Etapa 4 foi reescrita a partir da D13. As etapas e decisões posteriores agora citam os nomes das colunas da versão usada (D15). O estado vigente de cada decisão está no quadro "Decisões vigentes" de `docs/DIARIO.md`. Fontes da terminologia: os slides da disciplina, sobretudo "Avaliação de modelos — Divisão de dados" (Aula 08), "Método holdout" (Aula 04), "Métricas de desempenho" (Aula 09), "Nested Cross-Validation & Data Leakage" (Aula 04, material extra), "Limpeza e transformação" e "Desbalanceamento de classes" (Aulas 13–14) e "Redução de dimensionalidade" (Aulas 15–16).
 
 ---
 
@@ -84,7 +86,7 @@ Atrasos custam **1 ponto por dia**.
 - Pelo menos 5 algoritmos supervisionados, com vieses indutivos diversos, incluindo algoritmos do programa da disciplina.
 - Mais de uma métrica, com uma **métrica principal** de seleção de modelos.
 - Estratégia explícita de divisão dos dados para treino, validação (ajuste de hiperparâmetros) e avaliação final.
-- Múltiplas repetições, mesmas divisões para todos os algoritmos em cada iteração, ausência de vazamento e sementes fixas.
+- Múltiplas repetições, mesmas divisões para todos os algoritmos em cada iteração, ausência de data leakage e sementes fixas.
 - Spot-checking de algoritmos antes da otimização de hiperparâmetros (sugerido).
 - Resultados sumarizados com gráficos, tabelas e análise estatística, com conclusões apoiadas em dados.
 - Interpretação de **um** modelo (o melhor), discutindo relações pertinentes ou inesperadas.
@@ -105,6 +107,83 @@ Um dos integrantes desenvolve a dissertação *Detecção e Reação Inteligente
 
 Se alguma ideia desse tipo surgir durante o trabalho, registre-a no diário com a tag `[IDEIA-DISSERTAÇÃO]` e não a execute.
 
+### 1.3 As etapas formais do treinamento de modelos e onde estão no plano
+
+O enunciado define quatro passos: (i) análise exploratória; (ii) pré-processamento; (iii) treinamento e validação, com divisão dos dados, otimização de hiperparâmetros, seleção de modelos e spot-checking; (iv) interpretação. A eles se somam a definição do problema, a coleta dos dados e a reprodutibilidade. Nas aulas, a ordem de cada passo é dada por uma regra: **quando transformar os dados** (Aulas 13–14).
+- Operações que **removem instâncias ou atributos**, ou que aplicam uma regra fixa sem parâmetro estimado dos dados, podem ser feitas no conjunto completo, **antes da divisão**.
+- Operações que **estimam parâmetros a partir dos dados**, como imputação, normalização, padronização, discretização, seleção de atributos e reamostragem (*oversampling*), são ajustadas **só no conjunto de treinamento** e depois aplicadas, sem novo ajuste, aos conjuntos de validação e de teste. Na validação cruzada, isso é refeito a cada iteração, dentro de um `Pipeline`.
+
+Seguindo essa regra, o fluxo do projeto é:
+
+| # | Etapa formal (enunciado e aulas) | O que inclui neste trabalho | Etapa do plano | Dados usados |
+|---|---|---|---|---|
+| 1 | Definição do problema e coleta dos dados | Tarefa, perguntas de pesquisa, dataset, ingestão fiel dos CSVs | §2; Etapas 0 e 1 | Dataset completo (só contagens e esquema) |
+| 2 | Amostragem | Duas amostras disjuntas: **E** (exploração) e **M** (modelagem), estratificadas por tipo de ataque | Etapa 2 | Dataset completo → E e M |
+| 3 | Análise exploratória dos dados (EDA) | Tipos de atributo, distribuição do atributo alvo, valores ausentes, outliers, redundâncias, atalhos | Etapa 3 | Só E |
+| 4 | Pré-processamento **antes da divisão** | Limpeza (duplicatas; atributos redundantes e quase constantes; `Std` ausente → 0); escolha do conjunto de atributos | Etapas 2 e 4 | E e M, linha a linha |
+| 5 | Divisão dos dados em treino, validação e teste | Folds estratificados por `label34`, gerados uma vez e congelados | Etapa 5 | E (spot-checking) e M (validação cruzada aninhada) |
+| 6 | Pré-processamento **ajustado no treino** | `log1p`, padronização e codificação *one-hot*, ajustados no conjunto de treinamento de cada fold | Etapa 4 (dentro do `Pipeline`) | Treino de cada fold |
+| 7 | Treinamento e spot-checking | 7 algoritmos com hiperparâmetros padrão e um classificador de referência (`DummyClassifier`) | Etapa 6 | E |
+| 8 | Otimização de hiperparâmetros e seleção de modelos | Busca aleatória no **laço interno** da validação cruzada aninhada | Etapa 7 | Treino de cada fold externo de M (subdividido em treino e validação) |
+| 9 | Estimativa de desempenho e comparação de modelos | **Laço externo** da validação cruzada aninhada; métricas; testes de hipóteses | Etapas 7 e 8 | Folds externos de teste de M |
+| 10 | Interpretação do modelo | Importância por permutação, SHAP e ablação dos atalhos, só no melhor modelo | Etapa 9 | Folds externos de teste de M |
+| 11 | Modelo final | Ajuste dos hiperparâmetros e retreino em toda a amostra M | Etapa 10 | M inteira |
+| 12 | Reprodutibilidade e comunicação | `make all`, reprodução cruzada, artigo, revisão por pares, apresentação | Etapas 10 a 12 | — |
+
+Dentro de cada fold, a ordem é sempre a mesma:
+1. separar o conjunto de treinamento do conjunto de validação (ou de teste);
+2. ajustar o pré-processamento no treino (`fit`) e aplicá-lo ao treino e à validação ou ao teste (`transform`);
+3. treinar o modelo no treino;
+4. predizer na validação ou no teste;
+5. comparar rótulo e predição para obter a estimativa de desempenho.
+
+O `Pipeline` do scikit-learn garante essa ordem nos dois laços.
+
+### 1.4 Glossário (termos das aulas)
+
+O diário, o guia e o plano usam os termos das aulas. O código e o artigo usam o equivalente em inglês.
+
+| Termo das aulas | Em inglês (código e artigo) | Neste trabalho |
+|---|---|---|
+| Instância, exemplo | instance, sample | Uma janela de pacotes (uma linha do CSV) |
+| Atributos preditivos (x) | features | 39 colunas brutas; 27 depois da limpeza (D13) |
+| Atributo alvo (y), classe | target, class | `y`: ataque = classe positiva (1), benigno = classe negativa (0) |
+| Rótulo | label | `label34` (34 rótulos), `category8` (8 categorias); nunca são atributos |
+| Conjunto de treinamento, de validação e de teste | training, validation and test sets | Treino e validação no laço interno; treino e teste no laço externo |
+| Holdout (retenção), de 2 ou de 3 vias | holdout (2-way, 3-way) | Não é usado como estimativa principal: depende demais de uma única partição |
+| Validação cruzada *k*-fold estratificada | stratified k-fold cross-validation | Estratificada por `label34`, o que preserva também a proporção de `y` |
+| Validação cruzada repetida | repeated k-fold cross-validation | Spot-checking: 5 folds × 2 repetições, em E |
+| Validação cruzada aninhada | nested cross-validation | Em M: laço externo de 5 folds e laço interno de 3 folds |
+| Laço interno | inner loop | Ajuste de hiperparâmetros (papel do conjunto de validação) |
+| Laço externo | outer loop | Estimativa de desempenho (papel do conjunto de teste) |
+| Otimização (ajuste) de hiperparâmetros | hyperparameter tuning | `RandomizedSearchCV` no laço interno (D9) |
+| Configuração de hiperparâmetros | hyperparameter configuration | Um ponto do espaço de busca (`configs/search_spaces.yaml`) |
+| Spot-checking | spot-checking | Comparação rápida dos algoritmos com hiperparâmetros padrão (Etapa 6) |
+| Seleção de modelos | model selection | Escolha dos 3 finalistas (Etapa 6) e da melhor configuração (Etapa 7) |
+| Estimativa de desempenho, capacidade de generalização | performance estimate, generalisation | Média ± desvio padrão nos 5 folds externos de teste |
+| Modelo final | final model | Melhor algoritmo e configuração, retreinado em toda a amostra M (Etapa 10) |
+| Data leakage (vazamento, contaminação de dados) | data leakage | Qualquer informação de validação ou de teste que chegue ao treino (§10.2) |
+| Overfitting (sobreajuste), underfitting (subajuste) | overfitting, underfitting | Diagnosticados pela diferença entre o desempenho no treino e na validação |
+| Viés indutivo | inductive bias | Critério de diversidade na escolha dos algoritmos (D7) |
+| Limpeza de dados | data cleaning | Duplicatas, valores ausentes, atributos redundantes e quase constantes |
+| Tratamento de outliers | outlier handling | Detecção pelo método IQR; sem remoção; `log1p` nos atributos de cauda longa |
+| Normalização (min-max), padronização (z-score) | min-max scaling, standardisation | Padronização (`StandardScaler`) nos algoritmos sensíveis à escala |
+| Codificação (*one-hot*) | one-hot encoding | `Protocol Type`, que é nominal |
+| Discretização | discretisation | Não aplicada (§7, Etapa 4) |
+| Desbalanceamento de classes, amostragem de dados | class imbalance, resampling | Resolvido pelo desenho da amostra (D3); ver a proposta D16 no diário |
+| Redução de dimensionalidade: seleção e extração de atributos | feature selection, feature extraction (PCA) | Nenhuma seleção supervisionada nem PCA (§7, Etapa 4) |
+| Matriz de confusão: VP, VN, FP, FN | confusion matrix: TP, TN, FP, FN | Base de todas as métricas (D5, D6) |
+| Sensibilidade, recall, revocação, taxa de verdadeiros positivos (TVP) | sensitivity, recall, TPR | Taxa de detecção de ataques; também por tipo de ataque |
+| Especificidade, taxa de verdadeiros negativos | specificity, TNR | Acerto no tráfego benigno |
+| Taxa de falsos positivos (TFP = 1 − especificidade) | false positive rate, FPR | Taxa de alarme falso |
+| Precisão | precision | Depende da prevalência; não se transfere para uma casa real |
+| F1-score, acurácia, acurácia balanceada | F1, accuracy, balanced accuracy | Métricas secundárias (D6) |
+| Curva ROC e AUC; curva PR e AUPRC | ROC curve, ROC-AUC; PR curve, PR-AUC | Calculadas a partir das predições fora do fold |
+| Coeficiente de correlação de Matthews (MCC) | Matthews correlation coefficient | Métrica principal (D5). Não aparece nos slides; a justificativa é Chicco e Jurman (2020) |
+| Teste de hipóteses; erros tipo I e II | hypothesis test; type I and II errors | Comparação dos finalistas (D10) |
+| Amostra E, amostra M | exploration sample, modelling sample | Termos do projeto: E serve para decidir, M para ajustar e avaliar |
+| Atalho | shortcut | Termo do projeto. Corresponde ao "atributo ilegítimo" (L2) da taxonomia de data leakage (§10.2) |
+
 ---
 
 ## 2. Problema, objetivo e perguntas de pesquisa
@@ -115,13 +194,13 @@ Classificação **binária** supervisionada:
 
 - **Instância:** uma linha do CSV do CICIoT2023, que resume uma janela de pacotes **[verificar no artigo como a janela é definida e qual o seu tamanho]**.
 - **Classe positiva:** `y = 1` para ataque (qualquer um dos 33 tipos); `y = 0` para tráfego benigno.
-- **Rótulo auxiliar:** o rótulo original (34 valores) fica na coluna `label34`, e a categoria (8 valores) na coluna `category8`. As duas **nunca entram como atributo**. Servem para estratificar a amostragem e os folds e para medir o recall por tipo de ataque.
+- **Rótulo auxiliar:** o rótulo original (34 valores) fica na coluna `label34`, e a categoria (8 valores) na coluna `category8`. As duas **nunca entram como atributo**. Servem para estratificar a amostragem e os folds e para medir a sensibilidade (recall) por tipo de ataque.
 
 ### 2.2 Objetivo (rascunho)
 
-**PT:** Este trabalho desenvolve e avalia modelos de AM para distinguir tráfego benigno de tráfego malicioso em redes IoT, a partir de 46 atributos estatísticos extraídos de janelas de pacotes do CICIoT2023 (disponível em <link>). Além de identificar o melhor modelo sob um protocolo sem vazamento de dados, investigamos quais tipos de ataque escapam da detecção e se o desempenho depende de atributos que identificam o ambiente de captura, e não o ataque.
+**PT:** Este trabalho desenvolve e avalia modelos de AM para distinguir tráfego benigno de tráfego malicioso em redes IoT, a partir dos atributos estatísticos de janelas de pacotes do CICIoT2023 (disponível em <link>): 39 colunas na versão por captura, das quais 27 ficam depois da limpeza. Além de identificar o melhor modelo com uma estratégia de avaliação sem data leakage, investigamos quais tipos de ataque escapam da detecção e se o desempenho depende de atributos que identificam o ambiente de captura ou o processamento dos dados, e não o ataque.
 
-**EN (para o artigo):** *This work develops and evaluates machine learning models to distinguish benign from malicious traffic in IoT networks, using 46 statistical features extracted from packet windows of the CICIoT2023 dataset (available at <link>). Beyond identifying the best model under a leakage-free evaluation protocol, we investigate which attack types escape detection and whether performance relies on features that identify the capture environment rather than the attack itself.*
+**EN (para o artigo):** *This work develops and evaluates machine learning models to distinguish benign from malicious traffic in IoT networks, using the statistical features of packet windows in the CICIoT2023 dataset (available at <link>): 39 columns in the per-capture release, 27 after cleaning. Beyond identifying the best model under a leakage-free evaluation strategy, we investigate which attack types escape detection and whether performance relies on features that identify the capture environment or the data processing rather than the attack itself.*
 
 ### 2.3 Por que a pergunta não é só "qual modelo acerta mais"
 
@@ -129,15 +208,19 @@ Na literatura, a detecção binária no CICIoT2023 costuma reportar desempenho p
 
 ### 2.4 Perguntas de pesquisa
 
-- **Q1 (desempenho):** sob um protocolo sem vazamento (validação cruzada aninhada com folds fixos), qual algoritmo atinge o maior MCC, e as diferenças entre os melhores são estatisticamente significativas?
-- **Q2 (onde falha):** quais tipos de ataque o melhor modelo deixa passar (recall por tipo) e qual a taxa de alarme falso no tráfego benigno?
+- **Q1 (desempenho):** com uma estratégia de avaliação sem data leakage (validação cruzada aninhada com folds fixos: laço interno para o ajuste de hiperparâmetros, laço externo para a estimativa de desempenho), qual algoritmo atinge o maior MCC, e as diferenças entre os melhores são estatisticamente significativas?
+- **Q2 (onde falha):** quais tipos de ataque o melhor modelo deixa passar (sensibilidade por tipo) e qual a taxa de falsos positivos (TFP, o alarme falso) no tráfego benigno?
 - **Q3 (atalhos):** o desempenho depende de atributos que identificam o ambiente de captura (`Duration`, que seria o TTL, e `IAT`)? Quanto o MCC e o recall por tipo caem quando eles são removidos?
+
+> **Revisão da Q3 (D12, 2026-10-25; ver o diário):** a pergunta original fica registrada acima. Nos dados, `Duration` chama-se `Time_To_Live`. A EDA mostrou que o tamanho da janela (`Number`) é um atalho mais forte que o TTL. Por isso, os candidatos a atalho passaram a ser `Number` e `Time_To_Live`, com `IAT` mantido só como comparação, e as métricas são reportadas também por grupo de janela (10 e 100 pacotes).
 
 ### 2.5 Hipóteses (para confirmar ou refutar, sem forçar o resultado)
 
 - **H1:** ensembles de árvores (Random Forest, LightGBM) terão o maior MCC, mas a diferença para uma árvore de decisão simples será pequena.
 - **H2:** ataques de baixo volume (Web-based, Brute Force e parte do Recon) concentrarão os falsos negativos, por se parecerem com tráfego benigno.
 - **H3:** `Duration` (TTL) sozinho separa grande parte do tráfego, por refletir o sistema operacional das máquinas atacantes, e não o comportamento do ataque.
+
+As hipóteses ficam como foram escritas antes de olhar os dados, para não ajustá-las ao resultado. A H3 é testada com `Time_To_Live`, o nome da coluna nesta versão.
 
 ---
 
@@ -217,28 +300,30 @@ Vêm das estatísticas publicadas na página oficial:
 2. **Prevalência invertida:** no CICIoT2023 o ataque domina; numa casa real, o benigno domina. Precisão e taxas de alarme absolutas não se transferem (falácia da taxa-base, Arp et al., 2022).
 3. **Janelas quase duplicadas:** janelas consecutivas da mesma sessão de ataque são muito parecidas. Uma divisão aleatória pode colocar "irmãs" no treino e no teste e inflar o desempenho.
 4. **Ruído de rótulo possível:** ver seção 3.2.
-5. **Resultados quase perfeitos na literatura:** pedem cautela com vazamento e atalhos.
+5. **Resultados quase perfeitos na literatura:** pedem cautela com data leakage e atalhos.
 6. **Tamanho:** o conjunto completo não cabe na memória de máquinas comuns; é preciso amostrar de forma documentada.
 
 ---
 
 ## 4. Decisões metodológicas
 
+O quadro abaixo traz as decisões como foram planejadas, com os termos das aulas. O estado vigente de cada uma, com as revisões e as confirmações, fica no quadro "Decisões vigentes" de `docs/DIARIO.md`.
+
 | # | Decisão | Escolha | Justificativa | Status |
 |---|---|---|---|---|
-| D1 | Tarefa | Binária; ataque = 1, benigno = 0 | Escopo enxuto; foco no rigor e na explicação | Decidido |
-| D2 | Unidade | Linha do CSV (janela de pacotes) | É a unidade disponibilizada pelo dataset | Decidido |
-| D3 | Amostragem | 50% benigno e 50% ataque; ataque dividido igualmente entre os 33 tipos; amostra de exploração (E, ~50 mil linhas) e de modelagem (M, ~200 mil linhas), disjuntas | Sem estratificar por tipo, o DDoS domina e ataques raros somem. E e M disjuntas impedem que a escolha de algoritmos "veja" os dados de avaliação | Decidido; tamanhos ajustáveis à máquina |
-| D4 | Duplicatas | Remover duplicatas exatas e conflitantes (mesmos atributos, rótulos diferentes) antes de qualquer divisão | Evita vazamento trivial e rótulos contraditórios | Decidido |
+| D1 | Tarefa | Classificação binária; ataque = classe positiva (1), benigno = classe negativa (0) | Escopo enxuto; foco no rigor e na explicação | Decidido |
+| D2 | Instância | Linha do CSV (janela de pacotes) | É a unidade disponibilizada pelo dataset | Decidido |
+| D3 | Amostragem | 50% benigno e 50% ataque; ataque dividido igualmente entre os 33 tipos; amostra de exploração (E, ~50 mil instâncias) e de modelagem (M, ~200 mil), disjuntas | Sem estratificar por tipo, o DDoS domina e ataques raros somem. E e M disjuntas impedem que a escolha de algoritmos "veja" os dados de avaliação | Decidido; tamanhos ajustáveis à máquina. A distribuição de classes nos folds de teste é discutida na proposta D16 (diário, 2026-11-05) |
+| D4 | Limpeza: instâncias duplicadas | Remover duplicatas exatas e conflitantes (mesmos atributos, rótulos diferentes) antes de qualquer divisão | Evita data leakage por duplicatas entre treino e teste e rótulos contraditórios | Decidido |
 | D5 | Métrica principal | MCC | Usa os quatro quadrantes da matriz de confusão; recomendado para classificação binária (Chicco & Jurman, 2020) | Decidido |
-| D6 | Métricas secundárias | F1 por classe, acurácia balanceada, PR-AUC, TPR (detecção), FPR (alarme falso), recall por tipo de ataque | TPR e FPR não dependem da prevalência e são as mais transferíveis para fora do laboratório | Decidido |
-| D7 | Algoritmos | Regressão logística, Gaussian Naive Bayes, kNN, árvore de decisão, MLP, Random Forest, LightGBM, mais `DummyClassifier` como piso | Cobrem viés linear, probabilístico, baseado em instâncias, de árvores, de redes neurais e de ensembles (bagging e boosting) | Confirmar que constam do programa da disciplina |
-| D8 | Validação | Spot-checking em E (5 folds × 2 repetições); CV aninhada em M (5 folds externos × 3 internos); folds estratificados por `label34`, gerados uma vez e salvos | Atende "mesmas divisões para todos", evita viés de seleção de hiperparâmetros (Cawley & Talbot, 2010; Varma & Simon, 2006) | Decidido; agrupamento por captura depende da Etapa 1 |
-| D9 | Otimização | `RandomizedSearchCV`, 30 iterações, só nos 3 finalistas | Equilíbrio entre custo e cobertura | Ajustável |
-| D10 | Estatística | *Corrected resampled t-test* (Nadeau & Bengio, 2003) com correção de Holm | Adequado a um único dataset com folds sobrepostos; Friedman + Nemenyi é para vários datasets | Decidido |
-| D11 | Interpretação | Melhor modelo; importância por permutação e SHAP calculados nos folds externos de teste | Interpreta o modelo em dados que ele não viu; permite medir estabilidade entre folds | Decidido |
-| D12 | Atalhos | Modelos de um atributo só (`Duration`, `IAT`) e ablação do melhor modelo sem `Duration` e `IAT` | Testa diretamente a H3 e responde a Q3 | Decidido |
-| D13 | Pré-processamento | Definido após a EDA (seção 7, Etapa 4) | Depende dos dados | A decidir na Etapa 3 |
+| D6 | Métricas secundárias | F1 por classe, acurácia balanceada, AUPRC, sensibilidade (TVP, detecção), TFP (alarme falso, 1 − especificidade), sensibilidade por tipo de ataque | Sensibilidade e TFP não dependem da prevalência e são as mais transferíveis para fora do laboratório | Decidido |
+| D7 | Algoritmos | Regressão logística, Gaussian Naive Bayes, kNN, árvore de decisão, MLP, Random Forest, LightGBM, mais `DummyClassifier` como classificador de referência | Vieses indutivos diversos: linear, probabilístico, baseado em instâncias, árvores, redes neurais e ensembles (bagging e boosting) | Programa da disciplina conferido em 2026-11-05 (diário): faltava o SVM |
+| D8 | Divisão dos dados (treino, validação e teste) | Spot-checking em E, com validação cruzada repetida (5 folds × 2 repetições); validação cruzada aninhada em M (laço externo de 5 folds para teste, laço interno de 3 folds para validação); folds estratificados por `label34`, gerados uma vez e salvos | Mesmas divisões para todos os algoritmos; o laço interno isola o ajuste de hiperparâmetros da estimativa de desempenho (Cawley & Talbot, 2010; Varma & Simon, 2006) | Decidido; agrupamento por captura depende da Etapa 1 |
+| D9 | Otimização de hiperparâmetros | `RandomizedSearchCV` (busca aleatória), 30 configurações, só nos 3 finalistas | Equilíbrio entre custo e cobertura | Ajustável |
+| D10 | Comparação de modelos (teste de hipóteses) | *Corrected resampled t-test* (Nadeau & Bengio, 2003) com correção de Holm | O teste t pareado comum, com folds sobrepostos, tem erro tipo I elevado (Dietterich, 1998). A correção trata essa dependência. Friedman + Nemenyi (Demšar, 2006) é para vários datasets | Decidido |
+| D11 | Interpretação do modelo | Melhor modelo; importância por permutação e SHAP calculados nos folds externos de teste | Interpreta o modelo em dados que ele não viu; permite medir estabilidade entre folds | Decidido |
+| D12 | Atalhos | Modelos de um atributo só e ablação do melhor modelo sem os candidatos a atalho | Testa diretamente a H3 e responde a Q3 | Revisado na Etapa 1 (candidatos: `Number` e `Time_To_Live`; ver o diário) |
+| D13 | Pré-processamento | Definido a partir da EDA (seção 7, Etapa 4; `configs/features.yaml`) | Depende dos dados | Decidido na Etapa 3 |
 | D14 | Reprodutibilidade | Git, `requirements.txt` com versões fixas, configs YAML, Makefile, manifesto de hashes, índices de amostra e de folds versionados | Permite reproduzir do CSV bruto ao artigo | Decidido |
 
 ---
@@ -256,7 +341,7 @@ cmp263-ciciot2023/
 ├── requirements.txt           # versões fixas
 ├── configs/
 │   ├── base.yaml              # semente, caminhos, tamanhos de amostra, n_jobs
-│   ├── features.yaml          # atributos removidos e conjuntos (full, no_shortcut)
+│   ├── features.yaml          # D13: atributos removidos, transformações e conjuntos (full, no_window, no_ttl, no_shortcut)
 │   └── search_spaces.yaml     # espaços de busca por algoritmo
 ├── data/                      # NÃO versionado, exceto os itens marcados
 │   ├── raw/                   # CSVs originais
@@ -266,8 +351,8 @@ cmp263-ciciot2023/
 │   └── splits/                # índices dos folds (versionado)
 ├── src/
 │   ├── data/                  # inspect_raw.py, make_sample.py, labels.py
-│   ├── features/              # preprocess.py
-│   ├── models/                # registry.py, pipelines.py
+│   ├── features/              # (vazio: o pré-processamento fica em models/pipelines.py)
+│   ├── models/                # registry.py (algoritmos), pipelines.py (pré-processamento + estimador)
 │   ├── experiments/           # make_splits.py, spotcheck.py, nested_cv.py, ablation.py, final_model.py
 │   ├── evaluation/            # metrics.py, stats.py
 │   ├── interpretation/        # permutation.py, shap_analysis.py
@@ -443,7 +528,9 @@ Cada etapa traz **objetivo**, **tarefas**, **saídas**, **critério de pronto** 
 6. Se o total de ataque ficar abaixo do alvo (tipos raros), reduzir o benigno para manter a proporção 1:1.
 7. Salvar `data/processed/sample_E.parquet` e `sample_M.parquet` (39 atributos da versão por captura + `label34` + `category8` + `y` + `source_file` + `row_idx`), `data/sample_index.csv.gz`, os SHA-256 dos parquets e `results/sampling/sampling_report.json` com as contagens finais por rótulo em cada amostra.
 
-**O que deve constar no artigo:** a proporção 50/50 e a distribuição uniforme entre os tipos de ataque são escolhas de desenho do estudo, e não reproduzem a distribuição original nem a de uma casa real. Por isso, TPR, FPR e recall por tipo são as métricas mais transferíveis, e a precisão não se transfere.
+**O que deve constar no artigo:** a proporção 50/50 e a distribuição uniforme entre os tipos de ataque são escolhas de desenho do estudo, e não reproduzem a distribuição original nem a de uma casa real. Por isso, a sensibilidade (TVP), a TFP e a sensibilidade por tipo são as métricas mais transferíveis, e a precisão não se transfere.
+
+**Relação com as aulas:** pela regra de quando transformar os dados (§1.3), remover instâncias pode ser feito no conjunto completo, e por isso a amostragem não causa data leakage. Já a aula de desbalanceamento de classes pede que os conjuntos de validação e de teste mantenham a distribuição original dos dados. Aqui, como a amostragem vem antes da divisão, os folds de teste ficam com a distribuição do desenho (50/50 e tipos igualados), e não com a do dataset (97,65% de ataque). A proposta D16 (diário, 2026-11-05) trata disso.
 
 **Pronto quando:** rodar o script duas vezes produz arquivos com o mesmo hash.
 
@@ -473,55 +560,86 @@ Cada etapa traz **objetivo**, **tarefas**, **saídas**, **critério de pronto** 
 
 **Diário:** `[ENTREGA]`, `[DESCOBERTA]` para cada suspeita e `[DECISÃO]` com a lista de atributos removidos e o motivo de cada um.
 
-### Etapa 4 — Pré-processamento
+### Etapa 4 — Pré-processamento dos dados
 
-**Objetivo:** implementar o pré-processamento decidido na EDA sem vazamento.
+**Objetivo:** aplicar o pré-processamento decidido na EDA (D13, `configs/features.yaml`) sem data leakage, seguindo a regra de quando transformar os dados (§1.3). O pré-processamento tem duas partes:
+- **antes da divisão**, as operações que removem instâncias ou atributos ou que aplicam uma regra fixa;
+- **dentro do `Pipeline`**, as operações cujos parâmetros são estimados no conjunto de treinamento de cada fold.
 
-**Transformações fixas** (decididas na amostra E, sem parâmetros aprendidos, aplicadas a M antes da divisão):
+**As tarefas de pré-processamento das aulas, uma a uma** (os números vêm da EDA em E: `results/eda/`, commit `c3b2bf2`):
 
-- remover atributos constantes e redundantes listados em `features.yaml`;
-- separar `X` das colunas auxiliares (`label34`, `category8`, `source_file`, `row_idx`);
-- substituir ±inf por NaN, se houver.
+| Tarefa (Aulas 13–16) | O que fazemos | Quando | Por quê |
+|---|---|---|---|
+| Limpeza: instâncias duplicadas | Exatas: fica uma cópia. Conflitantes (mesmos atributos, `y` diferente) e de tipo ambíguo: saem todas as cópias (D4) | Antes da divisão (Etapa 2) | Remove instâncias, sem parâmetro estimado; evita duplicatas entre treino e teste (L1.4, §10.2) |
+| Limpeza: atributos redundantes | Saem `Tot size`, `LLC`, `IPv` e `Variance` (identidades exatas), as 4 contagens e `Tot sum` (cópias escaladas pelo tamanho da janela) e `Rate` (Spearman −0,994 com `IAT`) | Antes da divisão | Remove atributos sem usar o atributo alvo. Decidido em E, nunca em M |
+| Limpeza: atributos quase constantes | Saem `Telnet` e `SMTP` (mais de 99,9% de zeros) | Antes da divisão | Idem |
+| Limpeza: valores ausentes | `Std` ausente vira 0. Só ocorre nas janelas de 1 pacote, que não têm dispersão. O `Rate` infinito sai junto com a coluna | Antes da divisão | Regra fixa, sem parâmetro estimado; não é imputação por média ou mediana. Depois dela não sobra valor ausente nem infinito, e `prepare` interrompe a execução se sobrar |
+| Limpeza: dados inconsistentes | `IAT` negativo em 2 instâncias do dataset inteiro (mínimo de −0,018 s), mantido | — | Valor pequeno, compatível com pacotes fora de ordem; `log1p` continua definido |
+| Tratamento de outliers | Detecção pelo método IQR na EDA: até 21% das instâncias ficam fora de 1,5 × IQR. Sem remoção nem winsorização. Transformação `log1p` em `Min`, `Max`, `Std` e `IAT` (cauda longa, assimetria > 2) nos algoritmos sensíveis à escala | `log1p` dentro do `Pipeline`; não tem parâmetro | Tráfego de ataque é atípico por natureza, e remover os outliers apagaria o sinal. A transformação log é a estratégia indicada nas aulas para cauda longa à direita |
+| Transformação: normalização ou padronização | Padronização (`StandardScaler`) dos atributos numéricos, depois do `log1p`, só em LR, kNN, MLP e Naive Bayes | Dentro do `Pipeline`, ajustada no treino de cada fold | Médias e desvios são estimados no treino e aplicados à validação e ao teste. Árvores não são sensíveis à escala |
+| Transformação: codificação | `Protocol Type` em *one-hot* nos mesmos 4 algoritmos. As categorias são aprendidas no treino, e uma categoria nova vira zeros (`handle_unknown="ignore"`) | Dentro do `Pipeline` | O atributo é nominal: códigos de protocolo IP (0, 1, 6, 17, 47) não têm ordem. Nas árvores, o código fica como está (D13; ver a proposta P6 no diário) |
+| Transformação: discretização | Não aplicada | — | Nenhum algoritmo escolhido exige atributos categóricos, e as árvores já particionam os atributos numéricos |
+| Balanceamento de classes | Resolvido pelo desenho da amostra (D3: 50/50, tipos igualados). Sem SMOTE nem aprendizado sensível a custo | Antes da divisão (Etapa 2) | Sobre a distribuição dos folds de teste, ver a proposta D16 (diário) |
+| Redução de dimensionalidade | Nenhuma seleção de atributos supervisionada nem PCA. Os conjuntos `no_window`, `no_ttl` e `no_shortcut` são definidos por hipótese (D12), e não pelo desempenho | — | Ver o parágrafo abaixo da tabela |
 
-**Transformações ajustadas** (dentro de um `Pipeline` do scikit-learn, ajustadas só no treino de cada fold):
+**Redução de dimensionalidade.** Ela não é feita, por três motivos:
+- 27 atributos para cerca de 154 mil instâncias de treino não trazem maldição da dimensionalidade;
+- o PCA misturaria os atributos e impediria a análise de atalhos atributo a atributo (Q3);
+- árvores e LightGBM já fazem seleção embutida.
 
-- `SimpleImputer(strategy="median")`, se a EDA mostrar nulos ou infinitos;
-- para regressão logística, kNN, MLP e Naive Bayes: `log1p` nos atributos não negativos de cauda pesada (via `FunctionTransformer`) seguido de `StandardScaler`;
-- para árvores e ensembles: nenhuma transformação de escala.
+Se houvesse seleção supervisionada, ela teria de ficar dentro da validação cruzada.
 
-Não há reamostragem (SMOTE ou similar): o balanceamento já foi resolvido na amostragem. Também não há seleção automática de atributos além da remoção decidida na EDA, para manter a interpretação limpa.
+**Implementação** (commit `e16e460`):
+- `src/models/pipelines.py`:
+  - `feature_names(columns, feature_cfg, feature_set, auxiliary)`: os atributos preditivos do conjunto (`full`, `no_window`, `no_ttl` ou `no_shortcut`), sem as colunas auxiliares (`label34`, `category8`, `y`, `source_file`, `row_idx`);
+  - `prepare(df, features, feature_cfg)`: o pré-processamento antes da divisão, linha a linha;
+  - `build_pipeline(model_name, features, feature_cfg, search_cfg, seed, n_jobs)`: um `Pipeline` com o pré-processamento ajustado no treino e o estimador. Os hiperparâmetros do estimador ficam acessíveis como `model__<nome>`.
+- `src/models/registry.py`: os 7 algoritmos de D7 e o `DummyClassifier`, com os hiperparâmetros padrão e os parâmetros fixos de `configs/search_spaces.yaml`.
 
-**Implementação:** `src/models/pipelines.py` com `build_pipeline(model_name, feature_set)`, em que `feature_set` é `"full"` ou `"no_shortcut"` (sem `Duration` e `IAT`), para a ablação da Etapa 9.
-
-**Pronto quando:** `tests/test_no_leakage.py` confirma que os parâmetros ajustados (médias do scaler, medianas do imputer) dependem só das linhas de treino do fold.
+**Pronto quando** `tests/test_no_leakage.py` confirma:
+- que os parâmetros ajustados (médias e desvios da padronização, categorias do *one-hot*) dependem só das instâncias de treino;
+- que mudar as instâncias de teste não muda nada do que foi ajustado;
+- que a validação cruzada reajusta o pré-processamento em cada fold;
+- que o pré-processamento antes da divisão é linha a linha.
 
 **Diário:** `[ENTREGA]` e `[DECISÃO]` para as transformações escolhidas.
 
-### Etapa 5 — Protocolo de validação
+### Etapa 5 — Divisão dos dados: treino, validação e teste
 
-**Objetivo:** gerar e congelar todas as divisões antes de treinar qualquer modelo.
+**Objetivo:** gerar e congelar todas as divisões antes de treinar qualquer modelo. Assim, todos os algoritmos usam exatamente os mesmos conjuntos de treinamento, de validação e de teste em cada iteração.
+
+**Como os conjuntos das aulas aparecem aqui:**
+- **Spot-checking (amostra E):** validação cruzada repetida e estratificada. Em cada iteração, 4 folds formam o conjunto de treinamento e o quinto é avaliado. Como o resultado serve para escolher os finalistas, que é uma decisão de seleção de modelos, esses folds fazem o papel de conjunto de **validação**, e não de teste. A estimativa de desempenho final nunca vem de E.
+- **Validação cruzada aninhada (amostra M):**
+  - *laço externo:* em cada uma das 5 iterações, 4 folds formam o conjunto de treinamento externo e o quinto é o **conjunto de teste**, que só serve para a estimativa de desempenho;
+  - *laço interno:* o treino externo é dividido em 3 folds; em cada iteração, 2 formam o conjunto de **treinamento** e o terceiro é o conjunto de **validação**, usado só para escolher a configuração de hiperparâmetros.
+
+  É o *holdout* de 3 vias (treino, validação e teste) das aulas, com cada partição trocada por uma validação cruzada.
 
 **Tarefas (`src/experiments/make_splits.py`):**
 
 1. **Spot-checking (amostra E):** `RepeatedStratifiedKFold(n_splits=5, n_repeats=2, random_state=SEED)`, estratificado por `label34`.
-2. **Laço externo (amostra M):** `StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED)`, estratificado por `label34`. Isso preserva tanto a proporção binária quanto a de cada tipo de ataque em todos os folds.
-3. **Laço interno:** para cada fold externo `k`, `StratifiedKFold(n_splits=3, shuffle=True, random_state=SEED)` sobre as linhas de treino de `k`, estratificado por `label34`. Atenção: os índices internos são relativos ao subconjunto de treino do fold externo.
-4. Se a Etapa 1 permitir agrupamento, trocar por `StratifiedGroupKFold`.
+2. **Laço externo (amostra M):** `StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED)`, estratificado por `label34`. Isso preserva tanto a proporção das classes quanto a de cada tipo de ataque em todos os folds.
+3. **Laço interno:** para cada fold externo `k`, `StratifiedKFold(n_splits=3, shuffle=True, random_state=SEED)` sobre as instâncias de treino de `k`, estratificado por `label34`. Atenção: os índices internos são relativos ao subconjunto de treino do fold externo.
+4. Agrupar por captura (`StratifiedGroupKFold`) não se aplica (D8: 15 tipos têm uma só captura). As análises complementares da D8 (*leave-capture-out* e blocos contíguos de `row_idx`) são decididas aqui.
 5. Salvar todos os índices em `data/splits/` com hash.
 6. Opcional, se houver tempo de máquina: repetir o laço externo com uma segunda semente (5 × 2).
 
-**Pronto quando:** `tests/test_splits.py` confirma que os folds externos são disjuntos e cobrem M, que nenhuma linha de teste aparece no treino interno e que as proporções por `label34` estão preservadas.
+**Pronto quando:** `tests/test_splits.py` confirma:
+- que os folds externos são disjuntos e cobrem M;
+- que nenhuma instância de teste aparece no treino nem na validação do laço interno;
+- que as proporções por `label34` estão preservadas.
 
 **Diário:** `[ENTREGA]` com o tamanho de cada partição.
 
 ### Etapa 6 — Spot-checking (amostra E)
 
-**Objetivo:** escolher, de forma informada, os 3 algoritmos que seguem para a otimização.
+**Objetivo:** escolher, de forma informada, os 3 algoritmos que seguem para a otimização de hiperparâmetros. Spot-checking não é ajuste fino: compara rapidamente algoritmos de vieses indutivos diferentes, com hiperparâmetros padrão (enunciado).
 
 **Tarefas (`src/experiments/spotcheck.py`):**
 
-1. Treinar os 7 algoritmos mais o `DummyClassifier` com hiperparâmetros padrão (apenas o necessário para convergir, como `max_iter`, e `random_state` fixo), nos mesmos folds.
-2. Registrar por fold: MCC, F1 por classe, acurácia balanceada, PR-AUC, TPR, FPR, tempo de treino e de predição. Salvar em `results/spotcheck/metrics_per_fold.csv`.
+1. Treinar os 7 algoritmos mais o `DummyClassifier` com hiperparâmetros padrão (só o necessário para convergir, como `max_iter`, e `random_state` fixo), nos mesmos folds, com os pipelines da Etapa 4 (`build_pipeline`).
+2. Registrar por fold: MCC, F1 por classe, acurácia balanceada, AUPRC, sensibilidade (TVP), TFP, tempo de treino e de predição. Salvar em `results/spotcheck/metrics_per_fold.csv`. Registrar também o MCC no próprio conjunto de treinamento, para diagnosticar overfitting (treino muito acima da validação) e underfitting (os dois baixos). Este último item é a proposta P4 do diário.
 3. Gerar a tabela de média ± desvio e o boxplot de MCC por algoritmo.
 4. Selecionar os 3 com maior MCC médio. Se as diferenças estiverem dentro de um desvio-padrão (empate no teto), escolher os 3 com vieses indutivos mais diferentes e registrar que o spot-checking não discriminou. Isso também é um resultado.
 
@@ -531,32 +649,35 @@ Não há reamostragem (SMOTE ou similar): o balanceamento já foi resolvido na a
 
 **Diário:** `[ENTREGA]` com a tabela e `[DECISÃO]` com os finalistas.
 
-### Etapa 7 — Otimização de hiperparâmetros com CV aninhada (amostra M)
+### Etapa 7 — Otimização de hiperparâmetros e seleção de modelos com validação cruzada aninhada (amostra M)
 
-**Objetivo:** estimar o desempenho de cada finalista sem viés de seleção.
+**Objetivo:** estimar o desempenho de cada finalista sem o viés da seleção de hiperparâmetros. O laço interno escolhe a configuração usando os conjuntos de validação. O laço externo mede o desempenho dessa escolha num conjunto de teste que não participou dela. Reutilizar o mesmo conjunto para ajustar e para avaliar daria estimativas otimistas (Aula 04, *holdout* de 3 vias).
 
 **Esqueleto:**
 
 ```python
 mcc_scorer = make_scorer(matthews_corrcoef)
+features = feature_names(M.columns, feature_cfg, "full", auxiliary_columns(cfg))
+X, y = prepare(M, features, feature_cfg), M["y"].to_numpy()
 
-for k, (train_idx, test_idx) in enumerate(outer_folds):
+for k, (train_idx, test_idx) in enumerate(outer_folds):       # laço externo: treino × teste
     search = RandomizedSearchCV(
-        estimator=build_pipeline(model_name, feature_set="full"),
-        param_distributions=search_spaces[model_name],
-        n_iter=cfg.n_iter,            # 30
+        estimator=build_pipeline(model_name, features, feature_cfg, search_cfg, SEED, cfg["n_jobs"]),
+        param_distributions=search_spaces[model_name],        # chaves com o prefixo model__
+        n_iter=cfg["search"]["n_iter"],                       # 30 configurações
         scoring=mcc_scorer,
-        cv=inner_folds[k],            # índices relativos ao treino do fold k
-        refit=True,
+        cv=inner_folds[k],            # laço interno: treino × validação, índices relativos ao treino do fold k
+        refit=True,                   # retreina a melhor configuração em todo o treino externo
+        return_train_score=True,      # diagnóstico de overfitting (proposta P4)
         random_state=SEED,
-        n_jobs=cfg.n_jobs,
+        n_jobs=cfg["n_jobs"],
     )
-    search.fit(X.iloc[train_idx], y.iloc[train_idx])
-    proba = search.predict_proba(X.iloc[test_idx])[:, 1]
+    search.fit(X.iloc[train_idx], y[train_idx])
+    proba = search.predict_proba(X.iloc[test_idx])[:, 1]      # só agora o fold de teste é usado
     save_fold(model_name, k, search.best_params_, search.best_score_, test_idx, proba)
 ```
 
-- Salvar por fold: melhores hiperparâmetros, MCC interno, métricas externas e as probabilidades de cada linha de teste (predições fora do fold), em `results/nested/<modelo>/fold<k>.parquet`.
+- Salvar por fold: melhores hiperparâmetros, MCC na validação (laço interno), métricas no teste (laço externo) e as probabilidades de cada instância de teste (predições fora do fold), em `results/nested/<modelo>/fold<k>.parquet`.
 - Avaliar também o `DummyClassifier` nos folds externos, como piso.
 - Implementar retomada: se o arquivo de um fold já existe, pular. A execução é longa.
 - Hiperparâmetros diferentes entre folds são esperados. Registrar e discutir a estabilidade.
@@ -577,15 +698,15 @@ for k, (train_idx, test_idx) in enumerate(outer_folds):
 
 **Diário:** `[ENTREGA]` com o tempo de execução e a variação dos hiperparâmetros entre folds.
 
-### Etapa 8 — Avaliação e comparação
+### Etapa 8 — Estimativa de desempenho e comparação de modelos
 
-**Objetivo:** responder a Q1 e a Q2.
+**Objetivo:** responder a Q1 e a Q2 com as predições do laço externo, isto é, em conjuntos de teste que não participaram de nenhuma decisão.
 
 **Tarefas (`src/evaluation/`, `src/reporting/`):**
 
-1. **Tabela principal:** média ± desvio nos 5 folds externos de MCC, F1 (ataque), F1 (benigno), acurácia balanceada, PR-AUC, TPR e FPR, para os finalistas e o Dummy.
+1. **Tabela principal:** média ± desvio padrão nos 5 folds externos de MCC, F1 (ataque), F1 (benigno), acurácia balanceada, AUPRC, sensibilidade (TVP) e TFP (1 − especificidade), para os finalistas e o Dummy.
 2. **Gráfico por fold** (boxplot ou pontos ligados) do MCC de cada finalista.
-3. **Teste estatístico:** *corrected resampled t-test* entre o melhor modelo e cada um dos outros, com correção de Holm. Com apenas 5 folds o teste tem pouco poder, e isso deve ser dito no artigo.
+3. **Teste de hipóteses:** *corrected resampled t-test* entre o melhor modelo e cada um dos outros, com correção de Holm. Hipótese nula: os dois modelos têm desempenho equivalente. Com apenas 5 folds o teste tem pouco poder (risco de erro tipo II), e isso deve ser dito no artigo. Complemento proposto (P5, diário): intervalos de confiança de 95% por bootstrap (percentis 2,5 e 97,5, B ≥ 1000), como na Aula 08.
 
    ```python
    def corrected_resampled_ttest(scores_a, scores_b, n_train, n_test):
@@ -600,14 +721,14 @@ for k, (train_idx, test_idx) in enumerate(outer_folds):
    ```
 
 4. **Matriz de confusão** do melhor modelo, a partir das predições fora do fold.
-5. **Recall por tipo de ataque** (34 tipos e 7 categorias) e **FPR no benigno**, com intervalo de confiança de Wilson a 95%. Gráfico de barras horizontais ordenado do pior para o melhor tipo.
-6. **Curvas PR e ROC** do melhor modelo, a partir das predições fora do fold.
+5. **Sensibilidade (recall) por tipo de ataque** (33 tipos e 7 categorias) e **TFP no benigno**, com intervalo de confiança de Wilson a 95%. Gráfico de barras horizontais ordenado do pior para o melhor tipo. Também por grupo de janela (10 × 100 pacotes, D12).
+6. **Curvas PR e ROC** do melhor modelo, com AUPRC e AUC-ROC, a partir das predições fora do fold.
 
 **Pronto quando:** as tabelas e figuras são geradas por `make evaluate` e Q1 e Q2 estão respondidas no diário.
 
 **Diário:** `[ENTREGA]` e `[DESCOBERTA]` para H1 e H2 (confirmadas ou não).
 
-### Etapa 9 — Interpretação e análise de atalhos
+### Etapa 9 — Interpretação do modelo e análise de atalhos
 
 **Objetivo:** responder a Q3 e cumprir o eixo de interpretabilidade, com o **melhor modelo apenas**.
 
@@ -617,13 +738,13 @@ for k, (train_idx, test_idx) in enumerate(outer_folds):
 
 1. **Importância por permutação** (métrica MCC, 10 repetições) em cada fold externo de teste. Reportar média ± desvio entre folds e a estabilidade do ranking (correlação de Spearman entre folds e sobreposição do top 10).
 2. **SHAP:**
-   - Se o melhor modelo for de árvores, usar `TreeExplainer` numa subamostra de cerca de 2.000 linhas de cada fold de teste. Gerar o gráfico de resumo (beeswarm) e gráficos de dependência para os atributos mais importantes, em especial `Duration` e `IAT`.
+   - Se o melhor modelo for de árvores, usar `TreeExplainer` numa subamostra de cerca de 2.000 linhas de cada fold de teste. Gerar o gráfico de resumo (beeswarm) e gráficos de dependência para os atributos mais importantes, em especial `Number`, `Time_To_Live` e `IAT`. Os valores SHAP das colunas *one-hot* de `Protocol Type`, se houver, são somados por atributo original.
    - Se não for de árvores, ficar com permutação e gráficos de dependência parcial (PDP), e registrar o motivo.
-3. **Explicações locais:** SHAP para 4 a 6 erros (falsos negativos dos tipos de ataque com pior recall e falsos positivos no benigno), discutidos no artigo.
+3. **Explicações locais:** SHAP para 4 a 6 erros (falsos negativos dos tipos de ataque com pior sensibilidade e falsos positivos no benigno), discutidos no artigo.
 4. **Testes de atalho:**
-   - reavaliar os modelos de um atributo só (`Duration`, `IAT`) nos folds externos de M;
-   - **ablação:** repetir a Etapa 7 só para o melhor algoritmo com `feature_set="no_shortcut"` (sem `Duration` e `IAT`), nos mesmos folds. Se houver tempo, remover cada um separadamente;
-   - comparar MCC (teste corrigido) e recall por tipo de ataque entre `full` e `no_shortcut`. **Essa é a tabela central do artigo.**
+   - reavaliar os modelos de um atributo só (`Number`, `Time_To_Live` e, como comparação, `IAT`) nos folds externos de M;
+   - **ablação:** repetir a Etapa 7 só para o melhor algoritmo com `no_shortcut` (sem `Number` e `Time_To_Live`), nos mesmos folds. Se houver tempo, `no_window` e `no_ttl`, que removem cada um separadamente;
+   - comparar MCC (teste corrigido) e sensibilidade por tipo de ataque entre `full` e `no_shortcut`, separando os grupos de janela 10 e 100. **Essa é a tabela central do artigo.**
 5. **Leitura dos resultados:** queda pequena indica que o modelo é robusto a esses atributos; queda grande é evidência de atalho; colapso em tipos específicos de ataque indica quais ataques são reconhecidos pelo ambiente, e não pelo comportamento.
 
 **Pronto quando:** Q3 está respondida no diário com números e figuras.
@@ -636,7 +757,7 @@ for k, (train_idx, test_idx) in enumerate(outer_folds):
 
 **Tarefas:**
 
-1. **Modelo final para disponibilização:** rodar a busca de hiperparâmetros (3 folds) em toda a amostra M com o melhor algoritmo, retreinar e salvar `models/final_model.joblib` com os hiperparâmetros, as versões, a semente, o hash dos dados e o commit. Esse modelo **não é avaliado de novo**: a estimativa de desempenho dele é a da CV aninhada. Isso deve ser dito no artigo.
+1. **Modelo final para disponibilização:** rodar a busca de hiperparâmetros (3 folds) em toda a amostra M com o melhor algoritmo, retreinar e salvar `models/final_model.joblib` com os hiperparâmetros, as versões, a semente, o hash dos dados e o commit. Esse modelo **não é avaliado de novo**: a estimativa de desempenho dele é a da validação cruzada aninhada. É o último passo do *holdout* das aulas (Aula 04): depois de estimar o desempenho, o modelo final é treinado com todos os dados disponíveis. Ele não é nenhum dos modelos dos folds. Escolher o modelo do fold de melhor desempenho seria um erro metodológico. Isso deve ser dito no artigo.
 2. **`make all`:** executa tudo, dos CSVs brutos às tabelas (CSV e LaTeX) e figuras, via `src/reporting/`.
 3. **README:** visão geral, requisitos, como baixar os dados (com os hashes esperados), comandos `make`, tempo de execução esperado, máquina usada e um mapa de cada figura e tabela do artigo para o script que a gera.
 4. **Reprodução cruzada:** cada integrante da dupla clona o repositório num ambiente limpo e roda `make all`. Comparar hashes e métricas. Diferenças (por exemplo, não determinismo com várias threads) são corrigidas ou documentadas. Esse teste vale um parágrafo no artigo.
@@ -665,7 +786,7 @@ for k, (train_idx, test_idx) in enumerate(outer_folds):
 ### Etapa 12 — Revisão por pares e apresentação
 
 1. **Revisão por pares (24 a 30/11):** cada aluno revisa 2 artigos. A nota é individual. O checklist da seção 10 serve de roteiro.
-2. **Slides:** problema; dataset e amostragem; protocolo de validação; resultados; recall por tipo; achado sobre atalhos; reprodutibilidade; limitações.
+2. **Slides:** problema; dataset e amostragem; divisão em treino, validação e teste; resultados; sensibilidade por tipo; achado sobre atalhos; reprodutibilidade; limitações.
 3. **Ensaio com cronômetro**, respeitando o tempo que a professora definir.
 4. **Apresentação em 01/12** e participação ativa nas discussões dos outros grupos (nota individual).
 
@@ -675,15 +796,17 @@ for k, (train_idx, test_idx) in enumerate(outer_folds):
 
 Hoje é **25/10/2026 (domingo)**. Restam quatro semanas até a meta interna de entrega (20/11, sexta-feira), com dois dias de folga antes do prazo oficial (22/11, 23h59).
 
+> **Situação em 05/11/2026:** Etapas 0 a 4 concluídas. A Etapa 4 terminou em 05/11, e o previsto era 01–02/11. Como as Etapas 5 e 6 também estavam previstas para 01–04/11, o trabalho está cerca de 3 dias atrás deste cronograma. O plano de contingência (§8.2) continua valendo. O cronograma da disciplina (v2) confirma a revisão por pares em 24/11 e a apresentação em 01/12.
+
 | Período | Etapa(s) | Marco (pronto quando) |
 |---|---|---|
 | 25–26/10 | 0 | Repositório, ambiente, `CLAUDE.md`, diário e registro de IA criados; download iniciado |
 | 26–28/10 | 1 | Manifesto e contagens prontos; `[verificar]` resolvidos; decisão sobre agrupamento registrada |
 | 28–29/10 | 2 | Amostras E e M geradas, com hashes estáveis entre execuções |
 | 29–31/10 | 3 | EDA concluída; `features.yaml` preenchido; suspeitas de atalho confirmadas ou descartadas |
-| 01–02/11 | 4 e 5 | Pipelines e folds congelados; testes de vazamento e de divisão passando |
+| 01–02/11 | 4 e 5 | Pipelines e folds congelados; testes de data leakage e de divisão passando |
 | 03–04/11 | 6 | Spot-checking concluído; 3 finalistas escolhidos |
-| 04–08/11 | 7 | CV aninhada concluída para os 3 finalistas e o Dummy |
+| 04–08/11 | 7 | Validação cruzada aninhada concluída para os 3 finalistas e o Dummy |
 | 08–10/11 | 8 | Tabelas, figuras e testes estatísticos; Q1 e Q2 respondidas |
 | 10–13/11 | 9 | Interpretação e ablação; Q3 respondida |
 | 13–15/11 | 10 | Modelo final salvo; `make all` funcionando |
@@ -694,7 +817,7 @@ Hoje é **25/10/2026 (domingo)**. Restam quatro semanas até a meta interna de e
 
 **Em paralelo:**
 
-- **Revisão de literatura (01–07/11),** aproveitando o tempo em que a CV aninhada roda. Ver seção 8.1.
+- **Revisão de literatura (01–07/11),** aproveitando o tempo em que a validação cruzada aninhada roda. Ver seção 8.1.
 - **Rascunho de Métodos a partir de 02/11,** com base no diário.
 - **Consolidação semanal no diário** (seção 6.4) em 31/10, 07/11, 14/11 e 20/11.
 
@@ -703,7 +826,7 @@ Hoje é **25/10/2026 (domingo)**. Restam quatro semanas até a meta interna de e
 O objetivo é mostrar a lacuna que o trabalho preenche: a maior parte dos trabalhos reporta métricas altíssimas com divisão aleatória e sem investigar atalhos.
 
 - O artigo do CICIoT2023 e os resultados de referência que ele reporta para 2 classes.
-- 4 a 6 trabalhos que usam o CICIoT2023 em detecção binária. Para cada um, anotar: protocolo de divisão, métricas, tratamento de desbalanceamento e se investigam vazamento ou atalhos.
+- 4 a 6 trabalhos que usam o CICIoT2023 em detecção binária. Para cada um, anotar: protocolo de divisão, métricas, tratamento de desbalanceamento e se investigam data leakage ou atalhos.
 - Problemas metodológicos em datasets de detecção de intrusão: Engelen et al. (2021) sobre o CICIDS2017; Arp et al. (2022).
 - Aprendizado por atalho: Geirhos et al. (2020).
 - Vazamento e reprodutibilidade em ciência baseada em AM: Kapoor e Narayanan (2023).
@@ -714,13 +837,13 @@ Registrar cada leitura no diário com uma linha de resumo e a seção do artigo 
 
 Se o cronograma atrasar, cortar nesta ordem:
 
-1. Ablações separadas de `Duration` e `IAT` (manter só a ablação conjunta).
+1. Ablações separadas de `Number` e `Time_To_Live` (`no_window`, `no_ttl`; manter só a conjunta, `no_shortcut`).
 2. Segunda repetição do laço externo (já é opcional).
 3. Iterações da busca: de 30 para 15.
 4. Tamanho da amostra M: de 200 mil para 100 mil linhas.
 5. Explicações SHAP locais (manter as globais e a permutação).
 
-**Nunca cortar:** a separação entre dados de decisão e de teste; MCC e recall por tipo de ataque; a análise de atalhos; pelo menos 5 algoritmos; manifesto, sementes, README e `make all`; o diário e o registro de IA.
+**Nunca cortar:** a separação entre dados de decisão e de teste; MCC e sensibilidade por tipo de ataque; a análise de atalhos; pelo menos 5 algoritmos; manifesto, sementes, README e `make all`; o diário e o registro de IA.
 
 ---
 
@@ -734,8 +857,8 @@ Se o cronograma atrasar, cortar nesta ordem:
 | 1. Introduction | Motivação (IoT doméstica vulnerável), resultados quase perfeitos na literatura, Q1–Q3, contribuições | 1,5 |
 | 2. Related Work | Trabalhos com o CICIoT2023; problemas metodológicos em datasets de intrusão; aprendizado por atalho | 1,5–2 |
 | 3. Data | Dataset, inspeção, amostragem e deduplicação, principais achados da EDA | 2,5 |
-| 4. Methods | Pré-processamento, algoritmos, protocolo de validação, métricas, otimização, teste estatístico, interpretação | 2,5 |
-| 5. Results | Spot-checking, CV aninhada, testes estatísticos, recall por tipo de ataque | 3 |
+| 4. Methods | Pré-processamento, algoritmos, divisão dos dados (treino, validação e teste), métricas, otimização, teste estatístico, interpretação | 2,5 |
+| 5. Results | Spot-checking, validação cruzada aninhada, testes de hipóteses, sensibilidade por tipo de ataque | 3 |
 | 6. Interpretation and Shortcut Analysis | Permutação, SHAP, modelos de um atributo, ablação | 2,5 |
 | 7. Discussion and Limitations | Respostas a Q1–Q3; limitações da seção 3.7; ameaças à validade | 1,5 |
 | 8. Conclusion | Síntese e trabalhos futuros | 0,5 |
@@ -746,8 +869,8 @@ Se o cronograma atrasar, cortar nesta ordem:
 
 **Figuras:**
 
-1. Diagrama do protocolo: amostragem → E e M → spot-checking → CV aninhada → interpretação e ablação.
-2. Distribuição de `Duration` e `IAT` por classe (EDA).
+1. Diagrama da estratégia de avaliação: amostragem → E e M → spot-checking → validação cruzada aninhada (laço interno: treino × validação; laço externo: treino × teste) → interpretação e ablação.
+2. `Number` e `Time_To_Live` por tipo de ataque (EDA: `fig_number_by_type.png`, `fig_by_type.png`).
 3. MCC por algoritmo no spot-checking (boxplot).
 4. MCC por fold externo dos finalistas.
 5. Recall por tipo de ataque, `full` × `no_shortcut` (figura central).
@@ -758,9 +881,9 @@ Se o cronograma atrasar, cortar nesta ordem:
 
 1. Composição das amostras E e M.
 2. Atributos removidos e motivo.
-3. Resultados da CV aninhada (média ± desvio).
+3. Resultados da validação cruzada aninhada (média ± desvio).
 4. Testes estatísticos.
-5. Ablação (MCC e recall por categoria, `full` × `no_shortcut`).
+5. Ablação (MCC e sensibilidade por categoria, `full` × `no_shortcut`).
 
 Os espaços de busca e os hiperparâmetros escolhidos em cada fold podem ir para um apêndice curto, que também conta no limite de páginas.
 
@@ -782,23 +905,39 @@ Os espaços de busca e os hiperparâmetros escolhidos em cada fold podem ir para
 |---|---|
 | Viés de amostragem | Desenho amostral explícito (D3), documentado e discutido como limitação |
 | Rótulos imprecisos | Verificação de como o rótulo é atribuído (Etapa 1); duplicatas conflitantes removidas e contadas |
-| *Data snooping* (vazamento) | Amostras E e M disjuntas; pré-processamento ajustado dentro do `Pipeline`; folds congelados; testes automatizados |
-| Correlações espúrias | Modelos de um atributo só e ablação de `Duration` e `IAT` (Etapa 9) |
-| Seleção enviesada de hiperparâmetros | CV aninhada |
+| *Data snooping* (data leakage) | Amostras E e M disjuntas; pré-processamento ajustado dentro do `Pipeline`; folds congelados; testes automatizados (§10.2) |
+| Correlações espúrias | Modelos de um atributo só e ablação de `Number` e `Time_To_Live` (D12, Etapa 9) |
+| Seleção enviesada de hiperparâmetros | Validação cruzada aninhada |
 | Linha de base inadequada | `DummyClassifier` e modelos simples (regressão logística, Naive Bayes, árvore) |
-| Métrica inadequada | MCC como principal, mais TPR, FPR e recall por tipo; nunca só acurácia |
-| Falácia da taxa-base | Discussão explícita de que, numa casa real, o benigno domina e mesmo um FPR baixo gera muitos alarmes falsos |
+| Métrica inadequada | MCC como principal, mais sensibilidade, TFP e sensibilidade por tipo; nunca só acurácia |
+| Falácia da taxa-base | Discussão explícita de que, numa casa real, o benigno domina e mesmo uma TFP baixa gera muitos alarmes falsos |
 | Avaliação só em laboratório | Registrada como limitação; generalização fica fora do escopo |
 
-### 10.2 Checklist antes da entrega
+### 10.2 Tipos de data leakage (Kapoor & Narayanan, 2023) e como o plano trata cada um
+
+É a taxonomia do material extra da Aula 04 (*Nested Cross-Validation & Data Leakage*). Este quadro é o roteiro da seção do artigo que argumenta, tipo a tipo, que não há data leakage (as *model info sheets* do mesmo trabalho).
+
+| Código | Tipo | Risco neste trabalho | Como o plano trata |
+|---|---|---|---|
+| L1.1 | Sem conjunto de teste (treinar e avaliar nos mesmos dados) | — | Validação cruzada aninhada; o desempenho no treino só serve para diagnosticar overfitting |
+| L1.2 | Pré-processamento no conjunto completo (imputação, normalização ou *oversampling* antes da divisão) | Padronização e *one-hot* | Ajustados dentro do `Pipeline`, no treino de cada fold (Etapa 4, `tests/test_no_leakage.py`). Antes da divisão, só operações sem parâmetro estimado |
+| L1.3 | Seleção de atributos no conjunto completo | Remoção de atributos (D13) | Remoção sem uso do atributo alvo, decidida em E (disjunta de M); nenhuma seleção supervisionada |
+| L1.4 | Duplicatas entre treino e teste | Janelas idênticas | Deduplicação antes da divisão (D4); nenhum vetor de atributos se repete em E ∪ M |
+| L2 | Atributos ilegítimos (*proxies* do atributo alvo) | `Number` (tamanho da janela) e `Time_To_Live` | Análise de atalhos: modelos de um atributo e ablação (D12, Etapa 9) |
+| L3.1 | Data leakage temporal | Ordem das janelas desconhecida **[verificar]** | Nenhum atributo de tempo absoluto; blocos contíguos de `row_idx` como análise complementar (D8) |
+| L3.2 | Dependência entre instâncias (a mesma origem no treino e no teste) | Janelas da mesma captura no treino e no teste | Inevitável com 15 tipos de uma só captura (D8). *Leave-capture-out* como análise complementar; limitação no artigo |
+| L3.3 | Viés de amostragem no conjunto de teste | Folds de teste 50/50 e com tipos igualados (D3) | Métricas independentes da prevalência; proposta D16 no diário (pesos que restauram a distribuição original) |
+
+### 10.3 Checklist antes da entrega
 
 - [ ] Problema, objetivo, perguntas de pesquisa e link do dataset descritos com clareza.
 - [ ] EDA com gráficos e sumarização estatística.
-- [ ] Pré-processamento justificado item a item.
+- [ ] Pré-processamento justificado item a item, para cada tarefa das aulas, inclusive as não aplicadas: limpeza, outliers, normalização e padronização, codificação, discretização, balanceamento e redução de dimensionalidade (Etapa 4).
 - [ ] Pelo menos 5 algoritmos com vieses diversos, constantes do programa da disciplina.
 - [ ] Métrica principal e métricas secundárias justificadas.
-- [ ] Estratégia de divisão descrita; mesmas divisões para todos os algoritmos; sementes fixas.
+- [ ] Divisão em treino, validação e teste descrita com os termos das aulas; mesmas divisões para todos os algoritmos; sementes fixas.
 - [ ] Nenhuma decisão usou os folds externos de teste.
+- [ ] Cada tipo de data leakage do §10.2 discutido no artigo.
 - [ ] Spot-checking e otimização descritos (espaços de busca, número de iterações).
 - [ ] Resultados com média ± desvio, gráficos e teste estatístico.
 - [ ] Interpretação do melhor modelo, com discussão de achados pertinentes ou inesperados.
@@ -813,7 +952,11 @@ Os espaços de busca e os hiperparâmetros escolhidos em cada fold podem ir para
 
 ## 11. Referências
 
-Todas vieram de memória e devem ser **conferidas antes de citar [verificar]**.
+Todas vieram de memória e devem ser **conferidas antes de citar [verificar]**. As marcadas "(slides)" são citadas nos slides da disciplina, mas os dados bibliográficos ainda precisam ser conferidos na fonte.
+
+**Material da disciplina** (fonte da terminologia, §1.3 e §1.4)
+
+- Recamonde-Mendoza, M. Slides de CMP263 – Aprendizagem de Máquina, PPGC/UFRGS, 2026/2: Aula 04 (*Método holdout*) e material extra (*Nested Cross-Validation & Data Leakage in Predictive Modeling*, baseado em Kapoor & Narayanan, 2023); Aula 08 (*Avaliação de modelos — Divisão de dados*); Aula 09 (*Métricas de desempenho*); Aulas 02b e 13–14 (*Pré-processamento: normalização e codificação; limpeza e transformação; desbalanceamento de classes*); Aulas 15–16 (*Redução de dimensionalidade*).
 
 **Dataset**
 
@@ -833,6 +976,10 @@ Todas vieram de memória e devem ser **conferidas antes de citar [verificar]**.
 - Nadeau, C.; Bengio, Y. *Inference for the Generalization Error*. Machine Learning, 52, 239–281, 2003.
 - Holm, S. *A Simple Sequentially Rejective Multiple Test Procedure*. Scandinavian Journal of Statistics, 6(2), 65–70, 1979.
 - Chicco, D.; Jurman, G. *The Advantages of the Matthews Correlation Coefficient (MCC) over F1 Score and Accuracy in Binary Classification Evaluation*. BMC Genomics, 21, 6, 2020.
+- Dietterich, T. G. *Approximate Statistical Tests for Comparing Supervised Classification Learning Algorithms*. Neural Computation, 10(7), 1895–1923, 1998 (slides).
+- Demšar, J. *Statistical Comparisons of Classifiers over Multiple Data Sets*. JMLR, 7, 1–30, 2006 (slides).
+- Efron, B. *Better Bootstrap Confidence Intervals*. Journal of the American Statistical Association, 82(397), 1987. DOI: 10.2307/2289144 (slides).
+- Kuncheva, L. I.; Rodríguez, J. J. *On Feature Selection Protocols for Very Low-Sample-Size Data*. Pattern Recognition, 81, 660–673, 2018 (slides).
 
 **Interpretabilidade**
 

@@ -1,12 +1,30 @@
 # Binary attack detection in IoT networks with CICIoT2023
 
-Final project for **CMP263 – Machine Learning** (PPGC/UFRGS, 2026/2). We build and evaluate supervised models that separate benign from malicious IoT traffic in the CICIoT2023 dataset, under a leakage-free protocol (nested cross-validation with frozen folds), and ask three questions:
+Final project for **CMP263 – Machine Learning** (PPGC/UFRGS, 2026/2). We build and evaluate supervised models that separate benign from malicious IoT traffic in the CICIoT2023 dataset, under a leakage-free evaluation strategy: nested cross-validation with frozen folds, where the inner loop tunes hyperparameters on validation folds and the outer loop estimates performance on test folds. We ask three questions:
 
 - **Q1 (performance):** which algorithm reaches the highest MCC, and are the differences among the best ones statistically significant?
-- **Q2 (where it fails):** which attack types escape the best model (recall per type), and what is its false-alarm rate on benign traffic?
-- **Q3 (shortcuts):** does performance rely on features that identify the capture environment (e.g. TTL) rather than the attack itself?
+- **Q2 (where it fails):** which attack types escape the best model (sensitivity per attack type), and what is its false positive rate on benign traffic?
+- **Q3 (shortcuts):** does performance rely on features that identify the capture environment or the data processing (TTL, packet-window size) rather than the attack itself?
 
-> **Status:** work in progress (Etapas 0–3 done; next: Etapa 4, preprocessing pipelines). The full plan is in [`docs/PLANO.md`](docs/PLANO.md), the logbook with every decision and number is in [`docs/DIARIO.md`](docs/DIARIO.md), and a hands-on guide to running and validating everything is in [`docs/GUIA.md`](docs/GUIA.md). All three are in Portuguese. Code, figures and the paper are in English.
+> **Status:** work in progress (Etapas 0–4 done; next: Etapa 5, frozen training/validation/test splits). The full plan is in [`docs/PLANO.md`](docs/PLANO.md), the logbook with every decision and number is in [`docs/DIARIO.md`](docs/DIARIO.md), and a hands-on guide to running and validating everything is in [`docs/GUIA.md`](docs/GUIA.md). All three are in Portuguese and use the terminology of the course (glossary in `docs/PLANO.md` §1.4). Code, figures and the paper are in English.
+
+## Machine learning workflow
+
+The stages follow the assignment and the course (PLANO §1.3). Operations that remove instances or attributes, or apply a fixed rule, run before the split; operations that estimate parameters from data are fitted on the training set of each fold only.
+
+| # | Stage | Where |
+|---|---|---|
+| 1 | Problem definition and data collection: faithful ingestion of the official CSVs | Etapas 0–1 |
+| 2 | Sampling: disjoint exploration (E) and modelling (M) samples, stratified by attack type | Etapa 2 |
+| 3 | Exploratory data analysis, on E only | Etapa 3 |
+| 4 | Pre-processing before the split: duplicate removal, redundant and quasi-constant attributes dropped, `Std` of one-packet windows set to 0 | Etapas 2 and 4 |
+| 5 | Training/validation/test split: repeated stratified k-fold on E (spot-checking); nested cross-validation on M (outer 5 folds for testing, inner 3 folds for validation) | Etapa 5 |
+| 6 | Pre-processing fitted on the training folds: log1p, standardisation and one-hot encoding inside scikit-learn `Pipeline`s, for the scale-sensitive algorithms | Etapa 4 |
+| 7 | Spot-checking of 7 algorithms with default hyperparameters, plus a dummy baseline | Etapa 6 |
+| 8 | Hyperparameter tuning and model selection: inner loop of the nested cross-validation | Etapa 7 |
+| 9 | Performance estimation and model comparison: outer test folds, hypothesis tests | Etapas 7–8 |
+| 10 | Interpretation of the best model and shortcut ablation | Etapa 9 |
+| 11 | Final model: tuned and retrained on all of M; its performance estimate is the nested cross-validation one | Etapa 10 |
 
 ## Data
 
@@ -41,21 +59,23 @@ The raw data is **not** redistributed here. To reproduce:
 | `make inspect` | 1 | Label counts per file and in total, schema, missing and infinite values |
 | `make sample` | 2 | Deterministic exploration (E) and modelling (M) samples, deduplicated and disjoint |
 | `make eda` | 3 | EDA tables and figures, on sample E only |
-| `make splits` | 5 | Frozen fold indices (spot-checking, outer and inner CV) |
+| — | 4 | Pre-processing pipelines (`src/models/pipelines.py`, `src/models/registry.py`); no target of its own, checked by `make test` |
+| `make splits` | 5 | Frozen training/validation/test folds: spot-checking on E, outer (test) and inner (validation) folds on M |
 | `make spotcheck` | 6 | 7 algorithms + dummy baseline with default hyperparameters on E |
-| `make tune` | 7 | Nested CV (5 outer × 3 inner folds, randomized search) for the 3 finalists on M |
-| `make evaluate` | 8 | Main table, corrected resampled t-test, per-attack recall, PR/ROC |
+| `make tune` | 7 | Hyperparameter tuning and model selection with nested CV (5 outer × 3 inner folds, randomized search) for the 3 finalists on M |
+| `make evaluate` | 8 | Performance estimates on the outer test folds, corrected resampled t-test, per-attack sensitivity, PR/ROC |
 | `make interpret` / `make ablation` | 9 | Permutation importance, SHAP, shortcut ablation |
 | `make final` / `make report` | 10 | Final model and every table and figure of the paper |
 | `make all` | — | Everything above, from the raw CSVs |
-| `make test` | — | Ingestion, sampling, split and leakage tests |
+| `make test` | — | Ingestion, sampling, EDA and data-leakage tests (split tests come with Etapa 5) |
 | `make check-mirror` / `make check-ingest` | — | Optional cross-checks against the Kaggle mirror |
 
 ## Reproducibility rules
 
 - One seed and every path and size live in `configs/*.yaml`; no magic numbers in code.
 - Folds are generated once and versioned (`data/splits/`). All algorithms use the same folds.
-- Preprocessing is fitted inside scikit-learn `Pipeline`s, on training folds only. Outer test folds never inform a decision.
+- Pre-processing has two parts. Steps with no parameter estimated from data (dropping redundant columns, filling `Std` of one-packet windows with 0) run before the split, row by row. Standardisation and one-hot encoding are fitted inside scikit-learn `Pipeline`s on the training rows of each fold only, and applied unchanged to its validation or test rows (`tests/test_no_leakage.py`).
+- Outer test folds never inform a decision: not the pre-processing, the attributes, the hyperparameters nor the threshold.
 - Every run writes a `<script>.run.json` next to its results, with timestamp, git commit, config hash, library versions, seed, runtime and output hashes.
 - Results are never overwritten silently. Every number in the paper points to the result file that produced it.
 - Text files use LF line endings (`.gitattributes`), so result hashes match across Windows and Linux.
@@ -69,7 +89,7 @@ src/          data/, features/, models/, experiments/, evaluation/, interpretati
 notebooks/    exploration and visualisation only; logic lives in src/
 results/      inspection/, sampling/, eda/, spotcheck/, nested/, ablation/, interpretation/, figures/, tables/
 models/       final model and metadata
-tests/        ingestion, sampling, EDA, split and leakage tests
+tests/        ingestion, sampling, EDA and data-leakage tests (split tests in Etapa 5)
 docs/         PLANO.md, DIARIO.md, IA_LOG.md, enunciado.pdf, artigo/
 ```
 

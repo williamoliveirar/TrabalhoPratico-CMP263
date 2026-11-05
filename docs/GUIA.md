@@ -1,12 +1,12 @@
-# Guia prático do projeto (Etapas 0 a 3)
+# Guia prático do projeto (Etapas 0 a 4)
 
-*Situação em 26/10/2026, commit `efea946`. Atualize este guia ao fim de cada etapa.*
+*Situação em 05/11/2026; código da Etapa 4 no commit `e16e460`. Atualize este guia ao fim de cada etapa.*
 
-Este guia explica, do zero, o que já foi construído, como rodar cada parte e como conferir sozinho os resultados e as conclusões. O plano completo está em `docs/PLANO.md`; as decisões e os números, com fonte, em `docs/DIARIO.md`. Aqui o foco é prático: o que é cada coisa, que comando rodar e o que você deve ver.
+Este guia explica, do zero, o que já foi construído, como rodar cada parte e como conferir sozinho os resultados e as conclusões. O plano completo está em `docs/PLANO.md`; as decisões e os números, com fonte, em `docs/DIARIO.md`. Aqui o foco é prático: o que é cada coisa, que comando rodar e o que você deve ver. Os termos são os das aulas. O glossário completo está no PLANO, §1.4, e o mapa das etapas formais do treinamento de modelos no PLANO, §1.3.
 
 Sumário:
 1. [O projeto em uma página](#1-o-projeto-em-uma-página)
-2. [Conceitos que aparecem em todo lugar](#2-conceitos-que-aparecem-em-todo-lugar)
+2. [Conceitos e termos que aparecem em todo lugar](#2-conceitos-e-termos-que-aparecem-em-todo-lugar)
 3. [O ambiente: onde está cada coisa](#3-o-ambiente-onde-está-cada-coisa)
 4. [Mapa do repositório](#4-mapa-do-repositório)
 5. [A configuração](#5-a-configuração)
@@ -21,20 +21,21 @@ Sumário:
 
 ## 1. O projeto em uma página
 
-**Tarefa:** classificar cada linha do CICIoT2023 como benigna (`y = 0`) ou ataque (`y = 1`), com um protocolo sem vazamento de dados, e responder três perguntas:
+**Tarefa:** classificação binária de cada instância do CICIoT2023 (uma janela de pacotes) como benigna (classe negativa, `y = 0`) ou ataque (classe positiva, `y = 1`), com uma estratégia de avaliação sem data leakage. O trabalho responde três perguntas:
 - **Q1:** qual algoritmo tem o maior MCC, e as diferenças entre os melhores são significativas?
-- **Q2:** quais tipos de ataque escapam do melhor modelo, e quantos alarmes falsos ele gera no tráfego benigno?
-- **Q3:** o desempenho depende de atalhos (atributos que identificam o laboratório ou o processamento, e não o ataque)?
+- **Q2:** quais tipos de ataque escapam do melhor modelo (sensibilidade por tipo), e qual a taxa de falsos positivos (TFP, o alarme falso) no tráfego benigno?
+- **Q3:** o desempenho depende de atalhos, isto é, de atributos que identificam o laboratório ou o processamento, e não o ataque?
 
 **O que já está pronto:**
 
-| Etapa | O que faz | Situação |
-|---|---|---|
-| 0 | Repositório, ambiente, utilitários (semente, registro de execução) | Concluída |
-| 1 | Ler os 309 CSVs sem alterar nada, contar, inspecionar, conferir com o Kaggle, ler o artigo do dataset | Concluída |
-| 2 | Sortear as amostras E (exploração) e M (modelagem), sem duplicatas e sem linhas em comum | Concluída |
-| 3 | Análise exploratória só em E; decidir o pré-processamento (`configs/features.yaml`) | Concluída |
-| 4 e 5 | Pipelines do scikit-learn e folds congelados | Próximas |
+| Etapa | Etapa formal (aulas) | O que faz | Situação |
+|---|---|---|---|
+| 0 | — | Repositório, ambiente, utilitários (semente, registro de execução) | Concluída |
+| 1 | Coleta dos dados | Ler os 309 CSVs sem alterar nada, contar, inspecionar, conferir com o Kaggle, ler o artigo do dataset | Concluída |
+| 2 | Amostragem; limpeza (duplicatas) | Sortear as amostras E (exploração) e M (modelagem), sem duplicatas e sem instâncias em comum | Concluída |
+| 3 | Análise exploratória (EDA) | Só em E; decidir o pré-processamento (`configs/features.yaml`) | Concluída |
+| 4 | Pré-processamento | Antes da divisão (regras fixas) e dentro do `Pipeline` (ajustado no treino de cada fold) | Concluída |
+| 5 | Divisão em treino, validação e teste | Folds congelados para o spot-checking (E) e para a validação cruzada aninhada (M) | Próxima |
 
 **O caminho dos dados**, do arquivo bruto até a decisão de pré-processamento:
 
@@ -51,25 +52,60 @@ data/processed/sample_M.parquet  192.550 linhas  (otimização e avaliação; ni
    │  make eda      (≈ 10 s, só E)
    ▼
 results/eda/  (tabelas e figuras)  →  configs/features.yaml  (D13: o que remover e transformar)
+   │  Etapa 4 (código em src/models/, sem alvo próprio; conferido por make test)
+   ▼
+prepare()          antes da divisão: 27 atributos, Std ausente → 0 (linha a linha)
+build_pipeline()   dentro de cada fold: log1p + padronização + one-hot ajustados só no treino, depois o modelo
 ```
 
 ---
 
-## 2. Conceitos que aparecem em todo lugar
+## 2. Conceitos e termos que aparecem em todo lugar
 
-- **Linha = janela de pacotes.** O CICIoT2023 não traz um pacote por linha. Cada linha resume uma janela de pacotes consecutivos: médias, contagens, frações de protocolo. Segundo o artigo do dataset, a janela tem **10 pacotes** no benigno e em 14 tipos de ataque, e **100 pacotes** nos 19 tipos de DDoS, DoS e Mirai.
+**Os dados**
+- **Instância = janela de pacotes.** O CICIoT2023 não traz um pacote por linha. Cada linha (instância) resume uma janela de pacotes consecutivos: médias, contagens, frações de protocolo. Segundo o artigo do dataset, a janela tem **10 pacotes** no benigno e em 14 tipos de ataque, e **100 pacotes** nos 19 tipos de DDoS, DoS e Mirai.
+- **Atributos preditivos e atributo alvo.** Os atributos preditivos (x) são as 39 colunas estatísticas, que viram 27 depois da limpeza. O atributo alvo (y) é a classe: ataque (positiva) ou benigno (negativa).
 - **Captura.** Cada CSV é uma gravação (`.pcap`) de um experimento. Há 309 capturas, uma pasta por rótulo.
 - **Rótulo por captura.** Toda janela de uma captura de ataque recebe o rótulo do ataque, inclusive o tráfego de fundo que houver nela. Isso é um possível ruído de rótulo e vai para as limitações.
-- **`label34`, `category8`, `y`:** o rótulo original (34 valores: benigno + 33 ataques), a categoria (8: Benign, DDoS, DoS, Mirai, Recon, Web, BruteForce, Spoofing) e a classe binária. As três **nunca** entram como atributo; servem para estratificar e para medir o recall por tipo.
+- **`label34`, `category8`, `y`:** o rótulo original (34 valores: benigno + 33 ataques), a categoria (8: Benign, DDoS, DoS, Mirai, Recon, Web, BruteForce, Spoofing) e a classe binária. As três **nunca** entram como atributo preditivo; servem para estratificar e para medir a sensibilidade por tipo de ataque.
 - **`source_file` e `row_idx`:** de qual CSV e de qual linha dele veio cada janela. Permitem voltar ao dado bruto a qualquer momento.
-- **Amostras E e M.** E (exploração) é onde olhamos os dados e tomamos decisões. M (modelagem) só é usada para otimizar e avaliar, e os folds de teste de M nunca informam decisões. Se a EDA fosse feita em M, as decisões "veriam" os dados de avaliação: é o vazamento que o plano quer evitar.
+
+**A divisão dos dados** (Aulas 04 e 08)
+- **Amostras E e M.** E (exploração) é onde olhamos os dados e tomamos decisões: EDA e spot-checking. M (modelagem) só é usada para otimizar hiperparâmetros e estimar o desempenho, e os folds de teste de M nunca informam decisões. Se a EDA fosse feita em M, as decisões "veriam" os dados de avaliação, e isso é data leakage.
+- **Conjuntos de treinamento, de validação e de teste.**
+  - *treinamento:* onde o modelo e o pré-processamento são ajustados;
+  - *validação:* onde se comparam configurações de hiperparâmetros (ou algoritmos, no spot-checking);
+  - *teste:* onde se estima o desempenho final, uma vez só, com tudo já decidido. É o *holdout* de 3 vias das aulas.
+- **Validação cruzada aninhada** (Etapa 7, em M). Troca cada partição do *holdout* de 3 vias por uma validação cruzada:
+  - *laço externo* (5 folds): 4 folds de treino e 1 fold de **teste**, para a estimativa de desempenho;
+  - *laço interno* (3 folds, dentro do treino externo): 2 folds de treino e 1 de **validação**, para o ajuste de hiperparâmetros.
 - **Estratificar por `label34`.** Ao dividir em folds, sortear separadamente dentro de cada um dos 34 rótulos, para que cada fold tenha a mesma proporção de cada tipo de ataque. Isso garante também a proporção de `y`.
-- **Duplicatas (D4).** Linhas com os mesmos 39 atributos:
+
+**O pré-processamento** (Aulas 02b, 13–14 e 15–16)
+- **Antes da divisão:** operações que removem instâncias ou atributos, ou que aplicam uma regra fixa sem parâmetro estimado dos dados. Podem rodar no conjunto inteiro sem data leakage. Aqui:
+  - remover duplicatas (D4);
+  - remover atributos redundantes e quase constantes (D13);
+  - trocar `Std` ausente por 0.
+- **Dentro do `Pipeline`:** operações que estimam parâmetros dos dados. São ajustadas (`fit`) no conjunto de treinamento de cada fold e só aplicadas (`transform`) à validação e ao teste. Aqui: padronização (média e desvio) e codificação *one-hot* (categorias), precedidas de `log1p`.
+- **Duplicatas (D4).** Instâncias com os mesmos 39 atributos:
   - *exatas* (mesmo `label34`): fica uma cópia;
   - *conflitantes* (`y` diferente): saem todas as cópias;
   - *de tipo ambíguo* (dois tipos de ataque): saem todas as cópias.
-- **Atalho.** Um atributo que separa as classes por um motivo que não é o comportamento do ataque. Exemplos: o tamanho da janela, que é uma escolha do processamento, e o TTL, que reflete o sistema operacional das máquinas do laboratório. Um modelo que aprende atalhos parece ótimo aqui e falha fora do laboratório.
-- **MCC (coeficiente de correlação de Matthews).** A métrica principal (D5). Vai de −1 a 1: 0 é acaso, 1 é perfeito. Ao contrário da acurácia, não se deixa enganar por classes desbalanceadas.
+- **Data leakage.** Qualquer informação de validação ou de teste que chegue ao treinamento e torne a estimativa de desempenho otimista. O PLANO §10.2 lista os tipos (Kapoor e Narayanan, 2023) e como cada um é tratado.
+- **Atalho.** Um atributo que separa as classes por um motivo que não é o comportamento do ataque. Na taxonomia de data leakage, é um "atributo ilegítimo" (L2). Exemplos:
+  - o tamanho da janela, que é uma escolha do processamento;
+  - o TTL, que reflete o sistema operacional das máquinas do laboratório.
+
+  Um modelo que aprende atalhos parece ótimo aqui e falha fora do laboratório.
+
+**As métricas** (Aula 09)
+- **Matriz de confusão:** VP, VN, FP e FN.
+  - *sensibilidade* (recall, TVP): a fração dos ataques detectados;
+  - *especificidade*: a fração dos benignos aceitos;
+  - *TFP* = 1 − especificidade: o alarme falso.
+- **MCC (coeficiente de correlação de Matthews).** A métrica principal (D5). Vai de −1 a 1: 0 é acaso, 1 é perfeito. Usa os quatro quadrantes da matriz de confusão e, ao contrário da acurácia, não se deixa enganar por classes desbalanceadas. Não aparece nos slides; a justificativa é Chicco e Jurman (2020).
+
+**A reprodutibilidade**
 - **Determinismo.** Rodar o mesmo script duas vezes gera arquivos idênticos byte a byte. É o que permite conferir resultados comparando arquivos (seção 7).
 - **`<script>.run.json`.** Cada script grava, junto dos resultados, um registro da execução: horário, commit do Git, se havia código não commitado (`git_dirty`), hash da configuração, versões das bibliotecas, tempo e SHA-256 de cada saída.
 
@@ -146,9 +182,12 @@ TrabalhoPratico-CPM263/
 │   │   ├── check_ingest.py   compara a nossa ingestão com o Kaggle, linha a linha
 │   │   ├── make_sample.py    Etapa 2: amostras E e M
 │   │   └── eda.py            Etapa 3: tabelas e figuras da EDA (só E)
+│   ├── models/
+│   │   ├── registry.py       Etapa 4: os 7 algoritmos de D7 + Dummy, com hiperparâmetros padrão
+│   │   └── pipelines.py      Etapa 4: prepare() antes da divisão; build_pipeline() = pré-processamento + modelo
 │   ├── reporting/style.py    estilo e cores das figuras (benigno azul, ataque laranja)
-│   └── features/, models/, experiments/, evaluation/, interpretation/   (vazios; Etapas 4 a 10)
-├── tests/                    test_ingest.py, test_sample.py, test_eda.py (11 testes)
+│   └── features/, experiments/, evaluation/, interpretation/   (vazios; Etapas 5 a 10)
+├── tests/                    test_ingest.py, test_sample.py, test_eda.py, test_no_leakage.py (19 testes)
 ├── data/
 │   ├── raw_manifest.csv      versionado: tamanho, SHA-256 e linhas de cada um dos 309 CSVs
 │   ├── sample_index.csv.gz   versionado: quais linhas (source_file, row_idx) estão em E e em M
@@ -178,14 +217,16 @@ Nenhum número "mágico" fica no código: semente, caminhos e tamanhos vêm de `
 | `columns` | nomes das colunas auxiliares | `label34`, `category8`, `y`, `source_file`, `row_idx` |
 | `sampling` (D3) | tamanhos de E e M, folga para duplicatas, regra dos tipos raros | E: 25.000 + 25.000; M: 100.000 + 100.000; folga 1,3; raros 20% E / 80% M |
 | `eda` | limiares da EDA | quase constante > 99,9%; correlação > 0,99; assimetria > 2; árvore de profundidade 2; 5 folds |
-| `validation` (D8) | número de folds | spot-checking 5 × 2; externos 5; internos 3 |
+| `validation` (D8) | número de folds da divisão em treino, validação e teste | spot-checking 5 × 2 (validação cruzada repetida); laço externo 5 (teste); laço interno 3 (validação) |
 
 `configs/features.yaml` (D13, decidido em 26/10) diz o que acontece com cada coluna antes dos modelos:
-- `drop`: 12 colunas removidas, cada uma com o motivo e a entrada do diário. Ficam 27 atributos;
-- `fill_null`: `Std` nulo vira 0;
-- `categorical`: `Protocol Type` vira one-hot nos modelos que usam escala;
-- `log1p`: `Min`, `Max`, `Std` e `IAT`;
+- `drop`: 12 colunas removidas, cada uma com o motivo e a entrada do diário. Ficam 27 atributos (limpeza, antes da divisão);
+- `fill_null`: `Std` ausente vira 0 (regra fixa, antes da divisão);
+- `categorical`: `Protocol Type` vira *one-hot* nos algoritmos sensíveis à escala (dentro do `Pipeline`);
+- `log1p`: `Min`, `Max`, `Std` e `IAT` (tratamento de outliers de cauda longa, dentro do `Pipeline`);
 - `feature_sets`: `full`, `no_window`, `no_ttl` e `no_shortcut`, para a análise de atalhos.
+
+`configs/search_spaces.yaml` guarda, por algoritmo, os parâmetros fixos (`fixed`, usados também no spot-checking) e os espaços de busca dos hiperparâmetros (`params`, Etapa 7).
 
 Se você mudar um valor da configuração, o hash registrado no `run.json` muda. Assim dá para saber com qual configuração cada resultado foi gerado. Toda mudança de configuração vai para o diário.
 
@@ -257,6 +298,35 @@ Figuras:
 | `fig_spearman.png` | correlações entre atributos |
 | `fig_by_type.png` | TTL, `IAT` e `Number` por tipo |
 
+### Etapa 4 — Pré-processamento dos dados
+
+Não tem alvo no Makefile: é código usado pelas etapas seguintes (`src/models/`), conferido por `make test`. As decisões vêm do `features.yaml` (D13); a tabela completa, tarefa por tarefa das aulas, está no PLANO, Etapa 4. Em resumo:
+
+| Tarefa das aulas | O que fazemos | Quando |
+|---|---|---|
+| Limpeza: duplicatas | Regras da D4 (seção 2) | Antes da divisão (Etapa 2) |
+| Limpeza: atributos redundantes e quase constantes | 12 colunas removidas, sem usar o atributo alvo | Antes da divisão |
+| Limpeza: valores ausentes | `Std` ausente → 0 (janelas de 1 pacote); `Rate` com `inf` sai junto com a coluna | Antes da divisão |
+| Tratamento de outliers | Sem remoção (ataque é atípico por natureza); `log1p` nos 4 atributos de cauda longa | Dentro do `Pipeline` |
+| Normalização ou padronização | Padronização (`StandardScaler`) em LR, kNN, MLP e Naive Bayes | Dentro do `Pipeline`, ajustada no treino |
+| Codificação | *One-hot* de `Protocol Type` nos mesmos 4 algoritmos | Dentro do `Pipeline`, ajustada no treino |
+| Discretização | Não aplicada | — |
+| Balanceamento de classes | Feito pelo desenho da amostra (D3: 50/50) | Antes da divisão (Etapa 2) |
+| Redução de dimensionalidade | Não aplicada (27 atributos; PCA impediria a análise de atalhos) | — |
+
+Como usar (é o que as Etapas 6 a 10 vão fazer):
+
+```python
+from src.models.pipelines import auxiliary_columns, build_pipeline, feature_names, prepare
+features = feature_names(E.columns, feature_cfg, "full", auxiliary_columns(cfg))   # 27 atributos
+X = prepare(E, features, feature_cfg)        # antes da divisão: linha a linha, sem parâmetro estimado
+pipe = build_pipeline("logreg", features, feature_cfg, search_cfg, seed, n_jobs)
+pipe.fit(X.iloc[treino], y[treino])          # padronização e one-hot ajustados só no treino
+pipe.predict_proba(X.iloc[teste])            # aplicados, sem novo ajuste, ao teste
+```
+
+Árvores, Random Forest, LightGBM e o Dummy recebem os atributos como estão. Dentro de uma validação cruzada (`cross_validate`, `RandomizedSearchCV`), o `Pipeline` é clonado e reajustado em cada fold. Por isso não há data leakage do pré-processamento.
+
 ---
 
 ## 7. Como validar tudo por conta própria
@@ -269,11 +339,17 @@ São cinco níveis, do mais rápido ao mais completo. Rode no terminal do VS Cod
 make test
 ```
 
-Esperado: `11 passed`. Os testes conferem, com dados pequenos inventados:
+Esperado: `19 passed`. Os testes conferem, com dados pequenos inventados:
 - que a ingestão preserva valores e descarta só linhas malformadas;
 - que o mapeamento de rótulos tem 34 rótulos e 12 ataques DDoS;
 - que a deduplicação segue as três regras e que E e M saem disjuntas e 50/50;
-- que o sorteio é determinístico e que os grupos de janela batem com o artigo.
+- que o sorteio é determinístico e que os grupos de janela batem com o artigo;
+- (`test_no_leakage.py`, Etapa 4) que:
+  - o pré-processamento antes da divisão é linha a linha e deixa 27 atributos;
+  - as médias e os desvios da padronização e as categorias do *one-hot* vêm só das instâncias de treino;
+  - mudar as instâncias de teste não muda nada do que foi ajustado;
+  - a validação cruzada reajusta o pré-processamento em cada fold;
+  - os 8 algoritmos (7 + Dummy) treinam e predizem.
 
 ### Nível 2 — Refazer as Etapas 2 e 3 e obter os mesmos arquivos (≈ 30 s)
 
@@ -397,6 +473,33 @@ print(pl.read_csv("results/inspection/label_counts_total.csv").filter(pl.col("le
 
 Dica: abra os CSVs no VS Code ou com o polars. O Excel em português pode ler `0.653` como 653, porque espera vírgula decimal.
 
+**4.7 — O pré-processamento só aprende com o conjunto de treinamento (Etapa 4):**
+
+```python
+import numpy as np
+from src.models.pipelines import auxiliary_columns, build_pipeline, feature_names, prepare
+from src.utils.config import load_config
+cfg, fcfg, scfg = load_config(), load_config("features"), load_config("search_spaces")
+E = pl.read_parquet("data/processed/sample_E.parquet")
+feats = feature_names(E.columns, fcfg, "full", auxiliary_columns(cfg))
+X, y = prepare(E, feats, fcfg), E["y"].to_numpy()
+print(len(feats), int(X.isna().sum().sum()))                        # 27 0
+ordem = np.random.default_rng(42).permutation(len(X))
+treino, teste = ordem[:38000], ordem[38000:]
+pipe = build_pipeline("logreg", feats, fcfg, scfg, seed=42, n_jobs=1).fit(X.iloc[treino], y[treino])
+padr = pipe.named_steps["preprocess"].named_transformers_["standard"]
+cols = list(padr.feature_names_in_)
+print(abs(padr.mean_ - X.iloc[treino][cols].mean().to_numpy()).max())   # 0.0: médias do treino
+print(abs(padr.mean_ - X[cols].mean().to_numpy()).max() > 0)            # True: não são as de E inteira
+print(pipe.named_steps["preprocess"].transform(X.iloc[teste]).shape)    # (10104, 31)
+```
+
+Esperado:
+- `27 0`: 27 atributos, nenhum valor ausente;
+- `0.0`: as médias da padronização são exatamente as do conjunto de treinamento;
+- `True`: elas não são as de E inteira;
+- `(10104, 31)`: o teste recebe 31 colunas, isto é, 26 numéricas mais 5 colunas *one-hot* de `Protocol Type`.
+
 ### Nível 5 — Olhar as figuras e comparar com o diário
 
 Abra as figuras de `results/eda/` (clique no explorador do VS Code, ou `start results\eda\fig_number_by_type.png`). Para cada afirmação da entrada "Etapa 3 — EDA na amostra E" do diário, o arquivo citado deve mostrar o número citado. Por exemplo, a afirmação "MCC 0,653 com `Number`" está na primeira linha de `single_feature_models.csv` e na primeira barra de `fig_single_feature_mcc.png`.
@@ -423,6 +526,7 @@ Cada conclusão abaixo tem a evidência, onde ela está e como conferir.
 | 4 | O tamanho da janela é um atalho de construção: `Number` sozinho dá MCC 0,653 e separa os 19 tipos de inundação do benigno sem falso positivo (D12) | `number_by_label.csv`, `single_feature_models.csv`, artigo §4 | Níveis 4.2 e 4.3 |
 | 5 | Contagens, `Tot sum`, `Variance`, `Tot size`, `IPv` e `LLC` são cópias exatas de outras colunas; `Rate` quase espelha `IAT`; `Telnet` e `SMTP` são quase constantes. Ficam 27 atributos (D13) | `structural_checks.json`, `correlated_pairs.csv`, `feature_summary.csv` | Nível 4.4 |
 | 6 | TTL é atalho só em parte: vale 64 nas inundações, mas se sobrepõe ao benigno nos demais tipos. `IAT` não é marcador temporal. `HTTPS` é forte, mas sem evidência de artefato | `by_type_summary.csv`, `univariate.csv`, `fig_by_type.png` | Nível 4.5 |
+| 7 | O pré-processamento não tem data leakage: o que é feito antes da divisão é linha a linha, e o que estima parâmetros é ajustado só no treino de cada fold | `tests/test_no_leakage.py` | Níveis 1 e 4.7 |
 
 **Consequência para o trabalho:** um modelo pode ter MCC alto aprendendo só "janela grande = ataque". Por isso:
 - a Etapa 9 compara `full` com `no_window`, `no_ttl` e `no_shortcut`;
@@ -463,16 +567,16 @@ Regras que valem sempre (estão no `CLAUDE.md`):
 
 ## 10. O que vem a seguir e o que está com a dupla
 
-**Próximas etapas** (cronograma do PLANO §8; estamos cerca de 5 dias adiantados):
+**Próximas etapas** (cronograma do PLANO §8; em 05/11 estamos cerca de 3 dias atrasados):
 
-| Etapa | Previsto | O que será feito |
+| Etapa | Previsto no plano | O que será feito |
 |---|---|---|
-| 4 | 01–02/11 | `src/models/pipelines.py` a partir do `features.yaml`; teste de que o pré-processamento só vê o treino de cada fold |
-| 5 | 01–02/11 | `make splits`: folds congelados e versionados em `data/splits/` |
+| 5 | 01–02/11 | `make splits`: divisão em treino, validação e teste; folds congelados e versionados em `data/splits/` |
 | 6 | 03–04/11 | Spot-checking em E: 7 algoritmos + Dummy; 3 finalistas |
-| 7 | 04–08/11 | CV aninhada em M para os finalistas |
+| 7 | 04–08/11 | Validação cruzada aninhada em M para os finalistas: ajuste de hiperparâmetros (laço interno) e estimativa de desempenho (laço externo) |
 
 **Pendências da dupla:**
+- responder às propostas da entrada "2026-11-05 — Revisão metodológica à luz das aulas" do diário (D16 sobre a distribuição dos folds de teste, SVM na D7 e as demais);
 - preencher, no `docs/IA_LOG.md`, os campos "O que foi aproveitado" e "O que foi rejeitado" de cada entrada, e registrar as conversas de planejamento no claude.ai;
 - baixar a pasta *Supplementary material* do dataset (o formulário pede nome, e-mail e instituição) para confirmar se as linhas estão em ordem cronológica. Isso só pesa na Etapa 5, para a análise complementar de blocos contíguos;
 - escolher a licença do repositório e pôr o nome do(a) colega no README.
