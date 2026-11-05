@@ -19,9 +19,7 @@ results/sampling/make_sample.run.json. Re-running gives byte-identical files.
 
 Usage: python -m src.data.make_sample
 """
-import gzip
 import math
-from pathlib import Path
 
 import numpy as np
 import polars as pl
@@ -29,7 +27,7 @@ import pyarrow.parquet as pq
 
 from src.data.labels import BENIGN, CATEGORY
 from src.utils.config import load_config, path
-from src.utils.io import rel, sha256_file, write_json
+from src.utils.io import rel, sha256_file, write_csv_gz, write_json
 from src.utils.run_metadata import recorded_run
 from src.utils.seed import make_rng
 
@@ -130,13 +128,6 @@ def split_samples(unique: pl.DataFrame, label: str, per_type: dict[str, tuple[in
     order = [SOURCE_FILE, ROW_IDX]
     return (pl.concat(parts_E).sort(order), pl.concat(parts_M).sort(order),
             pl.DataFrame(counts).sort(label))
-
-
-def write_csv_gz(df: pl.DataFrame, target: Path) -> None:
-    """Gzip without a timestamp or file name in the header, so the bytes depend only on the content."""
-    target.parent.mkdir(parents=True, exist_ok=True)
-    with open(target, "wb") as f, gzip.GzipFile(filename="", mode="wb", fileobj=f, mtime=0) as gz:
-        gz.write(df.write_csv().encode("utf-8"))
 
 
 def composition(df: pl.DataFrame, cols: dict) -> dict:

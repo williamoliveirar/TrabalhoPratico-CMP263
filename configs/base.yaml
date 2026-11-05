@@ -54,7 +54,7 @@ eda:  # Etapa 3 — sample E only
 
 validation:  # D8: split by row, stratified by label34; no grouping by capture (15 attack types have one capture)
   spotcheck: {n_splits: 5, n_repeats: 2}
-  outer: {n_splits: 5}
+  outer: {n_splits: 5}  # also the folds of the complementary leave-capture-out design (capture_M, D8 (a))
   inner: {n_splits: 3}
 
 search:  # D9

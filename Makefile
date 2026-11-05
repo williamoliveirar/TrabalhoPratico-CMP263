@@ -40,7 +40,7 @@ sample:         ## Etapa 2 (D3, D4) — samples E and M: deduplicated, disjoint,
 eda:            ## Etapa 3 — EDA tables and figures (sample E only)
 	$(PY) -m src.data.eda
 
-splits:         ## Etapa 5 — frozen folds
+splits:         ## Etapa 5 — training/validation/test folds (E: spot-checking; M: nested CV, leave-capture-out), frozen
 	$(PY) -m src.experiments.make_splits
 
 spotcheck:      ## Etapa 6 — spot-checking on sample E
