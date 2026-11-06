@@ -1,12 +1,13 @@
 # Hyperparameter search spaces (docs/PLANO.md, Etapa 7). Adjust if the search hits the bounds,
 # and record the change in docs/DIARIO.md.
 # dist: loguniform {low, high} | randint {low, high} (inclusive) | uniform {low, high} | choice {values}
+# Write exponents with a sign (1.0e-3) or plain decimals (100.0): PyYAML reads 1.0e2 as a string.
 # `fixed` holds non-searched parameters passed to the estimator.
 
 logreg:
   fixed: {solver: lbfgs, max_iter: 2000}
   params:
-    C: {dist: loguniform, low: 1.0e-3, high: 1.0e2}
+    C: {dist: loguniform, low: 1.0e-3, high: 100.0}
 
 gaussian_nb:
   params:
@@ -27,8 +28,8 @@ decision_tree:
 svm:  # RBF kernel (P2); no Platt scaling: decision_function is the ranking score. cache_size only changes speed
   fixed: {kernel: rbf, cache_size: 1000}
   params:
-    C: {dist: loguniform, low: 1.0e-2, high: 1.0e3}
-    gamma: {dist: loguniform, low: 1.0e-4, high: 1.0e0}
+    C: {dist: loguniform, low: 1.0e-2, high: 1000.0}
+    gamma: {dist: loguniform, low: 1.0e-4, high: 1.0}
 
 mlp:
   fixed: {early_stopping: true}

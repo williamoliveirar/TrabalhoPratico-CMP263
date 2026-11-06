@@ -64,6 +64,10 @@ search:  # D9
   n_iter: 30
   finalists: 3
   finalist_models: [lightgbm, random_forest, mlp]  # Etapa 6 (results/spotcheck/selection.json; DIARIO 2026-11-06)
+  reference_models: [decision_tree, dummy]  # tree tuned too, to test H1 (P7, 2026-11-06); dummy = floor, never tuned
+
+nested:  # Etapa 7 — sample M, folds of make splits (outer: test; inner: validation)
+  feature_set: full
 
 interpretation:  # D11
   permutation_repeats: 10
