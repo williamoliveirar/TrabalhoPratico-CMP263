@@ -24,6 +24,12 @@ decision_tree:
     min_samples_leaf: {dist: randint, low: 1, high: 200}
     criterion: {dist: choice, values: [gini, entropy]}
 
+svm:  # RBF kernel (P2); no Platt scaling: decision_function is the ranking score. cache_size only changes speed
+  fixed: {kernel: rbf, cache_size: 1000}
+  params:
+    C: {dist: loguniform, low: 1.0e-2, high: 1.0e3}
+    gamma: {dist: loguniform, low: 1.0e-4, high: 1.0e0}
+
 mlp:
   fixed: {early_stopping: true}
   params:

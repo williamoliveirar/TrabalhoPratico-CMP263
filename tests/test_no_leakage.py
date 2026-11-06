@@ -1,5 +1,4 @@
 """Etapa 4: the fixed pre-processing is row-wise and the fitted pre-processing only sees training rows."""
-import json
 import warnings
 
 import numpy as np
@@ -9,28 +8,14 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import StratifiedKFold, cross_validate
 
 from src.models.pipelines import auxiliary_columns, build_pipeline, feature_names, prepare
-from src.models.registry import BASELINE, FACTORIES, TRANSFORMED
-from src.utils.config import ROOT, load_config
+from src.models.registry import BASELINE, FACTORIES, INDUCTIVE_BIAS, TRANSFORMED
+from src.utils.config import load_config
+from synthetic import COLUMNS, sample
 
 CFG = load_config()
 FEATURE_CFG = load_config("features")
 SEARCH_CFG = load_config("search_spaces")
-COLUMNS = [f["name"] for f in json.loads((ROOT / "results/inspection/schema.json").read_text("utf-8"))["features"]]
 AUX = auxiliary_columns(CFG)
-PROTOCOLS = [0.0, 1.0, 6.0, 17.0, 47.0]
-
-
-def sample(n: int, seed: int) -> pl.DataFrame:
-    """Synthetic sample with the 39 columns of the data and the auxiliary columns; Std null in a few rows."""
-    rng = np.random.default_rng(seed)
-    data = {c: rng.exponential(10.0, n) for c in COLUMNS}
-    data["Protocol Type"] = rng.choice(PROTOCOLS, n)
-    data["Std"] = np.where(np.arange(n) % 25 == 0, np.nan, data["Std"])
-    y = rng.integers(0, 2, n)
-    df = pl.DataFrame(data).with_columns(pl.col("Std").fill_nan(None))
-    return df.with_columns(pl.Series("label34", np.where(y == 1, "DDoS-ICMP_Flood", "BenignTraffic")),
-                           pl.Series("category8", np.where(y == 1, "DDoS", "Benign")), pl.Series("y", y),
-                           pl.lit("capture.pcap.csv").alias("source_file"), pl.Series("row_idx", np.arange(n)))
 
 
 def fitted_standard(pipe, name: str):
@@ -108,16 +93,21 @@ def test_cross_validation_refits_the_preprocessing_in_every_fold():
         np.testing.assert_allclose(fitted_standard(estimator, "standard").mean_, X.iloc[train][linear].mean())
 
 
-def test_tree_pipelines_get_the_attributes_unchanged():
+def test_tree_pipelines_get_numeric_attributes_unchanged_and_one_hot_protocol():
     df = sample(100, seed=5)
     features = feature_names(df.columns, FEATURE_CFG, "no_shortcut", AUX)
     X, y = prepare(df, features, FEATURE_CFG), df["y"].to_numpy()
     pipe = build_pipeline("decision_tree", features, FEATURE_CFG, SEARCH_CFG, seed=0, n_jobs=1).fit(X, y)
-    np.testing.assert_array_equal(pipe.named_steps["preprocess"].transform(X), X.to_numpy())
+    out = pipe.named_steps["preprocess"].transform(X)
+    numeric = [c for c in features if c not in FEATURE_CFG["categorical"]]
+    np.testing.assert_array_equal(out[:, :len(numeric)], X[numeric].to_numpy())   # no scaling, no log1p
+    codes = sorted(X["Protocol Type"].unique())                                       # P6: one column per code
+    np.testing.assert_array_equal(out[:, len(numeric):], (X[["Protocol Type"]].to_numpy() == codes).astype(float))
 
 
 def test_every_algorithm_builds_fits_and_predicts():
-    assert set(SEARCH_CFG) == set(FACTORIES) and TRANSFORMED <= set(FACTORIES) and BASELINE in FACTORIES
+    assert set(SEARCH_CFG) == set(FACTORIES) == set(INDUCTIVE_BIAS)
+    assert TRANSFORMED <= set(FACTORIES) and BASELINE in FACTORIES
     df = sample(300, seed=6)
     features = feature_names(df.columns, FEATURE_CFG, "full", AUX)
     X, y = prepare(df, features, FEATURE_CFG), df["y"].to_numpy()
@@ -125,5 +115,5 @@ def test_every_algorithm_builds_fits_and_predicts():
         pipe = build_pipeline(name, features, FEATURE_CFG, SEARCH_CFG, seed=0, n_jobs=1)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", ConvergenceWarning)  # random data: nothing to converge to
-            proba = pipe.fit(X.iloc[:200], y[:200]).predict_proba(X.iloc[200:])
-        assert proba.shape == (100, 2), name
+            pred = pipe.fit(X.iloc[:200], y[:200]).predict(X.iloc[200:])
+        assert pred.shape == (100,) and set(pred) <= {0, 1}, name

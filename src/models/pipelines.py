@@ -5,10 +5,11 @@ Two kinds of pre-processing, as in "Quando transformar os dados?" (Aula 13-14):
   parameter estimated from the data. The redundant and quasi-constant columns are dropped, `Std` null becomes 0
   (one-packet windows have no dispersion), and only the predictive attributes of the feature set are kept. The
   output of a row depends on that row alone, so applying it to the whole sample leaks nothing.
-- inside the Pipeline (`build_pipeline`): operations whose parameters are estimated from data. For the
-  TRANSFORMED algorithms, the standardisation means and deviations and the one-hot categories are fitted on the
-  training rows of each fold only and applied unchanged to its validation or test rows; log1p comes first and has
-  no parameter. The other algorithms get the attributes as they are.
+- inside the Pipeline (`build_pipeline`): operations whose parameters are estimated from data, fitted on the
+  training rows of each fold only and applied unchanged to its validation or test rows. Every pipeline one-hot
+  encodes the nominal attribute, with the categories seen in training (P6). The TRANSFORMED algorithms also get
+  log1p, which has no parameter, followed by standardisation (means and deviations of the training rows); the
+  other algorithms get the numeric attributes as they are.
 
 Hyperparameters of the estimator are reached as `model__<name>` (Etapa 7).
 """
@@ -54,17 +55,18 @@ def prepare(df: pl.DataFrame, features: list[str], feature_cfg: dict) -> pd.Data
 
 
 def preprocessor(model_name: str, features: list[str], feature_cfg: dict) -> ColumnTransformer:
-    if model_name not in TRANSFORMED:
-        return ColumnTransformer([("attributes", "passthrough", features)])
     categorical = [c for c in features if c in feature_cfg["categorical"]]
     numeric = [c for c in features if c not in categorical]
+    onehot = ("onehot", OneHotEncoder(handle_unknown="ignore", sparse_output=False), categorical)
+    if model_name not in TRANSFORMED:
+        return ColumnTransformer([("attributes", "passthrough", numeric), onehot])
     logged = [c for c in numeric if c in feature_cfg["log1p"]]
     linear = [c for c in numeric if c not in logged]
     return ColumnTransformer([
         ("log1p_standard", Pipeline([("log1p", FunctionTransformer(np.log1p, feature_names_out="one-to-one")),
                                      ("standard", StandardScaler())]), logged),
         ("standard", StandardScaler(), linear),
-        ("onehot", OneHotEncoder(handle_unknown="ignore", sparse_output=False), categorical),
+        onehot,
     ])
 
 

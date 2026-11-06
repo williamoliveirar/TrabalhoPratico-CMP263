@@ -43,9 +43,9 @@ drop:  # removed before any split, in every pipeline (fixed: no learned paramete
 fill_null:  # fixed, before any split
   Std: 0.0  # null only in one-packet windows (Number = 1), which have no dispersion (structural_checks.json)
 
-categorical: [Protocol Type]  # IP protocol codes 0, 1, 6, 17, 47: one-hot in the LR, kNN, MLP and NB pipelines
+categorical: [Protocol Type]  # IP protocol codes 0, 1, 6, 17, 47: one-hot in every pipeline (P6, 2026-11-06)
 
-log1p: [Min, Max, Std, IAT]  # unbounded, non-negative, skewness > eda.heavy_tail_skew (LR, kNN, MLP, NB only)
+log1p: [Min, Max, Std, IAT]  # unbounded, non-negative, skewness > eda.heavy_tail_skew (LR, NB, kNN, SVM, MLP only)
 
 feature_sets:
   full: all  # the 27 features not in `drop`

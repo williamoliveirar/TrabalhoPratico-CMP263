@@ -57,6 +57,9 @@ validation:  # D8: split by row, stratified by label34; no grouping by capture (
   outer: {n_splits: 5}  # also the folds of the complementary leave-capture-out design (capture_M, D8 (a))
   inner: {n_splits: 3}
 
+spotcheck:  # Etapa 6 — sample E, folds of make splits (validation role); defaults + search_spaces.yaml fixed
+  feature_set: full
+
 search:  # D9
   n_iter: 30
   finalists: 3
