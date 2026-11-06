@@ -63,6 +63,7 @@ spotcheck:  # Etapa 6 — sample E, folds of make splits (validation role); defa
 search:  # D9
   n_iter: 30
   finalists: 3
+  finalist_models: [lightgbm, random_forest, mlp]  # Etapa 6 (results/spotcheck/selection.json; DIARIO 2026-11-06)
 
 interpretation:  # D11
   permutation_repeats: 10

@@ -199,3 +199,30 @@ Modelo:
 **Limitações ou potencialidades observadas:**
 - *Potencialidade:* a ferramenta propôs um desenho pareado para o *leave-capture-out*. Só os tipos com capturas suficientes mudam de fold, e o efeito da captura pode ser medido sem mudar o resto da divisão.
 - *Limitação:* a ferramenta gerou os folds do *leave-capture-out* antes da confirmação da dupla, para que todas as divisões ficassem congeladas antes de qualquer treino. Se a dupla recusar a proposta, o arquivo precisa ser removido.
+
+## 2026-11-06 — Claude Code (Claude Opus 5.5, app desktop) — decisões P2 a P6 e Etapa 6
+
+**Finalidade:** registrar as decisões da dupla sobre as propostas pendentes e executar a Etapa 6 (spot-checking na amostra E).
+
+**Prompt (texto integral):**
+
+> Iniciar Etapa 6. P2: Sim, incluir. P3: Sim, acrescentar a AUC-ROC. P4: Sim, registrar o MCC também. P6: Sim, aplicar o one-hot encoding. Sobre a D8: Concordo com a sua avaliação, faça o que for melhor para a viabilidade do trabalho e do treinamento. Prossiga.
+
+Antes disso, na mesma sessão, a dupla autorizou o push dos commits da Etapa 5 ("Pode fazer o push").
+
+**O que a ferramenta produziu:**
+- medição avulsa do custo do SVM RBF num fold de E, antes de incluí-lo;
+- SVM no `registry.py`, *one-hot* em todos os pipelines, `src/evaluation/metrics.py` (com AUC-ROC, especificidade e matriz de confusão) e `src/experiments/spotcheck.py`, com 5 testes novos;
+- os resultados do spot-checking, a figura e a conferência de que o fold 0 se reproduz exatamente;
+- duas entradas no diário: a confirmação das decisões e a Etapa 6, com a proposta de finalistas (LightGBM, Random Forest e MLP) e uma proposta nova, a P7, que inclui a árvore de decisão na Etapa 7 para testar a H1;
+- atualização do README, do PLANO e do guia.
+
+**O que foi aproveitado:** [a preencher pela dupla]
+
+**O que foi rejeitado ou corrigido, e por quê:** [a preencher pela dupla]
+
+**Limitações ou potencialidades observadas:**
+- *Potencialidade:* a ferramenta mediu o custo do SVM antes de rodar tudo. Com isso, estimou que ele não caberia na Etapa 7 em M, um critério de viabilidade que o plano não previa.
+- *Potencialidade:* o diagnóstico de overfitting (P4) mostrou que a comparação da H1 com a árvore sem ajuste seria injusta, e daí veio a P7.
+- *Limitação:* a explicação do teto de MCC em torno de 0,81 (os ataques de janela 10 se parecem com o benigno) é uma hipótese apoiada numa conta por diferença. Ela só é confirmada com a sensibilidade por tipo, na Etapa 8.
+- *Limitação:* um teste escrito pela ferramenta falhou na primeira execução, porque os dados inventados empatavam exatamente na média. O erro era do teste, não do código, e foi corrigido.

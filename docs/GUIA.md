@@ -1,6 +1,6 @@
-# Guia prático do projeto (Etapas 0 a 5)
+# Guia prático do projeto (Etapas 0 a 6)
 
-*Situação em 05/11/2026; código da Etapa 5 no commit `436173a` e folds congelados no commit `5d693b0`. Atualize este guia ao fim de cada etapa.*
+*Situação em 06/11/2026; código da Etapa 6 no commit `03c53ba` e resultados do spot-checking no commit `df28178`. Atualize este guia ao fim de cada etapa.*
 
 Este guia explica, do zero, o que já foi construído, como rodar cada parte e como conferir sozinho os resultados e as conclusões. O plano completo está em `docs/PLANO.md`; as decisões e os números, com fonte, em `docs/DIARIO.md`. Aqui o foco é prático: o que é cada coisa, que comando rodar e o que você deve ver. Os termos são os das aulas. O glossário completo está no PLANO, §1.4, e o mapa das etapas formais do treinamento de modelos no PLANO, §1.3.
 
@@ -36,9 +36,10 @@ Sumário:
 | 3 | Análise exploratória (EDA) | Só em E; decidir o pré-processamento (`configs/features.yaml`) | Concluída |
 | 4 | Pré-processamento | Antes da divisão (regras fixas) e dentro do `Pipeline` (ajustado no treino de cada fold) | Concluída |
 | 5 | Divisão em treino, validação e teste | Folds congelados para o spot-checking (E) e para a validação cruzada aninhada (M) | Concluída |
-| 6 | Treinamento e spot-checking | 7 algoritmos + Dummy com hiperparâmetros padrão em E; 3 finalistas | Próxima |
+| 6 | Treinamento e spot-checking | 8 algoritmos + Dummy com hiperparâmetros padrão em E; 3 finalistas | Concluída |
+| 7 | Otimização de hiperparâmetros e seleção de modelos | Validação cruzada aninhada dos finalistas em M | Próxima |
 
-**O caminho dos dados**, do arquivo bruto até os folds congelados:
+**O caminho dos dados**, do arquivo bruto até a escolha dos finalistas:
 
 ```
 309 CSVs oficiais (8,9 GB, fora do repositório)
@@ -60,6 +61,9 @@ build_pipeline()   dentro de cada fold: log1p + padronização + one-hot ajustad
    │  make splits   (≈ 15 s, E e M)
    ▼
 data/splits/   folds de treino, validação e teste, gerados uma vez e versionados (Etapa 5)
+   │  make spotcheck (≈ 15 min, só E)
+   ▼
+results/spotcheck/   ranking dos 8 algoritmos  →  finalistas (configs/base.yaml, search.finalist_models)
 ```
 
 ---
@@ -109,6 +113,8 @@ data/splits/   folds de treino, validação e teste, gerados uma vez e versionad
   - *sensibilidade* (recall, TVP): a fração dos ataques detectados;
   - *especificidade*: a fração dos benignos aceitos;
   - *TFP* = 1 − especificidade: o alarme falso.
+- **AUC-ROC e AUPRC.** Medem se o modelo ordena os ataques acima dos benignos, sem depender do limiar. A AUC-ROC vale 0,5 no acaso e 1 na ordenação perfeita, e não depende da prevalência. O escore é a probabilidade de ataque ou, no SVM, a distância à margem (`decision_function`).
+- **Overfitting e underfitting** (Aula 04; P4). Compare o MCC no treino com o da validação. Treino muito acima da validação é overfitting (o modelo memorizou). Os dois baixos e próximos é underfitting (o modelo é simples demais).
 - **MCC (coeficiente de correlação de Matthews).** A métrica principal (D5). Vai de −1 a 1: 0 é acaso, 1 é perfeito. Usa os quatro quadrantes da matriz de confusão e, ao contrário da acurácia, não se deixa enganar por classes desbalanceadas. Não aparece nos slides; a justificativa é Chicco e Jurman (2020).
 
 **A reprodutibilidade**
@@ -189,13 +195,15 @@ TrabalhoPratico-CPM263/
 │   │   ├── make_sample.py    Etapa 2: amostras E e M
 │   │   └── eda.py            Etapa 3: tabelas e figuras da EDA (só E)
 │   ├── models/
-│   │   ├── registry.py       Etapa 4: os 7 algoritmos de D7 + Dummy, com hiperparâmetros padrão
+│   │   ├── registry.py       Etapas 4 e 6: os 8 algoritmos de D7 (com o SVM) + Dummy, com hiperparâmetros padrão
 │   │   └── pipelines.py      Etapa 4: prepare() antes da divisão; build_pipeline() = pré-processamento + modelo
 │   ├── reporting/style.py    estilo e cores das figuras (benigno azul, ataque laranja)
 │   ├── experiments/
-│   │   └── make_splits.py    Etapa 5: folds congelados; funções que os entregam ao scikit-learn (cv=)
-│   └── features/, evaluation/, interpretation/   (vazios; Etapas 6 a 10)
-├── tests/                    test_ingest.py, test_sample.py, test_eda.py, test_no_leakage.py, test_splits.py (26 testes)
+│   │   ├── make_splits.py    Etapa 5: folds congelados; funções que os entregam ao scikit-learn (cv=)
+│   │   └── spotcheck.py      Etapa 6: spot-checking em E; ranking e grupo de empate
+│   ├── evaluation/metrics.py métricas de D5 e D6 (MCC, sensibilidade, especificidade, AUC-ROC...)
+│   └── features/, interpretation/   (vazios; Etapas 7 a 10)
+├── tests/                    test_ingest.py, test_sample.py, test_eda.py, test_no_leakage.py, test_splits.py, test_spotcheck.py (31 testes); synthetic.py (dados inventados)
 ├── data/
 │   ├── raw_manifest.csv      versionado: tamanho, SHA-256 e linhas de cada um dos 309 CSVs
 │   ├── sample_index.csv.gz   versionado: quais linhas (source_file, row_idx) estão em E e em M
@@ -205,7 +213,8 @@ TrabalhoPratico-CPM263/
 │   ├── inspection/           saídas da Etapa 1
 │   ├── sampling/             saídas da Etapa 2
 │   ├── eda/                  saídas da Etapa 3 (tabelas CSV, JSON e figuras PNG)
-│   └── splits/               saídas da Etapa 5 (tamanho de cada partição, conferências, hashes)
+│   ├── splits/               saídas da Etapa 5 (tamanho de cada partição, conferências, hashes)
+│   └── spotcheck/            saídas da Etapa 6 (métricas por fold, resumo, ranking, figura)
 └── docs/
     ├── PLANO.md              o plano do trabalho (pt-BR)
     ├── DIARIO.md             diário de bordo: decisões e números com fonte (pt-BR)
@@ -228,11 +237,13 @@ Nenhum número "mágico" fica no código: semente, caminhos e tamanhos vêm de `
 | `sampling` (D3) | tamanhos de E e M, folga para duplicatas, regra dos tipos raros | E: 25.000 + 25.000; M: 100.000 + 100.000; folga 1,3; raros 20% E / 80% M |
 | `eda` | limiares da EDA | quase constante > 99,9%; correlação > 0,99; assimetria > 2; árvore de profundidade 2; 5 folds |
 | `validation` (D8) | número de folds da divisão em treino, validação e teste | spot-checking 5 × 2 (validação cruzada repetida); laço externo 5 (teste); laço interno 3 (validação); a divisão por captura usa os 5 folds do laço externo |
+| `spotcheck` | conjunto de atributos do spot-checking | `full` (27 atributos) |
+| `search` (D9) | busca de hiperparâmetros e finalistas | 30 configurações; finalistas: LightGBM, Random Forest e MLP |
 
 `configs/features.yaml` (D13, decidido em 26/10) diz o que acontece com cada coluna antes dos modelos:
 - `drop`: 12 colunas removidas, cada uma com o motivo e a entrada do diário. Ficam 27 atributos (limpeza, antes da divisão);
 - `fill_null`: `Std` ausente vira 0 (regra fixa, antes da divisão);
-- `categorical`: `Protocol Type` vira *one-hot* nos algoritmos sensíveis à escala (dentro do `Pipeline`);
+- `categorical`: `Protocol Type` vira *one-hot* em todos os pipelines (P6; dentro do `Pipeline`);
 - `log1p`: `Min`, `Max`, `Std` e `IAT` (tratamento de outliers de cauda longa, dentro do `Pipeline`);
 - `feature_sets`: `full`, `no_window`, `no_ttl` e `no_shortcut`, para a análise de atalhos.
 
@@ -318,8 +329,8 @@ Não tem alvo no Makefile: é código usado pelas etapas seguintes (`src/models/
 | Limpeza: atributos redundantes e quase constantes | 12 colunas removidas, sem usar o atributo alvo | Antes da divisão |
 | Limpeza: valores ausentes | `Std` ausente → 0 (janelas de 1 pacote); `Rate` com `inf` sai junto com a coluna | Antes da divisão |
 | Tratamento de outliers | Sem remoção (ataque é atípico por natureza); `log1p` nos 4 atributos de cauda longa | Dentro do `Pipeline` |
-| Normalização ou padronização | Padronização (`StandardScaler`) em LR, kNN, MLP e Naive Bayes | Dentro do `Pipeline`, ajustada no treino |
-| Codificação | *One-hot* de `Protocol Type` nos mesmos 4 algoritmos | Dentro do `Pipeline`, ajustada no treino |
+| Normalização ou padronização | Padronização (`StandardScaler`) em LR, Naive Bayes, kNN, SVM e MLP | Dentro do `Pipeline`, ajustada no treino |
+| Codificação | *One-hot* de `Protocol Type` em todos os pipelines (P6) | Dentro do `Pipeline`, ajustada no treino |
 | Discretização | Não aplicada | — |
 | Balanceamento de classes | Feito pelo desenho da amostra (D3: 50/50) | Antes da divisão (Etapa 2) |
 | Redução de dimensionalidade | Não aplicada (27 atributos; PCA impediria a análise de atalhos) | — |
@@ -335,7 +346,7 @@ pipe.fit(X.iloc[treino], y[treino])          # padronização e one-hot ajustado
 pipe.predict_proba(X.iloc[teste])            # aplicados, sem novo ajuste, ao teste
 ```
 
-Árvores, Random Forest, LightGBM e o Dummy recebem os atributos como estão. Dentro de uma validação cruzada (`cross_validate`, `RandomizedSearchCV`), o `Pipeline` é clonado e reajustado em cada fold. Por isso não há data leakage do pré-processamento.
+Árvores, Random Forest, LightGBM e o Dummy recebem os atributos numéricos como estão, além do *one-hot* de `Protocol Type`. Dentro de uma validação cruzada (`cross_validate`, `RandomizedSearchCV`), o `Pipeline` é clonado e reajustado em cada fold. Por isso não há data leakage do pré-processamento.
 
 ### Etapa 5 — Divisão dos dados: treino, validação e teste
 
@@ -368,6 +379,32 @@ for k, (treino, teste) in enumerate(outer_folds(assign)):    # laço externo
     cv_interno = inner_folds(assign, k)                      # 3 pares, posições relativas a X.iloc[treino]
 ```
 
+### Etapa 6 — Spot-checking (só em E)
+
+```powershell
+make spotcheck
+```
+
+Treina os 8 algoritmos e o Dummy com os hiperparâmetros padrão (≈ 15 min, quase todo o tempo é do SVM). Cada um roda nos 10 folds congelados de E (Etapa 5), com o pipeline da Etapa 4. O fold avaliado faz o papel de conjunto de **validação**: o resultado serve para escolher os finalistas, e não para estimar o desempenho final.
+
+| Arquivo (`results/spotcheck/`) | O que tem |
+|---|---|
+| `metrics_per_fold.csv` | Por algoritmo e fold: MCC, F1 das duas classes, acurácia balanceada, sensibilidade, especificidade, TFP, AUPRC, AUC-ROC e matriz de confusão (`tp`, `fn`, `tn`, `fp`), na validação; MCC no treino (`mcc_train`, P4); avisos de convergência |
+| `summary.csv` | Média e desvio padrão de cada métrica por algoritmo, do maior para o menor MCC médio |
+| `selection.json` | Ranking, os 3 maiores MCC médios e o grupo de empate (a menos de um desvio padrão do melhor) |
+| `fig_spotcheck_mcc.png` | MCC de cada fold (pontos), média (traço) e MCC médio no treino (losango) |
+| `timings_per_fold.csv` | Tempo de treino e de predição; é o único arquivo que muda de uma rodada para outra |
+
+Resultado: LightGBM (0,807 ± 0,006) e Random Forest (0,803 ± 0,006) empatam no topo, seguidos do MLP (0,776). Os três são os finalistas propostos para a Etapa 7 (`search.finalist_models` em `configs/base.yaml`). A árvore de decisão e a Random Forest chegam a MCC 1,000 no treino: sem limite de profundidade, elas memorizam o treino (overfitting). A leitura completa está no diário (entrada "2026-11-06 — Etapa 6").
+
+Para conferir que uma nova rodada dá os mesmos números, rode `make spotcheck` e depois:
+
+```powershell
+git diff --stat -- results/spotcheck ":(exclude)*.run.json" ":(exclude)*timings*"
+```
+
+Esperado: nenhuma saída.
+
 ---
 
 ## 7. Como validar tudo por conta própria
@@ -380,7 +417,7 @@ São cinco níveis, do mais rápido ao mais completo. Rode no terminal do VS Cod
 make test
 ```
 
-Esperado: `26 passed`. Os testes conferem, com dados pequenos inventados:
+Esperado: `31 passed`. Os testes conferem, com dados pequenos inventados:
 - que a ingestão preserva valores e descarta só linhas malformadas;
 - que o mapeamento de rótulos tem 34 rótulos e 12 ataques DDoS;
 - que a deduplicação segue as três regras e que E e M saem disjuntas e 50/50;
@@ -390,13 +427,18 @@ Esperado: `26 passed`. Os testes conferem, com dados pequenos inventados:
   - as médias e os desvios da padronização e as categorias do *one-hot* vêm só das instâncias de treino;
   - mudar as instâncias de teste não muda nada do que foi ajustado;
   - a validação cruzada reajusta o pré-processamento em cada fold;
-  - os 8 algoritmos (7 + Dummy) treinam e predizem;
+  - os 9 pipelines (8 algoritmos + Dummy) treinam e predizem;
 - (`test_splits.py`, Etapa 5) que:
   - os folds lidos dos arquivos são os mesmos do scikit-learn com a mesma semente;
   - os folds externos são disjuntos e cobrem a amostra, e nenhuma instância de teste entra no laço interno;
   - cada rótulo mantém a sua proporção em todos os folds;
   - na divisão por captura, cada captura dos tipos agrupados fica inteira num fold;
-  - os arquivos versionados de `data/splits/` cumprem os critérios de pronto da Etapa 5.
+  - os arquivos versionados de `data/splits/` cumprem os critérios de pronto da Etapa 5;
+- (`test_spotcheck.py`, Etapa 6) que:
+  - as métricas batem com as definições, numa matriz de confusão feita à mão;
+  - a predição usada nas métricas é idêntica ao `predict` de cada pipeline, e o escore do SVM é a `decision_function`;
+  - o MCC no treino denuncia uma árvore que memoriza dados aleatórios;
+  - a regra de seleção reconhece um empate no topo.
 
 ### Nível 2 — Refazer as Etapas 2, 3 e 5 e obter os mesmos arquivos (≈ 45 s)
 
@@ -575,6 +617,37 @@ Esperado:
 - `[-1]`: as instâncias de teste do fold externo 0 não estão em nenhum fold do laço interno dele;
 - `True`: o próprio scikit-learn, com a semente 42, gera os mesmos folds de teste.
 
+**4.9 — O spot-checking: o MCC sai da matriz de confusão, e um fold se reproduz (Etapa 6):**
+
+```python
+import polars as pl
+from sklearn.metrics import matthews_corrcoef
+from src.experiments.make_splits import SPOTCHECK, load_assignment, spotcheck_folds
+from src.models.pipelines import auxiliary_columns, build_pipeline, feature_names, prepare
+from src.utils.config import load_config
+d = pl.read_csv("results/spotcheck/metrics_per_fold.csv").filter(pl.col("algorithm") != "dummy")
+tp, tn, fp, fn = (pl.col(c) for c in ("tp", "tn", "fp", "fn"))
+mcc = (tp * tn - fp * fn) / ((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn)).sqrt()
+print(d.select((pl.col("mcc") - mcc).abs().max()).item())                     # 0.0
+print(d.group_by("algorithm").agg(pl.col("mcc").mean().round(3).alias("validation"),
+                                  pl.col("mcc_train").mean().round(3).alias("training"))
+      .sort("validation", descending=True))
+cfg, fcfg, scfg = load_config(), load_config("features"), load_config("search_spaces")
+E = pl.read_parquet("data/processed/sample_E.parquet")
+feats = feature_names(E.columns, fcfg, "full", auxiliary_columns(cfg))
+X, y = prepare(E, feats, fcfg), E["y"].to_numpy()
+treino, validacao = spotcheck_folds(load_assignment(cfg, SPOTCHECK, E))[0]
+pipe = build_pipeline("lightgbm", feats, fcfg, scfg, seed=42, n_jobs=6).fit(X.iloc[treino], y[treino])
+print(round(matthews_corrcoef(y[validacao], pipe.predict(X.iloc[validacao])), 6))   # 0.807424
+print(round(d.filter((pl.col("algorithm") == "lightgbm") & (pl.col("repeat") == 0)
+                     & (pl.col("fold") == 0))["mcc"].item(), 6))                   # 0.807424
+```
+
+Esperado:
+- `0.0`: o MCC gravado é exatamente o que sai da matriz de confusão de cada fold (VP, VN, FP, FN);
+- a tabela: LightGBM 0,807 na validação e 0,841 no treino; Random Forest e árvore de decisão com 1,0 no treino (overfitting); regressão logística, Naive Bayes, SVM e MLP com treino e validação quase iguais;
+- `0.807424` duas vezes: retreinar o LightGBM no primeiro fold dá o mesmo MCC que está gravado.
+
 ### Nível 5 — Olhar as figuras e comparar com o diário
 
 Abra as figuras de `results/eda/` (clique no explorador do VS Code, ou `start results\eda\fig_number_by_type.png`). Para cada afirmação da entrada "Etapa 3 — EDA na amostra E" do diário, o arquivo citado deve mostrar o número citado. Por exemplo, a afirmação "MCC 0,653 com `Number`" está na primeira linha de `single_feature_models.csv` e na primeira barra de `fig_single_feature_mcc.png`.
@@ -603,6 +676,8 @@ Cada conclusão abaixo tem a evidência, onde ela está e como conferir.
 | 6 | TTL é atalho só em parte: vale 64 nas inundações, mas se sobrepõe ao benigno nos demais tipos. `IAT` não é marcador temporal. `HTTPS` é forte, mas sem evidência de artefato | `by_type_summary.csv`, `univariate.csv`, `fig_by_type.png` | Nível 4.5 |
 | 7 | O pré-processamento não tem data leakage: o que é feito antes da divisão é linha a linha, e o que estima parâmetros é ajustado só no treino de cada fold | `tests/test_no_leakage.py` | Níveis 1 e 4.7 |
 | 8 | A divisão dos dados está congelada: todos os algoritmos vão usar os mesmos folds, nenhuma instância de teste entra no laço interno, e cada rótulo mantém a proporção em todos os folds | `data/splits/`, `results/splits/splits_report.json`, `tests/test_splits.py` | Níveis 1 e 4.8 |
+| 9 | Com hiperparâmetros padrão, os ensembles de árvores lideram (LightGBM 0,807; Random Forest 0,803) e o MCC em E não passa de cerca de 0,81, bem abaixo do benchmark binário do artigo do dataset. A explicação provável, ainda uma hipótese, é que os ataques de janela 10 se parecem com o benigno | `results/spotcheck/summary.csv`, `selection.json`, `fig_spotcheck_mcc.png` | Nível 4.9 |
+| 10 | Árvores sem limite de profundidade memorizam o treino (MCC 1,000 no treino, contra 0,723 e 0,803 na validação); LR e Naive Bayes ficam com treino e validação iguais e baixos (underfitting) | `results/spotcheck/summary.csv` | Nível 4.9 |
 
 **Consequência para o trabalho:** um modelo pode ter MCC alto aprendendo só "janela grande = ataque". Por isso:
 - a Etapa 9 compara `full` com `no_window`, `no_ttl` e `no_shortcut`;
@@ -643,19 +718,19 @@ Regras que valem sempre (estão no `CLAUDE.md`):
 
 ## 10. O que vem a seguir e o que está com a dupla
 
-**Próximas etapas** (cronograma do PLANO §8; em 05/11 estamos cerca de 3 dias atrasados):
+**Próximas etapas** (cronograma do PLANO §8; em 06/11 estamos cerca de 2 dias atrasados):
 
 | Etapa | Previsto no plano | O que será feito |
 |---|---|---|
-| 6 | 03–04/11 | Spot-checking em E: 7 algoritmos + Dummy; 3 finalistas |
 | 7 | 04–08/11 | Validação cruzada aninhada em M para os finalistas: ajuste de hiperparâmetros (laço interno) e estimativa de desempenho (laço externo) |
 | 8 | 08–10/11 | Estimativa de desempenho e comparação de modelos: tabelas, figuras e testes de hipóteses; Q1 e Q2 respondidas |
+| 9 | 10–13/11 | Interpretação do melhor modelo, ablação dos atalhos e *leave-capture-out*; Q3 respondida |
 
 **Pendências da dupla:**
-- responder às propostas da entrada "2026-11-05 — Revisão metodológica à luz das aulas" do diário (D16 sobre a distribuição dos folds de teste, SVM na D7 e as demais). P2 (SVM), P3, P4 e P6 mudam o spot-checking e precisam ser decididas antes da Etapa 6;
-- confirmar ou recusar as análises complementares da D8 propostas na entrada da Etapa 5: (a) *leave-capture-out*, adotar; (b) blocos contíguos de `row_idx`, não adotar;
+- confirmar os finalistas (LightGBM, Random Forest e MLP) e decidir a P7, que inclui a árvore de decisão na Etapa 7 para testar a H1 (entrada "2026-11-06 — Etapa 6" do diário);
+- decidir P1 (D16, métricas reponderadas para a distribuição original) e P5 (intervalos de confiança por bootstrap) antes da Etapa 8;
 - preencher, no `docs/IA_LOG.md`, os campos "O que foi aproveitado" e "O que foi rejeitado" de cada entrada, e registrar as conversas de planejamento no claude.ai;
-- baixar a pasta *Supplementary material* do dataset (o formulário pede nome, e-mail e instituição) para confirmar se as linhas estão em ordem cronológica. Isso decide a análise complementar (b) da D8, de blocos contíguos, que fica de fora enquanto a ordem não for confirmada;
+- baixar a pasta *Supplementary material* do dataset (o formulário pede nome, e-mail e instituição) para confirmar se as linhas estão em ordem cronológica. Isso só importa se a dupla quiser reabrir a análise complementar (b) da D8, de blocos contíguos, que não foi adotada;
 - escolher a licença do repositório e pôr o nome do(a) colega no README.
 
 ---

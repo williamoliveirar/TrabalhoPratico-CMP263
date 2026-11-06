@@ -6,7 +6,7 @@ Final project for **CMP263 – Machine Learning** (PPGC/UFRGS, 2026/2). We build
 - **Q2 (where it fails):** which attack types escape the best model (sensitivity per attack type), and what is its false positive rate on benign traffic?
 - **Q3 (shortcuts):** does performance rely on features that identify the capture environment or the data processing (TTL, packet-window size) rather than the attack itself?
 
-> **Status:** work in progress (Etapas 0–5 done; next: Etapa 6, spot-checking on sample E). The full plan is in [`docs/PLANO.md`](docs/PLANO.md), the logbook with every decision and number is in [`docs/DIARIO.md`](docs/DIARIO.md), and a hands-on guide to running and validating everything is in [`docs/GUIA.md`](docs/GUIA.md). All three are in Portuguese and use the terminology of the course (glossary in `docs/PLANO.md` §1.4). Code, figures and the paper are in English.
+> **Status:** work in progress (Etapas 0–6 done; next: Etapa 7, nested cross-validation of the finalists on sample M). The full plan is in [`docs/PLANO.md`](docs/PLANO.md), the logbook with every decision and number is in [`docs/DIARIO.md`](docs/DIARIO.md), and a hands-on guide to running and validating everything is in [`docs/GUIA.md`](docs/GUIA.md). All three are in Portuguese and use the terminology of the course (glossary in `docs/PLANO.md` §1.4). Code, figures and the paper are in English.
 
 ## Machine learning workflow
 
@@ -19,8 +19,8 @@ The stages follow the assignment and the course (PLANO §1.3). Operations that r
 | 3 | Exploratory data analysis, on E only | Etapa 3 |
 | 4 | Pre-processing before the split: duplicate removal, redundant and quasi-constant attributes dropped, `Std` of one-packet windows set to 0 | Etapas 2 and 4 |
 | 5 | Training/validation/test split: repeated stratified k-fold on E (spot-checking); nested cross-validation on M (outer 5 folds for testing, inner 3 folds for validation) | Etapa 5 |
-| 6 | Pre-processing fitted on the training folds: log1p, standardisation and one-hot encoding inside scikit-learn `Pipeline`s, for the scale-sensitive algorithms | Etapa 4 |
-| 7 | Spot-checking of 7 algorithms with default hyperparameters, plus a dummy baseline | Etapa 6 |
+| 6 | Pre-processing fitted on the training folds, inside scikit-learn `Pipeline`s: one-hot encoding of the protocol code in every pipeline; log1p and standardisation for the scale-sensitive algorithms | Etapa 4 |
+| 7 | Spot-checking of 8 algorithms with default hyperparameters, plus a dummy baseline; training MCC recorded to diagnose overfitting | Etapa 6 |
 | 8 | Hyperparameter tuning and model selection: inner loop of the nested cross-validation | Etapa 7 |
 | 9 | Performance estimation and model comparison: outer test folds, hypothesis tests | Etapas 7–8 |
 | 10 | Interpretation of the best model and shortcut ablation | Etapa 9 |
@@ -61,20 +61,20 @@ The raw data is **not** redistributed here. To reproduce:
 | `make eda` | 3 | EDA tables and figures, on sample E only |
 | — | 4 | Pre-processing pipelines (`src/models/pipelines.py`, `src/models/registry.py`); no target of its own, checked by `make test` |
 | `make splits` | 5 | Frozen training/validation/test folds: spot-checking on E, outer (test) and inner (validation) folds on M, and complementary leave-capture-out folds on M (proposal) |
-| `make spotcheck` | 6 | 7 algorithms + dummy baseline with default hyperparameters on E |
+| `make spotcheck` | 6 | 8 algorithms (logistic regression, Gaussian NB, kNN, decision tree, RBF SVM, MLP, random forest, LightGBM) + dummy baseline with default hyperparameters on the frozen folds of E |
 | `make tune` | 7 | Hyperparameter tuning and model selection with nested CV (5 outer × 3 inner folds, randomized search) for the 3 finalists on M |
 | `make evaluate` | 8 | Performance estimates on the outer test folds, corrected resampled t-test, per-attack sensitivity, PR/ROC |
 | `make interpret` / `make ablation` | 9 | Permutation importance, SHAP, shortcut ablation |
 | `make final` / `make report` | 10 | Final model and every table and figure of the paper |
 | `make all` | — | Everything above, from the raw CSVs |
-| `make test` | — | Ingestion, sampling, EDA, data-leakage and split tests |
+| `make test` | — | Ingestion, sampling, EDA, data-leakage, split and spot-checking tests |
 | `make check-mirror` / `make check-ingest` | — | Optional cross-checks against the Kaggle mirror |
 
 ## Reproducibility rules
 
 - One seed and every path and size live in `configs/*.yaml`; no magic numbers in code.
 - Folds are generated once, before any model is trained, and versioned (`data/splits/`). All algorithms use the same folds. Each file stores the fold of every instance in the row order of its sample, and the loaders refuse a sample in a different order (`tests/test_splits.py`).
-- Pre-processing has two parts. Steps with no parameter estimated from data (dropping redundant columns, filling `Std` of one-packet windows with 0) run before the split, row by row. Standardisation and one-hot encoding are fitted inside scikit-learn `Pipeline`s on the training rows of each fold only, and applied unchanged to its validation or test rows (`tests/test_no_leakage.py`).
+- Pre-processing has two parts. Steps with no parameter estimated from data (dropping redundant columns, filling `Std` of one-packet windows with 0) run before the split, row by row. One-hot encoding and standardisation are fitted inside scikit-learn `Pipeline`s on the training rows of each fold only, and applied unchanged to its validation or test rows (`tests/test_no_leakage.py`).
 - Outer test folds never inform a decision: not the pre-processing, the attributes, the hyperparameters nor the threshold.
 - Every run writes a `<script>.run.json` next to its results, with timestamp, git commit, config hash, library versions, seed, runtime and output hashes.
 - Results are never overwritten silently. Every number in the paper points to the result file that produced it.
@@ -89,7 +89,7 @@ src/          data/, features/, models/, experiments/, evaluation/, interpretati
 notebooks/    exploration and visualisation only; logic lives in src/
 results/      inspection/, sampling/, eda/, spotcheck/, nested/, ablation/, interpretation/, figures/, tables/
 models/       final model and metadata
-tests/        ingestion, sampling, EDA, data-leakage and split tests
+tests/        ingestion, sampling, EDA, data-leakage, split and spot-checking tests
 docs/         PLANO.md, DIARIO.md, IA_LOG.md, enunciado.pdf, artigo/
 ```
 

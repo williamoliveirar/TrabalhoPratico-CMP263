@@ -123,7 +123,7 @@ Seguindo essa regra, o fluxo do projeto é:
 | 4 | Pré-processamento **antes da divisão** | Limpeza (duplicatas; atributos redundantes e quase constantes; `Std` ausente → 0); escolha do conjunto de atributos | Etapas 2 e 4 | E e M, linha a linha |
 | 5 | Divisão dos dados em treino, validação e teste | Folds estratificados por `label34`, gerados uma vez e congelados | Etapa 5 | E (spot-checking) e M (validação cruzada aninhada) |
 | 6 | Pré-processamento **ajustado no treino** | `log1p`, padronização e codificação *one-hot*, ajustados no conjunto de treinamento de cada fold | Etapa 4 (dentro do `Pipeline`) | Treino de cada fold |
-| 7 | Treinamento e spot-checking | 7 algoritmos com hiperparâmetros padrão e um classificador de referência (`DummyClassifier`) | Etapa 6 | E |
+| 7 | Treinamento e spot-checking | 8 algoritmos com hiperparâmetros padrão e um classificador de referência (`DummyClassifier`) | Etapa 6 | E |
 | 8 | Otimização de hiperparâmetros e seleção de modelos | Busca aleatória no **laço interno** da validação cruzada aninhada | Etapa 7 | Treino de cada fold externo de M (subdividido em treino e validação) |
 | 9 | Estimativa de desempenho e comparação de modelos | **Laço externo** da validação cruzada aninhada; métricas; testes de hipóteses | Etapas 7 e 8 | Folds externos de teste de M |
 | 10 | Interpretação do modelo | Importância por permutação, SHAP e ablação dos atalhos, só no melhor modelo | Etapa 9 | Folds externos de teste de M |
@@ -316,9 +316,9 @@ O quadro abaixo traz as decisões como foram planejadas, com os termos das aulas
 | D3 | Amostragem | 50% benigno e 50% ataque; ataque dividido igualmente entre os 33 tipos; amostra de exploração (E, ~50 mil instâncias) e de modelagem (M, ~200 mil), disjuntas | Sem estratificar por tipo, o DDoS domina e ataques raros somem. E e M disjuntas impedem que a escolha de algoritmos "veja" os dados de avaliação | Decidido; tamanhos ajustáveis à máquina. A distribuição de classes nos folds de teste é discutida na proposta D16 (diário, 2026-11-05) |
 | D4 | Limpeza: instâncias duplicadas | Remover duplicatas exatas e conflitantes (mesmos atributos, rótulos diferentes) antes de qualquer divisão | Evita data leakage por duplicatas entre treino e teste e rótulos contraditórios | Decidido |
 | D5 | Métrica principal | MCC | Usa os quatro quadrantes da matriz de confusão; recomendado para classificação binária (Chicco & Jurman, 2020) | Decidido |
-| D6 | Métricas secundárias | F1 por classe, acurácia balanceada, AUPRC, sensibilidade (TVP, detecção), TFP (alarme falso, 1 − especificidade), sensibilidade por tipo de ataque | Sensibilidade e TFP não dependem da prevalência e são as mais transferíveis para fora do laboratório | Decidido |
-| D7 | Algoritmos | Regressão logística, Gaussian Naive Bayes, kNN, árvore de decisão, MLP, Random Forest, LightGBM, mais `DummyClassifier` como classificador de referência | Vieses indutivos diversos: linear, probabilístico, baseado em instâncias, árvores, redes neurais e ensembles (bagging e boosting) | Programa da disciplina conferido em 2026-11-05 (diário): faltava o SVM |
-| D8 | Divisão dos dados (treino, validação e teste) | Spot-checking em E, com validação cruzada repetida (5 folds × 2 repetições); validação cruzada aninhada em M (laço externo de 5 folds para teste, laço interno de 3 folds para validação); folds estratificados por `label34`, gerados uma vez e salvos | Mesmas divisões para todos os algoritmos; o laço interno isola o ajuste de hiperparâmetros da estimativa de desempenho (Cawley & Talbot, 2010; Varma & Simon, 2006) | Decidido; agrupamento por captura depende da Etapa 1 |
+| D6 | Métricas secundárias | F1 por classe, acurácia balanceada, AUPRC, AUC-ROC, sensibilidade (TVP, detecção), especificidade, TFP (alarme falso, 1 − especificidade), sensibilidade por tipo de ataque | Sensibilidade, especificidade, TFP e AUC-ROC não dependem da prevalência e são as mais transferíveis para fora do laboratório | Decidido. AUC-ROC e especificidade acrescentadas em 2026-11-06 (P3) |
+| D7 | Algoritmos | Regressão logística, Gaussian Naive Bayes, kNN, árvore de decisão, SVM (kernel RBF), MLP, Random Forest, LightGBM, mais `DummyClassifier` como classificador de referência | Vieses indutivos diversos: linear, probabilístico, baseado em instâncias, árvores, kernel (margem máxima), redes neurais e ensembles (bagging e boosting) | SVM incluído em 2026-11-06 (P2), depois da conferência do programa da disciplina |
+| D8 | Divisão dos dados (treino, validação e teste) | Spot-checking em E, com validação cruzada repetida (5 folds × 2 repetições); validação cruzada aninhada em M (laço externo de 5 folds para teste, laço interno de 3 folds para validação); folds estratificados por `label34`, gerados uma vez e salvos | Mesmas divisões para todos os algoritmos; o laço interno isola o ajuste de hiperparâmetros da estimativa de desempenho (Cawley & Talbot, 2010; Varma & Simon, 2006) | Decidido; sem agrupamento por captura (Etapa 1). Análises complementares decididas em 2026-11-06: *leave-capture-out* nos 16 tipos com 5 ou mais capturas, na Etapa 9; blocos contíguos de `row_idx` não adotados |
 | D9 | Otimização de hiperparâmetros | `RandomizedSearchCV` (busca aleatória), 30 configurações, só nos 3 finalistas | Equilíbrio entre custo e cobertura | Ajustável |
 | D10 | Comparação de modelos (teste de hipóteses) | *Corrected resampled t-test* (Nadeau & Bengio, 2003) com correção de Holm | O teste t pareado comum, com folds sobrepostos, tem erro tipo I elevado (Dietterich, 1998). A correção trata essa dependência. Friedman + Nemenyi (Demšar, 2006) é para vários datasets | Decidido |
 | D11 | Interpretação do modelo | Melhor modelo; importância por permutação e SHAP calculados nos folds externos de teste | Interpreta o modelo em dados que ele não viu; permite medir estabilidade entre folds | Decidido |
@@ -576,8 +576,8 @@ Cada etapa traz **objetivo**, **tarefas**, **saídas**, **critério de pronto** 
 | Limpeza: valores ausentes | `Std` ausente vira 0. Só ocorre nas janelas de 1 pacote, que não têm dispersão. O `Rate` infinito sai junto com a coluna | Antes da divisão | Regra fixa, sem parâmetro estimado; não é imputação por média ou mediana. Depois dela não sobra valor ausente nem infinito, e `prepare` interrompe a execução se sobrar |
 | Limpeza: dados inconsistentes | `IAT` negativo em 2 instâncias do dataset inteiro (mínimo de −0,018 s), mantido | — | Valor pequeno, compatível com pacotes fora de ordem; `log1p` continua definido |
 | Tratamento de outliers | Detecção pelo método IQR na EDA: até 21% das instâncias ficam fora de 1,5 × IQR. Sem remoção nem winsorização. Transformação `log1p` em `Min`, `Max`, `Std` e `IAT` (cauda longa, assimetria > 2) nos algoritmos sensíveis à escala | `log1p` dentro do `Pipeline`; não tem parâmetro | Tráfego de ataque é atípico por natureza, e remover os outliers apagaria o sinal. A transformação log é a estratégia indicada nas aulas para cauda longa à direita |
-| Transformação: normalização ou padronização | Padronização (`StandardScaler`) dos atributos numéricos, depois do `log1p`, só em LR, kNN, MLP e Naive Bayes | Dentro do `Pipeline`, ajustada no treino de cada fold | Médias e desvios são estimados no treino e aplicados à validação e ao teste. Árvores não são sensíveis à escala |
-| Transformação: codificação | `Protocol Type` em *one-hot* nos mesmos 4 algoritmos. As categorias são aprendidas no treino, e uma categoria nova vira zeros (`handle_unknown="ignore"`) | Dentro do `Pipeline` | O atributo é nominal: códigos de protocolo IP (0, 1, 6, 17, 47) não têm ordem. Nas árvores, o código fica como está (D13; ver a proposta P6 no diário) |
+| Transformação: normalização ou padronização | Padronização (`StandardScaler`) dos atributos numéricos, depois do `log1p`, só em LR, Naive Bayes, kNN, SVM e MLP | Dentro do `Pipeline`, ajustada no treino de cada fold | Médias e desvios são estimados no treino e aplicados à validação e ao teste. Árvores não são sensíveis à escala |
+| Transformação: codificação | `Protocol Type` em *one-hot* em todos os pipelines, inclusive nas árvores (P6, 2026-11-06). As categorias são aprendidas no treino, e uma categoria nova vira zeros (`handle_unknown="ignore"`) | Dentro do `Pipeline` | O atributo é nominal: códigos de protocolo IP (0, 1, 6, 17, 47) não têm ordem. Uma árvore conseguiria isolar cada código com vários cortes, mas a regra das aulas para atributo nominal é o *one-hot* |
 | Transformação: discretização | Não aplicada | — | Nenhum algoritmo escolhido exige atributos categóricos, e as árvores já particionam os atributos numéricos |
 | Balanceamento de classes | Resolvido pelo desenho da amostra (D3: 50/50, tipos igualados). Sem SMOTE nem aprendizado sensível a custo | Antes da divisão (Etapa 2) | Sobre a distribuição dos folds de teste, ver a proposta D16 (diário) |
 | Redução de dimensionalidade | Nenhuma seleção de atributos supervisionada nem PCA. Os conjuntos `no_window`, `no_ttl` e `no_shortcut` são definidos por hipótese (D12), e não pelo desempenho | — | Ver o parágrafo abaixo da tabela |
@@ -594,7 +594,7 @@ Se houvesse seleção supervisionada, ela teria de ficar dentro da validação c
   - `feature_names(columns, feature_cfg, feature_set, auxiliary)`: os atributos preditivos do conjunto (`full`, `no_window`, `no_ttl` ou `no_shortcut`), sem as colunas auxiliares (`label34`, `category8`, `y`, `source_file`, `row_idx`);
   - `prepare(df, features, feature_cfg)`: o pré-processamento antes da divisão, linha a linha;
   - `build_pipeline(model_name, features, feature_cfg, search_cfg, seed, n_jobs)`: um `Pipeline` com o pré-processamento ajustado no treino e o estimador. Os hiperparâmetros do estimador ficam acessíveis como `model__<nome>`.
-- `src/models/registry.py`: os 7 algoritmos de D7 e o `DummyClassifier`, com os hiperparâmetros padrão e os parâmetros fixos de `configs/search_spaces.yaml`.
+- `src/models/registry.py`: os 8 algoritmos de D7 (o SVM entrou em 2026-11-06, P2) e o `DummyClassifier`, com os hiperparâmetros padrão e os parâmetros fixos de `configs/search_spaces.yaml`.
 
 **Pronto quando** `tests/test_no_leakage.py` confirma:
 - que os parâmetros ajustados (médias e desvios da padronização, categorias do *one-hot*) dependem só das instâncias de treino;
@@ -638,8 +638,8 @@ Se houvesse seleção supervisionada, ela teria de ficar dentro da validação c
 
 **Tarefas (`src/experiments/spotcheck.py`):**
 
-1. Treinar os 7 algoritmos mais o `DummyClassifier` com hiperparâmetros padrão (só o necessário para convergir, como `max_iter`, e `random_state` fixo), nos mesmos folds, com os pipelines da Etapa 4 (`build_pipeline`).
-2. Registrar por fold: MCC, F1 por classe, acurácia balanceada, AUPRC, sensibilidade (TVP), TFP, tempo de treino e de predição. Salvar em `results/spotcheck/metrics_per_fold.csv`. Registrar também o MCC no próprio conjunto de treinamento, para diagnosticar overfitting (treino muito acima da validação) e underfitting (os dois baixos). Este último item é a proposta P4 do diário.
+1. Treinar os 8 algoritmos mais o `DummyClassifier` com hiperparâmetros padrão (só o necessário para convergir, como `max_iter`, e `random_state` fixo), nos mesmos folds, com os pipelines da Etapa 4 (`build_pipeline`).
+2. Registrar por fold: MCC, F1 por classe, acurácia balanceada, AUPRC, AUC-ROC, sensibilidade (TVP), especificidade, TFP, tempo de treino e de predição. Salvar em `results/spotcheck/metrics_per_fold.csv`. Registrar também o MCC no próprio conjunto de treinamento, para diagnosticar overfitting (treino muito acima da validação) e underfitting (os dois baixos) (P4, 2026-11-06).
 3. Gerar a tabela de média ± desvio e o boxplot de MCC por algoritmo.
 4. Selecionar os 3 com maior MCC médio. Se as diferenças estiverem dentro de um desvio-padrão (empate no teto), escolher os 3 com vieses indutivos mais diferentes e registrar que o spot-checking não discriminou. Isso também é um resultado.
 
@@ -691,6 +691,7 @@ for k, (train_idx, test_idx) in enumerate(outer_folds(assign)):   # laço extern
 | Gaussian NB | `var_smoothing` ~ log-uniforme(1e-12, 1e-3) |
 | kNN | `n_neighbors` ∈ {3, 5, …, 51}; `weights` ∈ {uniform, distance}; `p` ∈ {1, 2} |
 | Árvore de decisão | `max_depth` ∈ {3, …, 30, None}; `min_samples_leaf` ∈ [1, 200]; `criterion` ∈ {gini, entropy} |
+| SVM (RBF) | `C` ~ log-uniforme(1e-2, 1e3); `gamma` ~ log-uniforme(1e-4, 1); escore = `decision_function`, sem calibração de Platt |
 | MLP | `hidden_layer_sizes` ∈ {(32,), (64,), (64, 32), (128, 64)}; `alpha` ~ log-uniforme(1e-6, 1e-2); `learning_rate_init` ~ log-uniforme(1e-4, 1e-2); `early_stopping=True` |
 | Random Forest | `n_estimators` ∈ [100, 500]; `max_depth` ∈ {10, 20, 30, None}; `max_features` ∈ {sqrt, log2, 0.5}; `min_samples_leaf` ∈ [1, 50] |
 | LightGBM | `n_estimators` ∈ [100, 1000]; `learning_rate` ~ log-uniforme(0.01, 0.3); `num_leaves` ∈ [15, 255]; `min_child_samples` ∈ [10, 200]; `subsample` ∈ [0.6, 1] com `subsample_freq=1`; `colsample_bytree` ∈ [0.6, 1]; `reg_lambda` ~ log-uniforme(1e-3, 10) |
@@ -705,7 +706,7 @@ for k, (train_idx, test_idx) in enumerate(outer_folds(assign)):   # laço extern
 
 **Tarefas (`src/evaluation/`, `src/reporting/`):**
 
-1. **Tabela principal:** média ± desvio padrão nos 5 folds externos de MCC, F1 (ataque), F1 (benigno), acurácia balanceada, AUPRC, sensibilidade (TVP) e TFP (1 − especificidade), para os finalistas e o Dummy.
+1. **Tabela principal:** média ± desvio padrão nos 5 folds externos de MCC, F1 (ataque), F1 (benigno), acurácia balanceada, AUPRC, AUC-ROC, sensibilidade (TVP), especificidade e TFP (1 − especificidade), para os finalistas e o Dummy.
 2. **Gráfico por fold** (boxplot ou pontos ligados) do MCC de cada finalista.
 3. **Teste de hipóteses:** *corrected resampled t-test* entre o melhor modelo e cada um dos outros, com correção de Holm. Hipótese nula: os dois modelos têm desempenho equivalente. Com apenas 5 folds o teste tem pouco poder (risco de erro tipo II), e isso deve ser dito no artigo. Complemento proposto (P5, diário): intervalos de confiança de 95% por bootstrap (percentis 2,5 e 97,5, B ≥ 1000), como na Aula 08.
 
@@ -747,6 +748,7 @@ for k, (train_idx, test_idx) in enumerate(outer_folds(assign)):   # laço extern
    - **ablação:** repetir a Etapa 7 só para o melhor algoritmo com `no_shortcut` (sem `Number` e `Time_To_Live`), nos mesmos folds. Se houver tempo, `no_window` e `no_ttl`, que removem cada um separadamente;
    - comparar MCC (teste corrigido) e sensibilidade por tipo de ataque entre `full` e `no_shortcut`, separando os grupos de janela 10 e 100. **Essa é a tabela central do artigo.**
 5. **Leitura dos resultados:** queda pequena indica que o modelo é robusto a esses atributos; queda grande é evidência de atalho; colapso em tipos específicos de ataque indica quais ataques são reconhecidos pelo ambiente, e não pelo comportamento.
+6. ***Leave-capture-out*** (análise complementar da D8, item (a), adotado em 2026-11-06): treinar o melhor algoritmo, com a configuração de hiperparâmetros do modelo final (Etapa 10, tarefa 1, que pode rodar antes desta), nos folds do laço externo (`nested_M`) e nos folds por captura (`capture_M`). Comparar a sensibilidade por tipo, sobre as predições fora do fold, nos 16 tipos agrupados por captura. Uma queda grande indica que o desempenho depende de ver, no treino, janelas da mesma captura que está no teste. Custo: 10 treinos.
 
 **Pronto quando:** Q3 está respondida no diário com números e figuras.
 
@@ -797,7 +799,7 @@ for k, (train_idx, test_idx) in enumerate(outer_folds(assign)):   # laço extern
 
 Hoje é **25/10/2026 (domingo)**. Restam quatro semanas até a meta interna de entrega (20/11, sexta-feira), com dois dias de folga antes do prazo oficial (22/11, 23h59).
 
-> **Situação em 05/11/2026:** Etapas 0 a 5 concluídas. As Etapas 4 e 5 terminaram em 05/11, e o previsto era 01–02/11. Como a Etapa 6 estava prevista para 03–04/11, o trabalho está cerca de 3 dias atrás deste cronograma. O plano de contingência (§8.2) continua valendo. O cronograma da disciplina (v2) confirma a revisão por pares em 24/11 e a apresentação em 01/12.
+> **Situação em 06/11/2026:** Etapas 0 a 6 concluídas. As Etapas 4 e 5 terminaram em 05/11 (previsto: 01–02/11), e a 6 em 06/11 (previsto: 03–04/11). O trabalho está cerca de 2 dias atrás deste cronograma. O plano de contingência (§8.2) continua valendo. O cronograma da disciplina (v2) confirma a revisão por pares em 24/11 e a apresentação em 01/12.
 
 | Período | Etapa(s) | Marco (pronto quando) |
 |---|---|---|
