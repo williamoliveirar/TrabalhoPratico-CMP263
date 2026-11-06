@@ -1,0 +1,74 @@
+{
+  "source": {
+    "data/processed/sample_E.parquet": "005fc0e08d88dc0115b76afb2582f75ad7512348a6d95e69bacecad9b37a80d3",
+    "data/splits/spotcheck_E.csv.gz": "4a641ccd3eca924d52cc3e97258ca5218ad5748e8a9f824f0cb2f34cce2dcb62"
+  },
+  "feature_set": "full",
+  "n_features": 27,
+  "rule": "top 3 by mean validation MCC; if more than 3 algorithms are within one standard deviation of the best mean (tie group), the spot-checking does not discriminate among them and the finalists are chosen among them by diversity of inductive bias",
+  "ranking": [
+    {
+      "algorithm": "lightgbm",
+      "inductive_bias": "ensemble of trees (boosting)",
+      "mcc_mean": 0.8067334834088568,
+      "mcc_std": 0.005825483620478156
+    },
+    {
+      "algorithm": "random_forest",
+      "inductive_bias": "ensemble of trees (bagging)",
+      "mcc_mean": 0.8034770852207677,
+      "mcc_std": 0.005793767429365386
+    },
+    {
+      "algorithm": "mlp",
+      "inductive_bias": "neural network",
+      "mcc_mean": 0.7756146805390352,
+      "mcc_std": 0.0076334518066650155
+    },
+    {
+      "algorithm": "svm",
+      "inductive_bias": "kernel (maximum margin)",
+      "mcc_mean": 0.765880525963192,
+      "mcc_std": 0.004224587264116178
+    },
+    {
+      "algorithm": "knn",
+      "inductive_bias": "instance-based",
+      "mcc_mean": 0.7521755933900917,
+      "mcc_std": 0.004614123002535243
+    },
+    {
+      "algorithm": "logreg",
+      "inductive_bias": "linear",
+      "mcc_mean": 0.7255945182324084,
+      "mcc_std": 0.007734109110435631
+    },
+    {
+      "algorithm": "decision_tree",
+      "inductive_bias": "single tree",
+      "mcc_mean": 0.7230453530168637,
+      "mcc_std": 0.004237513700918639
+    },
+    {
+      "algorithm": "gaussian_nb",
+      "inductive_bias": "probabilistic",
+      "mcc_mean": 0.6934926644911991,
+      "mcc_std": 0.004072131173287909
+    }
+  ],
+  "top_by_mean": [
+    "lightgbm",
+    "random_forest",
+    "mlp"
+  ],
+  "tie_floor": 0.8009079997883786,
+  "tie_group": [
+    "lightgbm",
+    "random_forest"
+  ],
+  "discriminates": true,
+  "baseline": {
+    "algorithm": "dummy",
+    "mcc_mean": 0.0
+  }
+}

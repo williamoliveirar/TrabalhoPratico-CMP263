@@ -1,0 +1,43 @@
+{
+  "script": "src.experiments.spotcheck",
+  "started_at": "2026-11-06T22:26:08+00:00",
+  "git_commit": "03c53badcb0a3aca1649856472e011739526605c",
+  "git_dirty": false,
+  "config_sha256": "1f3255aeef1b74bd2d4e72f4fad33c1da24ec2da7186380eb54cd1baf3315120",
+  "seed": 42,
+  "n_jobs": 6,
+  "python": "3.12.7",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "libraries": {
+    "numpy": "2.5.4",
+    "pandas": "3.1.0",
+    "pyarrow": "26.0.0",
+    "polars": "2.1.0",
+    "scikit-learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "shap": "0.54.1",
+    "scipy": "1.18.1",
+    "matplotlib": "3.11.2",
+    "PyYAML": "6.0.3",
+    "joblib": "1.6.0"
+  },
+  "outputs": {
+    "results/spotcheck/metrics_per_fold.csv": "d27b6ba5b27401994044e7bd74203cd311a81a9f35ab27cec9fe42827ae7f328",
+    "results/spotcheck/summary.csv": "be2785f1e9341ea2e4eec644faeff8e41872af1e6f891eaa6bd373fbb40d65ed",
+    "results/spotcheck/timings_per_fold.csv": "f23a6f8bd84a19cb0005a5f1a1b4862f821ea17ff91d50ee93d30bfb34184a84",
+    "results/spotcheck/selection.json": "a5501d47add9a40fbd9398ed775c50435fc71dc8217454183d4f9e9c2fc3254c",
+    "results/spotcheck/fig_spotcheck_mcc.png": "b5307329fdfbf87c50b2255e1b0ea0b798af2b47867287f6a30e77542d2889fa"
+  },
+  "time_per_algorithm_s": {
+    "logreg": 2.5,
+    "gaussian_nb": 0.9,
+    "knn": 5.6,
+    "decision_tree": 3.3,
+    "svm": 369.2,
+    "mlp": 69.8,
+    "random_forest": 11.6,
+    "lightgbm": 2.9,
+    "dummy": 0.3
+  },
+  "elapsed_s": 903.8
+}
