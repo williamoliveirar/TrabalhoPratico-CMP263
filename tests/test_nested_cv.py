@@ -5,7 +5,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.model_selection import ParameterSampler, StratifiedKFold
 from sklearn.pipeline import Pipeline
 
-from src.experiments.nested_cv import param_distributions, plain, tune_and_test
+from src.experiments.nested_cv import collect, param_distributions, plain, tune_and_test
 from src.models.pipelines import auxiliary_columns, build_pipeline, feature_names, prepare
 from src.models.registry import BASELINE, FACTORIES
 from src.utils.config import load_config
@@ -78,6 +78,20 @@ def test_the_baseline_is_fitted_without_a_search():
     out = tune_and_test(pipe, param_distributions(SEARCH_CFG[BASELINE].get("params", {})), X, y, train, test,
                         inner=[], n_iter=30, seed=0, n_jobs=1)
     assert "search" not in out and out["test"]["mcc"] == 0.0 and out["test"]["roc_auc"] == 0.5
+
+
+def test_collect_waits_for_every_fold(tmp_path):
+    from src.utils.io import write_json
+    metrics = {"mcc": 0.8, "tp": 1, "fn": 0, "tn": 1, "fp": 0}
+    write_json({"model": "lightgbm", "outer_fold": 0, "n_train": 8, "n_test": 2, "best_params": {"num_leaves": 31},
+                "inner_validation_mcc": 0.7, "inner_validation_mcc_std": 0.01, "inner_training_mcc": 0.9,
+                "outer_training_mcc": 0.95, "test": metrics}, tmp_path / "lightgbm" / "fold0.json")
+    assert collect(tmp_path, ["lightgbm", BASELINE], n_outer=1) is None   # the dummy fold is missing
+    write_json({"model": BASELINE, "outer_fold": 0, "n_train": 8, "n_test": 2, "outer_training_mcc": 0.0,
+                "test": metrics | {"mcc": 0.0}}, tmp_path / BASELINE / "fold0.json")
+    table = collect(tmp_path, ["lightgbm", BASELINE], n_outer=1)
+    assert table["test_mcc"].to_list() == [0.8, 0.0] and table["best_params"].to_list() == ['{"num_leaves": 31}', None]
+    assert table["inner_validation_mcc"].null_count() == 1
 
 
 @pytest.mark.parametrize("spec, expected", [

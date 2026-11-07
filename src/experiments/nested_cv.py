@@ -22,8 +22,10 @@ stopped: a fold whose fold<k>.json exists is skipped.
 - fold<k>_search.csv: every configuration tried, with mean and std of the validation MCC and mean training MCC;
 - fold<k>_predictions.csv.gz: position in M, true class, predicted class and score of every test instance
   (the out-of-fold predictions used in Etapa 8);
-- fold<k>_timing.json: wall-clock times, the only output that varies between runs.
-Each invocation also writes results/nested/nested_cv.run.json.
+- fold<k>_timing.json: wall-clock times, the only output that varies between runs (and includes any time the
+  machine spent suspended).
+Once every model has every outer fold, results/nested/folds.csv gathers one row per model and fold. Each
+invocation also writes its own run record (nested_cv[_<scope>].run.json).
 
 Usage: python -m src.experiments.nested_cv [--models lightgbm ...] [--folds 0 1 ...]
 """
@@ -132,6 +134,25 @@ def run_fold(name: str, k: int, X, y: np.ndarray, assign: pl.DataFrame, cfg: dic
     return result["timing"]
 
 
+def collect(root, models: list[str], n_outer: int) -> pl.DataFrame | None:
+    """One row per model and outer fold (inner-loop and outer-loop results), or None while a fold is missing."""
+    rows = []
+    for name in models:
+        for k in range(n_outer):
+            f = root / name / f"fold{k}.json"
+            if not f.exists():
+                return None
+            d = json.loads(f.read_text("utf-8"))
+            rows.append({"model": name, "outer_fold": k, "n_train": d["n_train"], "n_test": d["n_test"],
+                         "inner_validation_mcc": d.get("inner_validation_mcc"),
+                         "inner_validation_mcc_std": d.get("inner_validation_mcc_std"),
+                         "inner_training_mcc": d.get("inner_training_mcc"),
+                         "outer_training_mcc": d["outer_training_mcc"],
+                         **{f"test_{m}": v for m, v in d["test"].items()},
+                         "best_params": json.dumps(d["best_params"], sort_keys=True) if "best_params" in d else None})
+    return pl.DataFrame(rows, infer_schema_length=None)
+
+
 def main() -> None:
     cfg, feature_cfg, search_cfg = load_config(), load_config("features"), load_config("search_spaces")
     models = [*cfg["search"]["finalist_models"], *cfg["search"]["reference_models"]]
@@ -166,6 +187,11 @@ def main() -> None:
                 done.append(f"{name}/fold{k}")
                 outputs |= {rel(f): sha256_file(f) for f in sorted(out_dir.glob(f"fold{k}*"))
                             if not f.name.endswith("_timing.json")}
+        table = collect(root, models, n_outer)
+        if table is not None:  # every model has every outer fold: consolidated table for Etapa 8
+            table.write_csv(root / "folds.csv")
+            outputs[rel(root / "folds.csv")] = sha256_file(root / "folds.csv")
+            print(f"wrote {rel(root / 'folds.csv')} ({table.height} rows)")
         run["computed"] = done
         run["outputs"] = outputs
 
