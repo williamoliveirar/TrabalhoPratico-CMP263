@@ -1,6 +1,6 @@
-# Guia prático do projeto (Etapas 0 a 6)
+# Guia prático do projeto (Etapas 0 a 7)
 
-*Situação em 06/11/2026; código da Etapa 6 no commit `03c53ba` e resultados do spot-checking no commit `df28178`. Atualize este guia ao fim de cada etapa.*
+*Situação em 07/11/2026; código da Etapa 7 nos commits `ae91fea` e `b583e03` e resultados da validação cruzada aninhada no commit `6da18f6`. Atualize este guia ao fim de cada etapa.*
 
 Este guia explica, do zero, o que já foi construído, como rodar cada parte e como conferir sozinho os resultados e as conclusões. O plano completo está em `docs/PLANO.md`; as decisões e os números, com fonte, em `docs/DIARIO.md`. Aqui o foco é prático: o que é cada coisa, que comando rodar e o que você deve ver. Os termos são os das aulas. O glossário completo está no PLANO, §1.4, e o mapa das etapas formais do treinamento de modelos no PLANO, §1.3.
 
@@ -200,10 +200,11 @@ TrabalhoPratico-CPM263/
 │   ├── reporting/style.py    estilo e cores das figuras (benigno azul, ataque laranja)
 │   ├── experiments/
 │   │   ├── make_splits.py    Etapa 5: folds congelados; funções que os entregam ao scikit-learn (cv=)
-│   │   └── spotcheck.py      Etapa 6: spot-checking em E; ranking e grupo de empate
+│   │   ├── spotcheck.py      Etapa 6: spot-checking em E; ranking e grupo de empate
+│   │   └── nested_cv.py      Etapa 7: validação cruzada aninhada em M (busca no laço interno, teste no externo)
 │   ├── evaluation/metrics.py métricas de D5 e D6 (MCC, sensibilidade, especificidade, AUC-ROC...)
-│   └── features/, interpretation/   (vazios; Etapas 7 a 10)
-├── tests/                    test_ingest.py, test_sample.py, test_eda.py, test_no_leakage.py, test_splits.py, test_spotcheck.py (31 testes); synthetic.py (dados inventados)
+│   └── features/, interpretation/   (vazios; Etapas 8 a 10)
+├── tests/                    test_ingest.py, test_sample.py, test_eda.py, test_no_leakage.py, test_splits.py, test_spotcheck.py, test_nested_cv.py (37 testes); synthetic.py (dados inventados)
 ├── data/
 │   ├── raw_manifest.csv      versionado: tamanho, SHA-256 e linhas de cada um dos 309 CSVs
 │   ├── sample_index.csv.gz   versionado: quais linhas (source_file, row_idx) estão em E e em M
@@ -214,7 +215,8 @@ TrabalhoPratico-CPM263/
 │   ├── sampling/             saídas da Etapa 2
 │   ├── eda/                  saídas da Etapa 3 (tabelas CSV, JSON e figuras PNG)
 │   ├── splits/               saídas da Etapa 5 (tamanho de cada partição, conferências, hashes)
-│   └── spotcheck/            saídas da Etapa 6 (métricas por fold, resumo, ranking, figura)
+│   ├── spotcheck/            saídas da Etapa 6 (métricas por fold, resumo, ranking, figura)
+│   └── nested/               saídas da Etapa 7 (por modelo e fold: configuração, busca, predições; folds.csv)
 └── docs/
     ├── PLANO.md              o plano do trabalho (pt-BR)
     ├── DIARIO.md             diário de bordo: decisões e números com fonte (pt-BR)
@@ -405,6 +407,31 @@ git diff --stat -- results/spotcheck ":(exclude)*.run.json" ":(exclude)*timings*
 
 Esperado: nenhuma saída.
 
+### Etapa 7 — Validação cruzada aninhada (em M)
+
+```powershell
+make tune
+```
+
+Para cada modelo (LightGBM, Random Forest e MLP, os finalistas; a árvore de decisão, para a H1; e o Dummy, como piso) e cada um dos 5 folds externos de M:
+- **laço interno (treino × validação):** a busca aleatória sorteia 30 configurações de `configs/search_spaces.yaml` e escolhe a de maior MCC médio nos 3 folds de **validação** tirados do treino externo. A melhor é retreinada no treino externo inteiro;
+- **laço externo (treino × teste):** só então o fold de **teste** é usado, uma única vez, para a estimativa de desempenho.
+
+Leva cerca de 5,4 h com 6 núcleos (Random Forest ≈ 2,7 h, LightGBM ≈ 1,5 h, MLP ≈ 1,0 h). Cada fold grava os seus arquivos ao terminar, e uma execução interrompida recomeça do fold que falta. Para rodar só uma parte: `python -m src.experiments.nested_cv --models decision_tree --folds 0`. **Deixe a tampa do notebook aberta:** fechá-la suspende a máquina mesmo durante a execução (ver a seção 11).
+
+| Arquivo (`results/nested/`) | O que tem |
+|---|---|
+| `<modelo>/fold<k>.json` | Melhor configuração; MCC na validação (média e desvio nos 3 folds internos) e no treino (P4); MCC no treino externo; métricas no teste e matriz de confusão |
+| `<modelo>/fold<k>_search.csv` | As 30 configurações do laço interno, com o MCC médio na validação e no treino e o ranking. As 30 são as mesmas em todos os folds |
+| `<modelo>/fold<k>_predictions.csv.gz` | Predições fora do fold: posição em M, classe verdadeira, classe prevista e escore de cada instância de teste (entrada da Etapa 8) |
+| `<modelo>/fold<k>_timing.json` | Tempos; é o único arquivo que muda de uma rodada para outra (e inclui o tempo em que a máquina ficou suspensa) |
+| `folds.csv` | Uma linha por modelo e fold, com tudo acima menos as predições |
+| `nested_cv*.run.json` | Um registro por chamada (`nested_cv_fold0`, `nested_cv_fold1_fold2_fold3_fold4` e a consolidação, `nested_cv`) |
+
+Resultado (MCC no teste, média ± desvio nos 5 folds externos): LightGBM 0,832 ± 0,002, Random Forest 0,824 ± 0,002, MLP 0,801 ± 0,003, árvore de decisão 0,793 ± 0,003 e Dummy 0. A ordem é a mesma em todos os folds. A configuração escolhida se repete entre folds (Random Forest em 5 de 5, LightGBM em 4 de 5). Onde muda, as vencedoras empatam. O MLP e a Random Forest escolheram a borda do espaço de busca, o que gerou a proposta P8. A leitura completa está no diário (entrada "2026-11-07 — Etapa 7").
+
+Para conferir que um fold se reproduz, use o trecho 4.10 (refaz a busca da árvore no fold 0 em cerca de 40 s). Rodar `make tune` de novo não refaz nada, porque todos os folds já existem.
+
 ---
 
 ## 7. Como validar tudo por conta própria
@@ -417,7 +444,7 @@ São cinco níveis, do mais rápido ao mais completo. Rode no terminal do VS Cod
 make test
 ```
 
-Esperado: `31 passed`. Os testes conferem, com dados pequenos inventados:
+Esperado: `37 passed`. Os testes conferem, com dados pequenos inventados:
 - que a ingestão preserva valores e descarta só linhas malformadas;
 - que o mapeamento de rótulos tem 34 rótulos e 12 ataques DDoS;
 - que a deduplicação segue as três regras e que E e M saem disjuntas e 50/50;
@@ -438,7 +465,12 @@ Esperado: `31 passed`. Os testes conferem, com dados pequenos inventados:
   - as métricas batem com as definições, numa matriz de confusão feita à mão;
   - a predição usada nas métricas é idêntica ao `predict` de cada pipeline, e o escore do SVM é a `decision_function`;
   - o MCC no treino denuncia uma árvore que memoriza dados aleatórios;
-  - a regra de seleção reconhece um empate no topo.
+  - a regra de seleção reconhece um empate no topo;
+- (`test_nested_cv.py`, Etapa 7) que:
+  - todos os espaços de busca de `search_spaces.yaml` geram configurações válidas, dentro dos limites, que chegam ao modelo;
+  - durante a busca, cada ajuste recebe exatamente o treino do seu fold interno, o retreino recebe o treino externo inteiro e nenhuma instância de teste aparece em nenhum deles;
+  - o Dummy é avaliado sem busca;
+  - a tabela consolidada só é gravada quando todos os modelos têm todos os folds.
 
 ### Nível 2 — Refazer as Etapas 2, 3 e 5 e obter os mesmos arquivos (≈ 45 s)
 
@@ -648,6 +680,43 @@ Esperado:
 - a tabela: LightGBM 0,807 na validação e 0,841 no treino; Random Forest e árvore de decisão com 1,0 no treino (overfitting); regressão logística, Naive Bayes, SVM e MLP com treino e validação quase iguais;
 - `0.807424` duas vezes: retreinar o LightGBM no primeiro fold dá o mesmo MCC que está gravado.
 
+**4.10 — A validação cruzada aninhada: as predições cobrem M uma vez, e um fold se reproduz (Etapa 7, ≈ 40 s):**
+
+```python
+import json
+import polars as pl
+from sklearn.metrics import matthews_corrcoef
+from src.experiments.make_splits import NESTED, inner_folds, load_assignment, outer_folds
+from src.experiments.nested_cv import param_distributions, tune_and_test
+from src.models.pipelines import auxiliary_columns, build_pipeline, feature_names, prepare
+from src.utils.config import load_config
+t = pl.read_csv("results/nested/folds.csv")
+print(t.group_by("model", maintain_order=True).agg(pl.col("test_mcc").mean().round(3).alias("mean"),
+                                                   pl.col("test_mcc").std().round(3).alias("std")))
+p = pl.concat([pl.read_csv(f"results/nested/lightgbm/fold{k}_predictions.csv.gz") for k in range(5)])
+print(p["position"].n_unique(), p.height)                                              # 192550 192550
+p0 = pl.read_csv("results/nested/lightgbm/fold0_predictions.csv.gz")
+print(round(matthews_corrcoef(p0["y"], p0["pred"]), 6),
+      round(t.filter((pl.col("model") == "lightgbm") & (pl.col("outer_fold") == 0))["test_mcc"].item(), 6))
+cfg, fcfg, scfg = load_config(), load_config("features"), load_config("search_spaces")
+M = pl.read_parquet("data/processed/sample_M.parquet")
+feats = feature_names(M.columns, fcfg, "full", auxiliary_columns(cfg))
+X, y = prepare(M, feats, fcfg), M["y"].to_numpy()
+assign = load_assignment(cfg, NESTED, M)
+treino, teste = outer_folds(assign)[0]
+pipe = build_pipeline("decision_tree", feats, fcfg, scfg, seed=cfg["seed"], n_jobs=1)
+out = tune_and_test(pipe, param_distributions(scfg["decision_tree"]["params"]), X, y, treino, teste,
+                    inner_folds(assign, 0), n_iter=cfg["search"]["n_iter"], seed=cfg["seed"], n_jobs=cfg["n_jobs"])
+gravado = json.loads(open("results/nested/decision_tree/fold0.json", encoding="utf-8").read())
+print(out["best_params"] == gravado["best_params"], round(out["test"]["mcc"], 6), round(gravado["test"]["mcc"], 6))
+```
+
+Esperado:
+- a tabela: LightGBM 0,832 (desvio 0,002), Random Forest 0,824 (0,002), MLP 0,801 (0,003), árvore de decisão 0,793 (0,003) e Dummy 0,0;
+- `192550 192550`: juntas, as predições dos 5 folds de teste cobrem cada instância de M exatamente uma vez;
+- `0.833506` duas vezes: o MCC gravado sai das predições gravadas;
+- `True 0.793446 0.793446`: refazer a busca da árvore no fold 0 escolhe a mesma configuração e dá o mesmo MCC no teste.
+
 ### Nível 5 — Olhar as figuras e comparar com o diário
 
 Abra as figuras de `results/eda/` (clique no explorador do VS Code, ou `start results\eda\fig_number_by_type.png`). Para cada afirmação da entrada "Etapa 3 — EDA na amostra E" do diário, o arquivo citado deve mostrar o número citado. Por exemplo, a afirmação "MCC 0,653 com `Number`" está na primeira linha de `single_feature_models.csv` e na primeira barra de `fig_single_feature_mcc.png`.
@@ -678,6 +747,9 @@ Cada conclusão abaixo tem a evidência, onde ela está e como conferir.
 | 8 | A divisão dos dados está congelada: todos os algoritmos vão usar os mesmos folds, nenhuma instância de teste entra no laço interno, e cada rótulo mantém a proporção em todos os folds | `data/splits/`, `results/splits/splits_report.json`, `tests/test_splits.py` | Níveis 1 e 4.8 |
 | 9 | Com hiperparâmetros padrão, os ensembles de árvores lideram (LightGBM 0,807; Random Forest 0,803) e o MCC em E não passa de cerca de 0,81, bem abaixo do benchmark binário do artigo do dataset. A explicação provável, ainda uma hipótese, é que os ataques de janela 10 se parecem com o benigno | `results/spotcheck/summary.csv`, `selection.json`, `fig_spotcheck_mcc.png` | Nível 4.9 |
 | 10 | Árvores sem limite de profundidade memorizam o treino (MCC 1,000 no treino, contra 0,723 e 0,803 na validação); LR e Naive Bayes ficam com treino e validação iguais e baixos (underfitting) | `results/spotcheck/summary.csv` | Nível 4.9 |
+| 11 | Com hiperparâmetros ajustados, a estimativa de desempenho no laço externo é LightGBM 0,832 ± 0,002, Random Forest 0,824, MLP 0,801 e árvore de decisão 0,793, na mesma ordem em todos os folds. O teto continua perto de 0,83, e os testes estatísticos ficam para a Etapa 8 | `results/nested/folds.csv` | Nível 4.10 |
+| 12 | A escolha dos hiperparâmetros é estável: a mesma configuração na Random Forest em 5 de 5 folds e no LightGBM em 4 de 5; onde muda, as vencedoras ficam a no máximo 0,0017 uma da outra. A validação do laço interno fica um pouco abaixo do teste (treino menor) | `results/nested/<modelo>/fold<k>_search.csv`, `folds.csv` | Compare a coluna `rank` dos `fold<k>_search.csv` de um modelo |
+| 13 | O ajuste acabou com a memorização da árvore (diferença treino − validação de 0,277 para 0,026). O MLP escolheu a maior arquitetura oferecida em todos os folds, e a Random Forest, o maior `max_features`: os números deles podem ser um limite inferior (P8) | `folds.csv` (`inner_training_mcc`, `inner_validation_mcc`), `fold<k>.json` | Nível 4.10 e os `fold<k>.json` |
 
 **Consequência para o trabalho:** um modelo pode ter MCC alto aprendendo só "janela grande = ataque". Por isso:
 - a Etapa 9 compara `full` com `no_window`, `no_ttl` e `no_shortcut`;
@@ -718,20 +790,21 @@ Regras que valem sempre (estão no `CLAUDE.md`):
 
 ## 10. O que vem a seguir e o que está com a dupla
 
-**Próximas etapas** (cronograma do PLANO §8; em 06/11 estamos cerca de 2 dias atrasados):
+**Próximas etapas** (cronograma do PLANO §8; em 07/11, a Etapa 7 terminou dentro da janela prevista):
 
 | Etapa | Previsto no plano | O que será feito |
 |---|---|---|
-| 7 | 04–08/11 | Validação cruzada aninhada em M para os finalistas: ajuste de hiperparâmetros (laço interno) e estimativa de desempenho (laço externo) |
 | 8 | 08–10/11 | Estimativa de desempenho e comparação de modelos: tabelas, figuras e testes de hipóteses; Q1 e Q2 respondidas |
 | 9 | 10–13/11 | Interpretação do melhor modelo, ablação dos atalhos e *leave-capture-out*; Q3 respondida |
+| 10 | 13–15/11 | Modelo final treinado em toda a amostra M; `make all` funcionando |
 
 **Pendências da dupla:**
-- confirmar os finalistas (LightGBM, Random Forest e MLP) e decidir a P7, que inclui a árvore de decisão na Etapa 7 para testar a H1 (entrada "2026-11-06 — Etapa 6" do diário);
+- decidir a P8: o que fazer com as configurações do MLP e da Random Forest que ficaram na borda do espaço de busca (entrada "2026-11-07 — Etapa 7" do diário);
 - decidir P1 (D16, métricas reponderadas para a distribuição original) e P5 (intervalos de confiança por bootstrap) antes da Etapa 8;
 - preencher, no `docs/IA_LOG.md`, os campos "O que foi aproveitado" e "O que foi rejeitado" de cada entrada, e registrar as conversas de planejamento no claude.ai;
 - baixar a pasta *Supplementary material* do dataset (o formulário pede nome, e-mail e instituição) para confirmar se as linhas estão em ordem cronológica. Isso só importa se a dupla quiser reabrir a análise complementar (b) da D8, de blocos contíguos, que não foi adotada;
-- escolher a licença do repositório e pôr o nome do(a) colega no README.
+- escolher a licença do repositório e pôr o nome do(a) colega no README;
+- antes das execuções longas da Etapa 9, deixar o notebook na tomada com a tampa aberta, ou mudar a ação de fechar a tampa para "Não fazer nada" com o carregador ligado (seção 11).
 
 ---
 
@@ -746,3 +819,4 @@ Regras que valem sempre (estão no `CLAUDE.md`):
 | `git status` mostra resultados modificados além dos `.run.json` | Algo mudou (dados, código, configuração ou versão de biblioteca). **Não commite.** Veja o que mudou com `git diff` e registre no diário antes de qualquer coisa |
 | Números estranhos ao abrir CSV no Excel | Ponto decimal lido como separador de milhar. Abra no VS Code ou no polars |
 | O Kaggle não está nesta máquina | `make check-mirror` e `make check-ingest` são opcionais; o resto do pipeline não depende deles |
+| Um `fold<k>_timing.json` ou `elapsed_s` com horas a mais que o normal | O notebook suspendeu durante a execução (tampa fechada ou botão de energia). O cálculo só pausa: os resultados não mudam, só o tempo de relógio. Para ver as suspensões: `Get-WinEvent -FilterHashtable @{LogName='System'; Id=42,107}` no PowerShell. Para evitar: tampa aberta, ou "Ao fechar a tampa: Não fazer nada" com o carregador ligado, nas Opções de Energia do Windows |

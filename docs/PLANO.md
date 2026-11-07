@@ -319,7 +319,7 @@ O quadro abaixo traz as decisões como foram planejadas, com os termos das aulas
 | D6 | Métricas secundárias | F1 por classe, acurácia balanceada, AUPRC, AUC-ROC, sensibilidade (TVP, detecção), especificidade, TFP (alarme falso, 1 − especificidade), sensibilidade por tipo de ataque | Sensibilidade, especificidade, TFP e AUC-ROC não dependem da prevalência e são as mais transferíveis para fora do laboratório | Decidido. AUC-ROC e especificidade acrescentadas em 2026-11-06 (P3) |
 | D7 | Algoritmos | Regressão logística, Gaussian Naive Bayes, kNN, árvore de decisão, SVM (kernel RBF), MLP, Random Forest, LightGBM, mais `DummyClassifier` como classificador de referência | Vieses indutivos diversos: linear, probabilístico, baseado em instâncias, árvores, kernel (margem máxima), redes neurais e ensembles (bagging e boosting) | SVM incluído em 2026-11-06 (P2), depois da conferência do programa da disciplina |
 | D8 | Divisão dos dados (treino, validação e teste) | Spot-checking em E, com validação cruzada repetida (5 folds × 2 repetições); validação cruzada aninhada em M (laço externo de 5 folds para teste, laço interno de 3 folds para validação); folds estratificados por `label34`, gerados uma vez e salvos | Mesmas divisões para todos os algoritmos; o laço interno isola o ajuste de hiperparâmetros da estimativa de desempenho (Cawley & Talbot, 2010; Varma & Simon, 2006) | Decidido; sem agrupamento por captura (Etapa 1). Análises complementares decididas em 2026-11-06: *leave-capture-out* nos 16 tipos com 5 ou mais capturas, na Etapa 9; blocos contíguos de `row_idx` não adotados |
-| D9 | Otimização de hiperparâmetros | `RandomizedSearchCV` (busca aleatória), 30 configurações, só nos 3 finalistas | Equilíbrio entre custo e cobertura | Ajustável |
+| D9 | Otimização de hiperparâmetros | `RandomizedSearchCV` (busca aleatória), 30 configurações, nos 3 finalistas e na árvore de decisão (P7, só para a H1) | Equilíbrio entre custo e cobertura | Executado na Etapa 7; bordas do espaço em aberto (P8, diário 2026-11-07) |
 | D10 | Comparação de modelos (teste de hipóteses) | *Corrected resampled t-test* (Nadeau & Bengio, 2003) com correção de Holm | O teste t pareado comum, com folds sobrepostos, tem erro tipo I elevado (Dietterich, 1998). A correção trata essa dependência. Friedman + Nemenyi (Demšar, 2006) é para vários datasets | Decidido |
 | D11 | Interpretação do modelo | Melhor modelo; importância por permutação e SHAP calculados nos folds externos de teste | Interpreta o modelo em dados que ele não viu; permite medir estabilidade entre folds | Decidido |
 | D12 | Atalhos | Modelos de um atributo só e ablação do melhor modelo sem os candidatos a atalho | Testa diretamente a H3 e responde a Q3 | Revisado na Etapa 1 (candidatos: `Number` e `Time_To_Live`; ver o diário) |
@@ -678,12 +678,12 @@ for k, (train_idx, test_idx) in enumerate(outer_folds(assign)):   # laço extern
     save_fold(model_name, k, search.best_params_, search.best_score_, test_idx, proba)
 ```
 
-- Salvar por fold: melhores hiperparâmetros, MCC na validação (laço interno), métricas no teste (laço externo) e as probabilidades de cada instância de teste (predições fora do fold), em `results/nested/<modelo>/fold<k>.parquet`.
+- Salvar por fold: melhores hiperparâmetros, MCC na validação (laço interno), métricas no teste (laço externo) e o escore de cada instância de teste (predições fora do fold). Implementado em `results/nested/<modelo>/`: `fold<k>.json`, `fold<k>_search.csv`, `fold<k>_predictions.csv.gz` e `fold<k>_timing.json`, mais a tabela consolidada `results/nested/folds.csv`.
 - Avaliar também o `DummyClassifier` nos folds externos, como piso.
 - Implementar retomada: se o arquivo de um fold já existe, pular. A execução é longa.
 - Hiperparâmetros diferentes entre folds são esperados. Registrar e discutir a estabilidade.
 
-**Espaços de busca iniciais** (`configs/search_spaces.yaml`; ajustar se a busca bater nos limites):
+**Espaços de busca iniciais** (`configs/search_spaces.yaml`; ajustar se a busca bater nos limites). Na execução de 07/11, o MLP e a Random Forest escolheram a borda do espaço em todos os folds; o que fazer está na proposta P8 (diário, entrada "2026-11-07 — Etapa 7"):
 
 | Algoritmo | Hiperparâmetros |
 |---|---|
@@ -696,7 +696,7 @@ for k, (train_idx, test_idx) in enumerate(outer_folds(assign)):   # laço extern
 | Random Forest | `n_estimators` ∈ [100, 500]; `max_depth` ∈ {10, 20, 30, None}; `max_features` ∈ {sqrt, log2, 0.5}; `min_samples_leaf` ∈ [1, 50] |
 | LightGBM | `n_estimators` ∈ [100, 1000]; `learning_rate` ~ log-uniforme(0.01, 0.3); `num_leaves` ∈ [15, 255]; `min_child_samples` ∈ [10, 200]; `subsample` ∈ [0.6, 1] com `subsample_freq=1`; `colsample_bytree` ∈ [0.6, 1]; `reg_lambda` ~ log-uniforme(1e-3, 10) |
 
-**Pronto quando:** os 3 finalistas e o Dummy têm resultados nos 5 folds externos.
+**Pronto quando:** os 3 finalistas, a árvore de decisão (P7) e o Dummy têm resultados nos 5 folds externos. Concluído em 07/11 (resultados no commit `6da18f6`).
 
 **Diário:** `[ENTREGA]` com o tempo de execução e a variação dos hiperparâmetros entre folds.
 
@@ -799,7 +799,7 @@ for k, (train_idx, test_idx) in enumerate(outer_folds(assign)):   # laço extern
 
 Hoje é **25/10/2026 (domingo)**. Restam quatro semanas até a meta interna de entrega (20/11, sexta-feira), com dois dias de folga antes do prazo oficial (22/11, 23h59).
 
-> **Situação em 06/11/2026:** Etapas 0 a 6 concluídas. As Etapas 4 e 5 terminaram em 05/11 (previsto: 01–02/11), e a 6 em 06/11 (previsto: 03–04/11). O trabalho está cerca de 2 dias atrás deste cronograma. O plano de contingência (§8.2) continua valendo. O cronograma da disciplina (v2) confirma a revisão por pares em 24/11 e a apresentação em 01/12.
+> **Situação em 07/11/2026:** Etapas 0 a 7 concluídas. As Etapas 4 e 5 terminaram em 05/11 (previsto: 01–02/11), a 6 em 06/11 (previsto: 03–04/11) e a 7 em 07/11, dentro da janela prevista (04–08/11). O atraso de cerca de 2 dias foi absorvido, a menos que a proposta P8 leve a refazer algum modelo. A validação cruzada aninhada levou cerca de 5,4 h de cálculo, o dobro do estimado. O plano de contingência (§8.2) continua valendo. O cronograma da disciplina (v2) confirma a revisão por pares em 24/11 e a apresentação em 01/12.
 
 | Período | Etapa(s) | Marco (pronto quando) |
 |---|---|---|

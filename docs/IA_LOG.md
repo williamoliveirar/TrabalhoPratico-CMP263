@@ -226,3 +226,29 @@ Antes disso, na mesma sessão, a dupla autorizou o push dos commits da Etapa 5 (
 - *Potencialidade:* o diagnóstico de overfitting (P4) mostrou que a comparação da H1 com a árvore sem ajuste seria injusta, e daí veio a P7.
 - *Limitação:* a explicação do teto de MCC em torno de 0,81 (os ataques de janela 10 se parecem com o benigno) é uma hipótese apoiada numa conta por diferença. Ela só é confirmada com a sensibilidade por tipo, na Etapa 8.
 - *Limitação:* um teste escrito pela ferramenta falhou na primeira execução, porque os dados inventados empatavam exatamente na média. O erro era do teste, não do código, e foi corrigido.
+
+## 2026-11-06 — Claude Code (Claude Opus 5.5, app desktop) — P7 e Etapa 7
+
+**Finalidade:** registrar a decisão da dupla sobre a P7 e executar a Etapa 7 (validação cruzada aninhada na amostra M). A execução terminou em 07/11.
+
+**Prompt (texto integral):** resposta à pergunta da ferramenta "Incluo também a árvore de decisão na Etapa 7, para testar a H1 (P7)?", escolhida entre as opções oferecidas:
+
+> Sim, incluir a árvore
+
+**O que a ferramenta produziu:**
+- `src/experiments/nested_cv.py` e `tests/test_nested_cv.py` (6 testes): busca aleatória no laço interno, um único uso do fold de teste no laço externo, retomada por fold e a tabela consolidada `results/nested/folds.csv`;
+- a execução dos 5 folds externos para LightGBM, Random Forest, MLP, árvore de decisão e Dummy (cerca de 5,4 h de cálculo), com a conferência de que um fold refeito sai idêntico;
+- o diagnóstico dos tempos de relógio inflados: o notebook suspendeu quatro vezes durante a execução (log do Windows);
+- duas entradas no diário: a confirmação da P7 e a Etapa 7, com a estabilidade dos hiperparâmetros entre folds e a proposta P8 sobre as bordas do espaço de busca;
+- atualização do guia, do README e do PLANO.
+
+**O que foi aproveitado:** [a preencher pela dupla]
+
+**O que foi rejeitado ou corrigido, e por quê:** [a preencher pela dupla]
+
+**Limitações ou potencialidades observadas:**
+- *Potencialidade:* o teste dos espaços de busca encontrou um defeito que derrubaria a busca da regressão logística e do SVM: o PyYAML lê `1.0e2` como texto.
+- *Potencialidade:* como as 30 configurações candidatas são as mesmas em todos os folds, a ferramenta pôde comparar as escolhas entre folds diretamente e separar empates de instabilidade.
+- *Limitação:* a estimativa de tempo da ferramenta (2,5 a 3 h) ficou em cerca de metade do real (5,4 h). Ela se baseou em treinos isolados e não considerou a lentidão de 6 treinos simultâneos.
+- *Limitação:* depois do fold externo 0, a ferramenta decidiu sozinha manter os espaços de busca, mesmo vendo o MLP na borda, sem consultar a dupla e contra a instrução do PLANO ("ajustar se a busca bater nos limites"). Ela mesma apontou o problema na entrada da Etapa 7, que traz a decisão para a dupla como P8.
+- *Limitação:* o pedido para o Windows não suspender, feito pela ferramenta, não impediu as suspensões por tampa fechada. Isso não afetou os resultados, mas inflou os tempos gravados.
