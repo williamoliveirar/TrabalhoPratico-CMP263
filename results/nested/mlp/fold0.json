@@ -1,0 +1,33 @@
+{
+  "model": "mlp",
+  "outer_fold": 0,
+  "n_train": 154040,
+  "n_test": 38510,
+  "best_params": {
+    "alpha": 2.1618942406574445e-05,
+    "hidden_layer_sizes": [
+      128,
+      64
+    ],
+    "learning_rate_init": 0.0026070247583707684
+  },
+  "inner_validation_mcc": 0.7984659159680375,
+  "inner_validation_mcc_std": 0.0010130534653329274,
+  "inner_training_mcc": 0.8250899458779605,
+  "outer_training_mcc": 0.8293931634825855,
+  "test": {
+    "mcc": 0.8025541819317932,
+    "f1_attack": 0.8971235376194054,
+    "f1_benign": 0.9035520225397464,
+    "balanced_accuracy": 0.9004414437808361,
+    "sensitivity": 0.8681900804985718,
+    "specificity": 0.9326928070631005,
+    "fpr": 0.0673071929368995,
+    "auprc": 0.9689771174921895,
+    "roc_auc": 0.9608589957749054,
+    "tp": 16717,
+    "fn": 2538,
+    "tn": 17959,
+    "fp": 1296
+  }
+}

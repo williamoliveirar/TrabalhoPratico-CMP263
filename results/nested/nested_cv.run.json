@@ -1,0 +1,29 @@
+{
+  "script": "src.experiments.nested_cv",
+  "started_at": "2026-11-07T20:48:13+00:00",
+  "git_commit": "b583e032a422683a5e7905e30e9aeca9a1202c71",
+  "git_dirty": false,
+  "config_sha256": "fc6567889696a0fef36349f37a7ad0c46525b46b3dec3d88f56281b92bdd4d02",
+  "seed": 42,
+  "n_jobs": 6,
+  "python": "3.12.7",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "libraries": {
+    "numpy": "2.5.4",
+    "pandas": "3.1.0",
+    "pyarrow": "26.0.0",
+    "polars": "2.1.0",
+    "scikit-learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "shap": "0.54.1",
+    "scipy": "1.18.1",
+    "matplotlib": "3.11.2",
+    "PyYAML": "6.0.3",
+    "joblib": "1.6.0"
+  },
+  "computed": [],
+  "outputs": {
+    "results/nested/folds.csv": "f42d4ad97eea2dedce75284c6aec986ce2131ac97203c7ad2f793f7fa3571468"
+  },
+  "elapsed_s": 0.0
+}

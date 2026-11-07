@@ -1,0 +1,48 @@
+{
+  "script": "src.experiments.nested_cv",
+  "started_at": "2026-11-06T23:00:47+00:00",
+  "git_commit": "ae91fea2819e20b385c89f3716814b07b8ceddd8",
+  "git_dirty": false,
+  "config_sha256": "fc6567889696a0fef36349f37a7ad0c46525b46b3dec3d88f56281b92bdd4d02",
+  "seed": 42,
+  "n_jobs": 6,
+  "python": "3.12.7",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "libraries": {
+    "numpy": "2.5.4",
+    "pandas": "3.1.0",
+    "pyarrow": "26.0.0",
+    "polars": "2.1.0",
+    "scikit-learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "shap": "0.54.1",
+    "scipy": "1.18.1",
+    "matplotlib": "3.11.2",
+    "PyYAML": "6.0.3",
+    "joblib": "1.6.0"
+  },
+  "computed": [
+    "lightgbm/fold0",
+    "random_forest/fold0",
+    "mlp/fold0",
+    "decision_tree/fold0",
+    "dummy/fold0"
+  ],
+  "outputs": {
+    "results/nested/lightgbm/fold0.json": "108a124d68610f134d404f32b6bd6f9b0c0dc177dd48b58cbfcd99e123e77a57",
+    "results/nested/lightgbm/fold0_predictions.csv.gz": "e23e7875de9bbf4d06636f1fe1f2dd5adaaa93068e655bfd58f8352c71052e2b",
+    "results/nested/lightgbm/fold0_search.csv": "390217f10b676825c6601b0bb445faaeb871d2b760715c46d2f3ccfaec475460",
+    "results/nested/random_forest/fold0.json": "a7ff101cdcef502253294050518cbbd81b3f7c89c1bd27382ccb47a7513f7df5",
+    "results/nested/random_forest/fold0_predictions.csv.gz": "c295bdd905b6de6aaf2e435d9447b47fa64d7a0e82b2630464f302a52d4d0f67",
+    "results/nested/random_forest/fold0_search.csv": "09435b66b2cd245cbd3b4434ebde13b7f47c8f2654c924e7f97fe0f5d4e5cfed",
+    "results/nested/mlp/fold0.json": "2643fa44ad3bc00d796dda501e77c8e8268b146008eb2da56cec0d380f87a3ff",
+    "results/nested/mlp/fold0_predictions.csv.gz": "f5218cb5bddbaad08ad95f38c6e42b5d8a85364ee061d7dcd89dd8b91b29dd1e",
+    "results/nested/mlp/fold0_search.csv": "385cd21f52da34783e4752e872b7fa5e4c363723e7f1135de5b995735779d4f7",
+    "results/nested/decision_tree/fold0.json": "eeccfe729273929be6d108445bab73fad35825a570d5f8dedbb651b12070c9f8",
+    "results/nested/decision_tree/fold0_predictions.csv.gz": "7f5f548a4c8759b0c132b153564a4ef65e3a193826223db8adcc8f69aec7a6b0",
+    "results/nested/decision_tree/fold0_search.csv": "d8fcc18efcb7859dfffadd28a5bb0980448df1e455a39bc0560df10904b2c2a4",
+    "results/nested/dummy/fold0.json": "62cc9f94f6419d8f19e5c53e3b247b207a741ed8343091c25bb816e143d35364",
+    "results/nested/dummy/fold0_predictions.csv.gz": "78dd831feff6bd03fe4194517c8e0aee2a6514d30006986789ebd46c2d034744"
+  },
+  "elapsed_s": 15575.1
+}

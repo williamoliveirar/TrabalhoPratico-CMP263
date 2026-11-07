@@ -1,0 +1,31 @@
+{
+  "model": "random_forest",
+  "outer_fold": 1,
+  "n_train": 154040,
+  "n_test": 38510,
+  "best_params": {
+    "max_depth": null,
+    "max_features": 0.5,
+    "min_samples_leaf": 3,
+    "n_estimators": 406
+  },
+  "inner_validation_mcc": 0.8199932875366883,
+  "inner_validation_mcc_std": 0.0010656597569172507,
+  "inner_training_mcc": 0.9502446998564458,
+  "outer_training_mcc": 0.9508684212325339,
+  "test": {
+    "mcc": 0.8210861712378454,
+    "f1_attack": 0.9069730077120822,
+    "f1_benign": 0.9124407702389353,
+    "balanced_accuracy": 0.9097896650220721,
+    "sensitivity": 0.8795118151129576,
+    "specificity": 0.9400675149311867,
+    "fpr": 0.059932485068813296,
+    "auprc": 0.9750099129561234,
+    "roc_auc": 0.9693309187110815,
+    "tp": 16935,
+    "fn": 2320,
+    "tn": 18101,
+    "fp": 1154
+  }
+}

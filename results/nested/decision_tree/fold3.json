@@ -1,0 +1,30 @@
+{
+  "model": "decision_tree",
+  "outer_fold": 3,
+  "n_train": 154040,
+  "n_test": 38510,
+  "best_params": {
+    "criterion": "entropy",
+    "max_depth": 14,
+    "min_samples_leaf": 4
+  },
+  "inner_validation_mcc": 0.7922054902032037,
+  "inner_validation_mcc_std": 0.0007142398539355866,
+  "inner_training_mcc": 0.8234302589466073,
+  "outer_training_mcc": 0.8229436939710707,
+  "test": {
+    "mcc": 0.7922572494401247,
+    "f1_attack": 0.8896197439591205,
+    "f1_benign": 0.8990529220214273,
+    "balanced_accuracy": 0.8945468709426123,
+    "sensitivity": 0.8499091145157102,
+    "specificity": 0.9391846273695144,
+    "fpr": 0.06081537263048559,
+    "auprc": 0.9573093254023936,
+    "roc_auc": 0.9537549571984898,
+    "tp": 16365,
+    "fn": 2890,
+    "tn": 18084,
+    "fp": 1171
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "model": "dummy",
+  "outer_fold": 1,
+  "n_train": 154040,
+  "n_test": 38510,
+  "outer_training_mcc": 0.0,
+  "test": {
+    "mcc": 0.0,
+    "f1_attack": 0.0,
+    "f1_benign": 0.6666666666666666,
+    "balanced_accuracy": 0.5,
+    "sensitivity": 0.0,
+    "specificity": 1.0,
+    "fpr": 0.0,
+    "auprc": 0.5,
+    "roc_auc": 0.5,
+    "tp": 0,
+    "fn": 19255,
+    "tn": 19255,
+    "fp": 0
+  }
+}
