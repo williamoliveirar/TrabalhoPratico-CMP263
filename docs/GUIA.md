@@ -794,13 +794,13 @@ Regras que valem sempre (estão no `CLAUDE.md`):
 
 | Etapa | Previsto no plano | O que será feito |
 |---|---|---|
-| 8 | 08–10/11 | Estimativa de desempenho e comparação de modelos: tabelas, figuras e testes de hipóteses; Q1 e Q2 respondidas |
+| 8 | 08–10/11 | Estimativa de desempenho e comparação de modelos: tabelas, figuras, testes de hipóteses, intervalos de confiança por bootstrap (P5) e métricas na distribuição original (P1); Q1 e Q2 respondidas. A cargo da colega da dupla; não precisa dos dados brutos (diário, 2026-11-07, "Confirmação da P1 e da P5") |
 | 9 | 10–13/11 | Interpretação do melhor modelo, ablação dos atalhos e *leave-capture-out*; Q3 respondida |
 | 10 | 13–15/11 | Modelo final treinado em toda a amostra M; `make all` funcionando |
 
 **Pendências da dupla:**
 - decidir a P8: o que fazer com as configurações do MLP e da Random Forest que ficaram na borda do espaço de busca (entrada "2026-11-07 — Etapa 7" do diário);
-- decidir P1 (D16, métricas reponderadas para a distribuição original) e P5 (intervalos de confiança por bootstrap) antes da Etapa 8;
+- antes do primeiro commit da colega: incluir a conta dela na seção "Assinatura" do `CLAUDE.md` e dar a ela acesso ao repositório no GitHub;
 - preencher, no `docs/IA_LOG.md`, os campos "O que foi aproveitado" e "O que foi rejeitado" de cada entrada, e registrar as conversas de planejamento no claude.ai;
 - baixar a pasta *Supplementary material* do dataset (o formulário pede nome, e-mail e instituição) para confirmar se as linhas estão em ordem cronológica. Isso só importa se a dupla quiser reabrir a análise complementar (b) da D8, de blocos contíguos, que não foi adotada;
 - escolher a licença do repositório e pôr o nome do(a) colega no README;

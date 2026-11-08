@@ -320,7 +320,7 @@ O quadro abaixo traz as decisões como foram planejadas, com os termos das aulas
 | D7 | Algoritmos | Regressão logística, Gaussian Naive Bayes, kNN, árvore de decisão, SVM (kernel RBF), MLP, Random Forest, LightGBM, mais `DummyClassifier` como classificador de referência | Vieses indutivos diversos: linear, probabilístico, baseado em instâncias, árvores, kernel (margem máxima), redes neurais e ensembles (bagging e boosting) | SVM incluído em 2026-11-06 (P2), depois da conferência do programa da disciplina |
 | D8 | Divisão dos dados (treino, validação e teste) | Spot-checking em E, com validação cruzada repetida (5 folds × 2 repetições); validação cruzada aninhada em M (laço externo de 5 folds para teste, laço interno de 3 folds para validação); folds estratificados por `label34`, gerados uma vez e salvos | Mesmas divisões para todos os algoritmos; o laço interno isola o ajuste de hiperparâmetros da estimativa de desempenho (Cawley & Talbot, 2010; Varma & Simon, 2006) | Decidido; sem agrupamento por captura (Etapa 1). Análises complementares decididas em 2026-11-06: *leave-capture-out* nos 16 tipos com 5 ou mais capturas, na Etapa 9; blocos contíguos de `row_idx` não adotados |
 | D9 | Otimização de hiperparâmetros | `RandomizedSearchCV` (busca aleatória), 30 configurações, nos 3 finalistas e na árvore de decisão (P7, só para a H1) | Equilíbrio entre custo e cobertura | Executado na Etapa 7; bordas do espaço em aberto (P8, diário 2026-11-07) |
-| D10 | Comparação de modelos (teste de hipóteses) | *Corrected resampled t-test* (Nadeau & Bengio, 2003) com correção de Holm | O teste t pareado comum, com folds sobrepostos, tem erro tipo I elevado (Dietterich, 1998). A correção trata essa dependência. Friedman + Nemenyi (Demšar, 2006) é para vários datasets | Decidido |
+| D10 | Comparação de modelos (teste de hipóteses) | *Corrected resampled t-test* (Nadeau & Bengio, 2003) com correção de Holm; intervalos de confiança por bootstrap como complemento (P5) | O teste t pareado comum, com folds sobrepostos, tem erro tipo I elevado (Dietterich, 1998). A correção trata essa dependência. Friedman + Nemenyi (Demšar, 2006) é para vários datasets | Decidido (P5 adotada em 07/11) |
 | D11 | Interpretação do modelo | Melhor modelo; importância por permutação e SHAP calculados nos folds externos de teste | Interpreta o modelo em dados que ele não viu; permite medir estabilidade entre folds | Decidido |
 | D12 | Atalhos | Modelos de um atributo só e ablação do melhor modelo sem os candidatos a atalho | Testa diretamente a H3 e responde a Q3 | Revisado na Etapa 1 (candidatos: `Number` e `Time_To_Live`; ver o diário) |
 | D13 | Pré-processamento | Definido a partir da EDA (seção 7, Etapa 4; `configs/features.yaml`) | Depende dos dados | Decidido na Etapa 3 |
@@ -708,7 +708,7 @@ for k, (train_idx, test_idx) in enumerate(outer_folds(assign)):   # laço extern
 
 1. **Tabela principal:** média ± desvio padrão nos 5 folds externos de MCC, F1 (ataque), F1 (benigno), acurácia balanceada, AUPRC, AUC-ROC, sensibilidade (TVP), especificidade e TFP (1 − especificidade), para os finalistas e o Dummy.
 2. **Gráfico por fold** (boxplot ou pontos ligados) do MCC de cada finalista.
-3. **Teste de hipóteses:** *corrected resampled t-test* entre o melhor modelo e cada um dos outros, com correção de Holm. Hipótese nula: os dois modelos têm desempenho equivalente. Com apenas 5 folds o teste tem pouco poder (risco de erro tipo II), e isso deve ser dito no artigo. Complemento proposto (P5, diário): intervalos de confiança de 95% por bootstrap (percentis 2,5 e 97,5, B ≥ 1000), como na Aula 08.
+3. **Teste de hipóteses:** *corrected resampled t-test* entre o melhor modelo e cada um dos outros, com correção de Holm. Hipótese nula: os dois modelos têm desempenho equivalente. Com apenas 5 folds o teste tem pouco poder (risco de erro tipo II), e isso deve ser dito no artigo. Complemento adotado (P5, diário, 07/11): intervalos de confiança de 95% por bootstrap (percentis 2,5 e 97,5, B ≥ 1000) sobre as predições fora do fold, também para a diferença entre modelos (reamostragem pareada), como na Aula 08. O bootstrap mede só a variação do conjunto de teste, e o artigo deve dizer isso.
 
    ```python
    def corrected_resampled_ttest(scores_a, scores_b, n_train, n_test):
@@ -725,6 +725,7 @@ for k, (train_idx, test_idx) in enumerate(outer_folds(assign)):   # laço extern
 4. **Matriz de confusão** do melhor modelo, a partir das predições fora do fold.
 5. **Sensibilidade (recall) por tipo de ataque** (33 tipos e 7 categorias) e **TFP no benigno**, com intervalo de confiança de Wilson a 95%. Gráfico de barras horizontais ordenado do pior para o melhor tipo. Também por grupo de janela (10 × 100 pacotes, D12).
 6. **Curvas PR e ROC** do melhor modelo, com AUPRC e AUC-ROC, a partir das predições fora do fold.
+7. **Distribuição original (D16, P1 adotada em 07/11):** (a) as métricas da tabela principal reponderadas para a distribuição original do dataset, com peso por `label34` igual à fração no dataset dividida pela fração em M; (b) a precisão projetada para outras prevalências de ataque a partir da sensibilidade e da especificidade, PPV = sens·π / (sens·π + (1 − espec)·(1 − π)).
 
 **Pronto quando:** as tabelas e figuras são geradas por `make evaluate` e Q1 e Q2 estão respondidas no diário.
 
@@ -929,7 +930,7 @@ Os espaços de busca e os hiperparâmetros escolhidos em cada fold podem ir para
 | L2 | Atributos ilegítimos (*proxies* do atributo alvo) | `Number` (tamanho da janela) e `Time_To_Live` | Análise de atalhos: modelos de um atributo e ablação (D12, Etapa 9) |
 | L3.1 | Data leakage temporal | Ordem das janelas desconhecida **[verificar]** | Nenhum atributo de tempo absoluto; blocos contíguos de `row_idx` como análise complementar (D8) |
 | L3.2 | Dependência entre instâncias (a mesma origem no treino e no teste) | Janelas da mesma captura no treino e no teste | Inevitável com 15 tipos de uma só captura (D8). *Leave-capture-out* como análise complementar; limitação no artigo |
-| L3.3 | Viés de amostragem no conjunto de teste | Folds de teste 50/50 e com tipos igualados (D3) | Métricas independentes da prevalência; proposta D16 no diário (pesos que restauram a distribuição original) |
+| L3.3 | Viés de amostragem no conjunto de teste | Folds de teste 50/50 e com tipos igualados (D3) | Métricas independentes da prevalência; D16 (P1, adotada em 07/11): métricas reponderadas para a distribuição original e precisão projetada para outras prevalências (Etapa 8) |
 
 ### 10.3 Checklist antes da entrega
 

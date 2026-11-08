@@ -252,3 +252,26 @@ Antes disso, na mesma sessão, a dupla autorizou o push dos commits da Etapa 5 (
 - *Limitação:* a estimativa de tempo da ferramenta (2,5 a 3 h) ficou em cerca de metade do real (5,4 h). Ela se baseou em treinos isolados e não considerou a lentidão de 6 treinos simultâneos.
 - *Limitação:* depois do fold externo 0, a ferramenta decidiu sozinha manter os espaços de busca, mesmo vendo o MLP na borda, sem consultar a dupla e contra a instrução do PLANO ("ajustar se a busca bater nos limites"). Ela mesma apontou o problema na entrada da Etapa 7, que traz a decisão para a dupla como P8.
 - *Limitação:* o pedido para o Windows não suspender, feito pela ferramenta, não impediu as suspensões por tampa fechada. Isso não afetou os resultados, mas inflou os tempos gravados.
+
+## 2026-11-07 — Claude Code (Claude Opus 5.5, app desktop) — push, P1 e P5 e passagem da Etapa 8
+
+**Finalidade:** enviar ao GitHub os commits das Etapas 6 e 7, explicar as propostas pendentes P1 e P5, registrar a decisão sobre elas e preparar a passagem da Etapa 8 para a colega da dupla.
+
+**Prompts (texto integral):**
+
+> Faça o Push. Me explique melhor a P1 e a P5 pendentes?
+
+> Adora as duas, conforme a sua recomendação. A "Etapa 8 — Estimativa de desempenho e comparação de modelos" será feita pela minha colega, a minha dupla. Falta algo antes de iniciá-la? E quero que você prepare um arquivo .md completo para recomendações, direcionamentos e ponderações ao início dessa Etapa, que serão utilizadas por ela na IA de apoio dela, como o Claude Code, (não precisa atrelar ao repositório do git, envie só para mim).
+
+**O que a ferramenta produziu:**
+- explicação da P1 e da P5, com um exemplo numérico da precisão projetada (0,14 com 1% de ataques, no LightGBM) e uma ressalva sobre o que o bootstrap sobre instâncias mede;
+- conferência de que a Etapa 8 pode ser feita sem os dados brutos;
+- entrada no diário com a decisão e a preparação da Etapa 8;
+- um documento de passagem da Etapa 8 para a IA de apoio da colega, entregue a William e não versionado.
+
+**O que foi aproveitado:** [a preencher pela dupla]
+
+**O que foi rejeitado ou corrigido, e por quê:** [a preencher pela dupla]
+
+**Limitações ou potencialidades observadas:**
+- *Limitação:* o documento de passagem foi escrito pela ferramenta e vai orientar outra IA. Ele não está no repositório; para o material suplementar do artigo, a dupla deve guardar uma cópia, e a colega deve registrar no IA_LOG os pedidos que fizer à IA dela.
