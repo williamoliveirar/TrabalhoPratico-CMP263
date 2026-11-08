@@ -275,3 +275,4 @@ Antes disso, na mesma sessão, a dupla autorizou o push dos commits da Etapa 5 (
 
 **Limitações ou potencialidades observadas:**
 - *Limitação:* o documento de passagem foi escrito pela ferramenta e vai orientar outra IA. Ele não está no repositório; para o material suplementar do artigo, a dupla deve guardar uma cópia, e a colega deve registrar no IA_LOG os pedidos que fizer à IA dela.
+

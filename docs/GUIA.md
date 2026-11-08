@@ -784,7 +784,8 @@ O primeiro lista os últimos commits; o segundo mostra o que entrou num commit (
 Regras que valem sempre (estão no `CLAUDE.md`):
 - o diário só recebe entradas novas; só o quadro "Decisões vigentes" é editável;
 - resultado registrado não é sobrescrito sem perguntar;
-- todo número no diário ou no artigo cita o arquivo e o commit de origem.
+- todo número no diário ou no artigo cita o arquivo e o commit de origem;
+- cada integrante commita com a própria conta (`williamoliveirar` ou `retcelvic`), sem nenhuma linha de co-autoria do Claude (seção "Assinatura" do `CLAUDE.md`).
 
 ---
 
@@ -800,7 +801,6 @@ Regras que valem sempre (estão no `CLAUDE.md`):
 
 **Pendências da dupla:**
 - decidir a P8: o que fazer com as configurações do MLP e da Random Forest que ficaram na borda do espaço de busca (entrada "2026-11-07 — Etapa 7" do diário);
-- antes do primeiro commit da colega: incluir a conta dela na seção "Assinatura" do `CLAUDE.md` e dar a ela acesso ao repositório no GitHub;
 - preencher, no `docs/IA_LOG.md`, os campos "O que foi aproveitado" e "O que foi rejeitado" de cada entrada, e registrar as conversas de planejamento no claude.ai;
 - baixar a pasta *Supplementary material* do dataset (o formulário pede nome, e-mail e instituição) para confirmar se as linhas estão em ordem cronológica. Isso só importa se a dupla quiser reabrir a análise complementar (b) da D8, de blocos contíguos, que não foi adotada;
 - escolher a licença do repositório e pôr o nome do(a) colega no README;
