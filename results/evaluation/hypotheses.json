@@ -1,0 +1,88 @@
+{
+  "best_model": "lightgbm",
+  "best_model_rule": "highest mean outer-fold test MCC",
+  "H1": {
+    "first_half_ensembles_have_highest_mcc": "confirmed",
+    "second_half_difference_is_small": "no verdict (pre-registered: no threshold was set)",
+    "second_half_numbers": [
+      {
+        "ensemble": "lightgbm",
+        "mcc_difference": 0.03938391023191359,
+        "errors_ensemble": 16326,
+        "errors_tree": 20198,
+        "tree_extra_errors_relative": 0.23716770795050834,
+        "tree_mcc_over_ensemble_mcc": 0.9526597821763685
+      },
+      {
+        "ensemble": "random_forest",
+        "mcc_difference": 0.03132814903615877,
+        "errors_ensemble": 17104,
+        "errors_tree": 20198,
+        "tree_extra_errors_relative": 0.1808933582787653,
+        "tree_mcc_over_ensemble_mcc": 0.961974756850201
+      }
+    ]
+  },
+  "H2": {
+    "verdict": "confirmed",
+    "categories_in_h2_that_concentrate": 3,
+    "categories": [
+      {
+        "category": "Recon",
+        "missed_share": 0.47324172843970347,
+        "instance_share": 0.14468969098935341,
+        "sensitivity": 0.6241923905240488,
+        "concentrates_false_negatives": true,
+        "in_h2": true
+      },
+      {
+        "category": "BruteForce",
+        "missed_share": 0.09889712529379859,
+        "instance_share": 0.03147234484549468,
+        "sensitivity": 0.638943894389439,
+        "concentrates_false_negatives": true,
+        "in_h2": true
+      },
+      {
+        "category": "Web",
+        "missed_share": 0.3584342795154583,
+        "instance_share": 0.1629187224097637,
+        "sensitivity": 0.7472107108702583,
+        "concentrates_false_negatives": true,
+        "in_h2": true
+      },
+      {
+        "category": "Spoofing",
+        "missed_share": 0.0694268667510396,
+        "instance_share": 0.06294468969098936,
+        "sensitivity": 0.8732673267326733,
+        "concentrates_false_negatives": true,
+        "in_h2": false
+      },
+      {
+        "category": "DDoS",
+        "missed_share": 0.0,
+        "instance_share": 0.37766813814593614,
+        "sensitivity": 1.0,
+        "concentrates_false_negatives": false,
+        "in_h2": false
+      },
+      {
+        "category": "DoS",
+        "missed_share": 0.0,
+        "instance_share": 0.12588937938197872,
+        "sensitivity": 1.0,
+        "concentrates_false_negatives": false,
+        "in_h2": false
+      },
+      {
+        "category": "Mirai",
+        "missed_share": 0.0,
+        "instance_share": 0.09441703453648403,
+        "sensitivity": 1.0,
+        "concentrates_false_negatives": false,
+        "in_h2": false
+      }
+    ]
+  }
+}

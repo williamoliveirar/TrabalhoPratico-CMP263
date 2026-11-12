@@ -1,0 +1,6 @@
+model,tp,fn,tn,fp,best
+lightgbm,85213,11062,91011,5264,true
+random_forest,84787,11488,90659,5616,false
+mlp,83485,12790,89696,6579,false
+decision_tree,82529,13746,89823,6452,false
+dummy,0,96275,96275,0,false
