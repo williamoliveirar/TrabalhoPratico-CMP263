@@ -99,6 +99,8 @@ Atrasos custam **1 ponto por dia**.
 
 **Grupo:** dupla. Os dois integrantes devem contribuir em todas as etapas, inclusive escrita e apresentação.
 
+> **Desde 12/11/2026, o trabalho é individual:** a colega deixou a disciplina, e William conclui todas as etapas (diário, entrada "2026-11-12 — O trabalho passa a ser individual"). Onde este plano diz "a dupla" ou "cada integrante", leia-se William. A aceitação do trabalho individual precisa ser confirmada com a professora.
+
 ### 1.2 Relação com a dissertação (apenas contexto)
 
 Um dos integrantes desenvolve a dissertação *Detecção e Reação Inteligente a Ciberataques em Redes IoT Residenciais* (título provisório), que propõe detecção por TinyML em microcontroladores ESP32, reação graduada entre dispositivos e autenticação com criptografia pós-quântica. Este trabalho reaproveita o dataset e o subproblema de detecção, mas é **autocontido** e segue só o enunciado da disciplina.
@@ -764,7 +766,7 @@ for k, (train_idx, test_idx) in enumerate(outer_folds(assign)):   # laço extern
 1. **Modelo final para disponibilização:** rodar a busca de hiperparâmetros (3 folds) em toda a amostra M com o melhor algoritmo, retreinar e salvar `models/final_model.joblib` com os hiperparâmetros, as versões, a semente, o hash dos dados e o commit. Esse modelo **não é avaliado de novo**: a estimativa de desempenho dele é a da validação cruzada aninhada. É o último passo do *holdout* das aulas (Aula 04): depois de estimar o desempenho, o modelo final é treinado com todos os dados disponíveis. Ele não é nenhum dos modelos dos folds. Escolher o modelo do fold de melhor desempenho seria um erro metodológico. Isso deve ser dito no artigo.
 2. **`make all`:** executa tudo, dos CSVs brutos às tabelas (CSV e LaTeX) e figuras, via `src/reporting/`.
 3. **README:** visão geral, requisitos, como baixar os dados (com os hashes esperados), comandos `make`, tempo de execução esperado, máquina usada e um mapa de cada figura e tabela do artigo para o script que a gera.
-4. **Reprodução cruzada:** cada integrante da dupla clona o repositório num ambiente limpo e roda `make all`. Comparar hashes e métricas. Diferenças (por exemplo, não determinismo com várias threads) são corrigidas ou documentadas. Esse teste vale um parágrafo no artigo.
+4. **Reprodução cruzada:** cada integrante da dupla clona o repositório num ambiente limpo e roda `make all`. Com o trabalho individual (12/11), a reprodução é feita por William num clone novo, com um ambiente virtual criado do zero, de preferência em outra máquina ou sistema operacional. Comparar hashes e métricas. Diferenças (por exemplo, não determinismo com várias threads) são corrigidas ou documentadas. Esse teste vale um parágrafo no artigo.
 5. **Publicação:** tornar o repositório público, criar a tag `v1.0` na entrega e, opcionalmente, gerar um DOI no Zenodo.
 
 **Pronto quando:** a reprodução cruzada chega aos mesmos números.

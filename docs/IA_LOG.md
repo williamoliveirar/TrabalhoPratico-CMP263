@@ -276,3 +276,22 @@ Antes disso, na mesma sessão, a dupla autorizou o push dos commits da Etapa 5 (
 **Limitações ou potencialidades observadas:**
 - *Limitação:* o documento de passagem foi escrito pela ferramenta e vai orientar outra IA. Ele não está no repositório; para o material suplementar do artigo, a dupla deve guardar uma cópia, e a colega deve registrar no IA_LOG os pedidos que fizer à IA dela.
 
+## 2026-11-12 — Claude Code (Claude Opus 5.5, app desktop) — trabalho individual e Etapa 8
+
+**Finalidade:** registrar que o trabalho passou a ser individual e executar a Etapa 8.
+
+**Prompt (texto integral; o nome da colega foi omitido nesta transcrição, por privacidade):**
+
+> a minha colega [nome omitido] (retcelvic) desistiu de fazer a disciplina e não fará mais o trabalho comigo, portanto, o terminarei sozinho e assumirei todas as próximas etapas. Revogue os acessos dela ao repositório e tire as menções ao Claude.md de aprovação de acesso para ela. Já retirei-a como colaboradora. E vamos seguir com as próximas etapas desde já.
+
+**O que a ferramenta produziu:**
+- conferência, pela API do GitHub, de que a conta da colega não tem mais acesso e de que não há convite pendente nem branch ou PR dela;
+- registro no diário, no PLANO e no guia, com as consequências para o enunciado e para a reprodução cruzada;
+- a Etapa 8 (detalhada nas entradas do diário de 12/11).
+
+**O que foi aproveitado:** [a preencher por William]
+
+**O que foi rejeitado ou corrigido, e por quê:** [a preencher por William]
+
+**Limitações ou potencialidades observadas:**
+- *Potencialidade:* a ferramenta apontou que o enunciado pede trabalho em dupla, o que exige confirmação com a professora.

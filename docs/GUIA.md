@@ -14,7 +14,7 @@ Sumário:
 7. [Como validar tudo por conta própria](#7-como-validar-tudo-por-conta-própria)
 8. [As conclusões até aqui e como chegar a elas](#8-as-conclusões-até-aqui-e-como-chegar-a-elas)
 9. [Como trabalhamos com o Git](#9-como-trabalhamos-com-o-git)
-10. [O que vem a seguir e o que está com a dupla](#10-o-que-vem-a-seguir-e-o-que-está-com-a-dupla)
+10. [O que vem a seguir e o que está pendente](#10-o-que-vem-a-seguir-e-o-que-está-pendente)
 11. [Problemas comuns](#11-problemas-comuns)
 
 ---
@@ -785,25 +785,26 @@ Regras que valem sempre (estão no `CLAUDE.md`):
 - o diário só recebe entradas novas; só o quadro "Decisões vigentes" é editável;
 - resultado registrado não é sobrescrito sem perguntar;
 - todo número no diário ou no artigo cita o arquivo e o commit de origem;
-- cada integrante commita com a própria conta (`williamoliveirar` ou `retcelvic`), sem nenhuma linha de co-autoria do Claude (seção "Assinatura" do `CLAUDE.md`).
+- todos os commits são feitos com a conta `williamoliveirar`, sem nenhuma linha de co-autoria do Claude (seção "Assinatura" do `CLAUDE.md`).
 
 ---
 
-## 10. O que vem a seguir e o que está com a dupla
+## 10. O que vem a seguir e o que está pendente
 
 **Próximas etapas** (cronograma do PLANO §8; em 07/11, a Etapa 7 terminou dentro da janela prevista):
 
 | Etapa | Previsto no plano | O que será feito |
 |---|---|---|
-| 8 | 08–10/11 | Estimativa de desempenho e comparação de modelos: tabelas, figuras, testes de hipóteses, intervalos de confiança por bootstrap (P5) e métricas na distribuição original (P1); Q1 e Q2 respondidas. A cargo da colega da dupla; não precisa dos dados brutos (diário, 2026-11-07, "Confirmação da P1 e da P5") |
+| 8 | 08–10/11 | Estimativa de desempenho e comparação de modelos: tabelas, figuras, testes de hipóteses, intervalos de confiança por bootstrap (P5) e métricas na distribuição original (P1); Q1 e Q2 respondidas. Não precisa dos dados brutos (diário, 2026-11-07, "Confirmação da P1 e da P5") |
 | 9 | 10–13/11 | Interpretação do melhor modelo, ablação dos atalhos e *leave-capture-out*; Q3 respondida |
 | 10 | 13–15/11 | Modelo final treinado em toda a amostra M; `make all` funcionando |
 
-**Pendências da dupla:**
+**Pendências (desde 12/11, o trabalho é individual; ver o diário):**
 - decidir a P8: o que fazer com as configurações do MLP e da Random Forest que ficaram na borda do espaço de busca (entrada "2026-11-07 — Etapa 7" do diário);
 - preencher, no `docs/IA_LOG.md`, os campos "O que foi aproveitado" e "O que foi rejeitado" de cada entrada, e registrar as conversas de planejamento no claude.ai;
-- baixar a pasta *Supplementary material* do dataset (o formulário pede nome, e-mail e instituição) para confirmar se as linhas estão em ordem cronológica. Isso só importa se a dupla quiser reabrir a análise complementar (b) da D8, de blocos contíguos, que não foi adotada;
-- escolher a licença do repositório e pôr o nome do(a) colega no README;
+- baixar a pasta *Supplementary material* do dataset (o formulário pede nome, e-mail e instituição) para confirmar se as linhas estão em ordem cronológica. Isso só importa se for preciso reabrir a análise complementar (b) da D8, de blocos contíguos, que não foi adotada;
+- escolher a licença do repositório;
+- confirmar com a professora que o trabalho pode ser concluído individualmente (o enunciado pede dupla);
 - antes das execuções longas da Etapa 9, deixar o notebook na tomada com a tampa aberta, ou mudar a ação de fechar a tampa para "Não fazer nada" com o carregador ligado (seção 11).
 
 ---
