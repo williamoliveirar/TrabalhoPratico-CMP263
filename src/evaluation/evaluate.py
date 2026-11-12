@@ -45,8 +45,8 @@ CELLS = ["tp", "fn", "tn", "fp"]
 H1_REFERENCE = "decision_tree"  # H1 compares the tree ensembles with a single decision tree (P7)
 LEVELS = ["all", "window", "category8", "label34"]
 # slots 0 and 1 of SERIES are reserved for benign and attack (src/reporting/style.py); colour follows the model
-MODEL_COLOR = {"lightgbm": SERIES[2], "random_forest": SERIES[3], "mlp": SERIES[4], "decision_tree": SERIES[5],
-               BASELINE: INK_MUTED}
+MODEL_COLOR = {"lightgbm": SERIES[2], "random_forest": SERIES[3], "mlp": SERIES[4], "decision_tree": SERIES[6],
+               BASELINE: INK_MUTED}  # SERIES[5] skipped: a second green next to LightGBM's
 MODEL_LABEL = {"lightgbm": "LightGBM", "random_forest": "Random forest", "mlp": "MLP",
                "decision_tree": "Decision tree", BASELINE: "Dummy"}
 
@@ -267,16 +267,17 @@ def figure_recall_by_type(recall: pl.DataFrame, fpr: dict, best: str, target) ->
     ax.axvline(overall, color=INK_SECONDARY, linewidth=1, linestyle="--", zorder=1)
     ax.set_yticks(y, types["group"].to_list(), fontsize=7.5)
     ax.set_xlim(-0.02, 1.02)
-    ax.set_xlabel("Sensitivity (recall) on the pooled out-of-fold predictions, 95% Wilson interval")
+    ax.set_xlabel("Sensitivity (recall) on the pooled out-of-fold predictions, 95% Wilson interval\n"
+                  f"False positive rate on benign traffic: {fpr['fpr']:.4f} "
+                  f"({fpr['false_positives']:,} of {fpr['n']:,})")
     ax.set_title(f"Sensitivity per attack type — {MODEL_LABEL[best]}", loc="left")
     handles = [Line2D([], [], marker="o", linestyle="", color=color, label="10-packet window"),
                Line2D([], [], marker="D", linestyle="", markerfacecolor="white", markeredgecolor=color,
                       label="100-packet window"),
                Line2D([], [], color=INK_SECONDARY, linestyle="--", label=f"all attacks ({overall:.3f})")]
-    ax.legend(handles=handles, loc="lower right", fontsize=8)
-    ax.text(0, -0.07, f"False positive rate on benign traffic: {fpr['fpr']:.4f} "
-                      f"({fpr['false_positives']:,} of {fpr['n']:,}).", transform=ax.transAxes, fontsize=8,
-            color=INK_SECONDARY)
+    # upper right is empty: the worst types sit there at sensitivity below 0.6
+    ax.legend(handles=handles, loc="upper right", fontsize=8, frameon=True, facecolor="white", edgecolor="none",
+              framealpha=1)
     save(fig, target)
 
 
@@ -296,10 +297,10 @@ def figure_pr_roc(oof: pl.DataFrame, summary: pl.DataFrame, best: str, target) -
     roc.plot([0, 1], [0, 1], color=INK_MUTED, linewidth=0.8, linestyle=":")
     pr.set(xlabel="Recall (sensitivity)", ylabel="Precision", xlim=(0, 1.01), ylim=(0.45, 1.01))
     roc.set(xlabel="False positive rate", ylabel="True positive rate", xlim=(0, 1.01), ylim=(0, 1.01))
-    pr.set_title(f"PR — AUPRC {row['auprc_mean']:.3f} ± {row['auprc_std']:.3f}", loc="left")
-    roc.set_title(f"ROC — AUC {row['roc_auc_mean']:.3f} ± {row['roc_auc_std']:.3f}", loc="left")
-    fig.suptitle(f"{MODEL_LABEL[best]}: thin grey = each outer fold; thick = pooled out-of-fold", x=0.01, ha="left",
-                 fontsize=9, color=INK_SECONDARY)
+    pr.set_title(f"PR — AUPRC {row['auprc_mean']:.4f} ± {row['auprc_std']:.4f}", loc="left")
+    roc.set_title(f"ROC — AUC {row['roc_auc_mean']:.4f} ± {row['roc_auc_std']:.4f}", loc="left")
+    fig.suptitle(f"{MODEL_LABEL[best]}: thick = pooled out-of-fold; thin grey = each outer fold (hidden under the "
+                 "pooled curve); AUC mean ± std over folds", x=0.01, ha="left", fontsize=9, color=INK_SECONDARY)
     fig.tight_layout()
     save(fig, target)
 
