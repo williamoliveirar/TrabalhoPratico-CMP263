@@ -1,6 +1,6 @@
-# Guia prático do projeto (Etapas 0 a 7)
+# Guia prático do projeto (Etapas 0 a 8)
 
-*Situação em 07/11/2026; código da Etapa 7 nos commits `ae91fea` e `b583e03` e resultados da validação cruzada aninhada no commit `6da18f6`. Atualize este guia ao fim de cada etapa.*
+*Situação em 12/11/2026; código da Etapa 8 nos commits `ae0e693`, `e8fa682` e `924f128` e resultados da comparação de modelos no commit `41aca33`. Desde 12/11 o trabalho é individual. Atualize este guia ao fim de cada etapa.*
 
 Este guia explica, do zero, o que já foi construído, como rodar cada parte e como conferir sozinho os resultados e as conclusões. O plano completo está em `docs/PLANO.md`; as decisões e os números, com fonte, em `docs/DIARIO.md`. Aqui o foco é prático: o que é cada coisa, que comando rodar e o que você deve ver. Os termos são os das aulas. O glossário completo está no PLANO, §1.4, e o mapa das etapas formais do treinamento de modelos no PLANO, §1.3.
 
@@ -202,9 +202,12 @@ TrabalhoPratico-CPM263/
 │   │   ├── make_splits.py    Etapa 5: folds congelados; funções que os entregam ao scikit-learn (cv=)
 │   │   ├── spotcheck.py      Etapa 6: spot-checking em E; ranking e grupo de empate
 │   │   └── nested_cv.py      Etapa 7: validação cruzada aninhada em M (busca no laço interno, teste no externo)
-│   ├── evaluation/metrics.py métricas de D5 e D6 (MCC, sensibilidade, especificidade, AUC-ROC...)
+│   ├── evaluation/
+│   │   ├── metrics.py        métricas de D5 e D6 (MCC, sensibilidade, especificidade, AUC-ROC...), com peso opcional
+│   │   ├── stats.py          Etapa 8: teste t corrigido, Holm, Wilson, bootstrap, precisão projetada
+│   │   └── evaluate.py       Etapa 8: comparação de modelos e análise de erros (make evaluate)
 │   └── features/, interpretation/   (vazios; Etapas 8 a 10)
-├── tests/                    test_ingest.py, test_sample.py, test_eda.py, test_no_leakage.py, test_splits.py, test_spotcheck.py, test_nested_cv.py (37 testes); synthetic.py (dados inventados)
+├── tests/                    test_ingest.py, test_sample.py, test_eda.py, test_no_leakage.py, test_splits.py, test_spotcheck.py, test_nested_cv.py, test_evaluation.py (49 testes); synthetic.py (dados inventados)
 ├── data/
 │   ├── raw_manifest.csv      versionado: tamanho, SHA-256 e linhas de cada um dos 309 CSVs
 │   ├── sample_index.csv.gz   versionado: quais linhas (source_file, row_idx) estão em E e em M
@@ -216,7 +219,8 @@ TrabalhoPratico-CPM263/
 │   ├── eda/                  saídas da Etapa 3 (tabelas CSV, JSON e figuras PNG)
 │   ├── splits/               saídas da Etapa 5 (tamanho de cada partição, conferências, hashes)
 │   ├── spotcheck/            saídas da Etapa 6 (métricas por fold, resumo, ranking, figura)
-│   └── nested/               saídas da Etapa 7 (por modelo e fold: configuração, busca, predições; folds.csv)
+│   ├── nested/               saídas da Etapa 7 (por modelo e fold: configuração, busca, predições; folds.csv)
+│   └── evaluation/           saídas da Etapa 8 (tabela principal, testes, sensibilidade por tipo, P1, figuras)
 └── docs/
     ├── PLANO.md              o plano do trabalho (pt-BR)
     ├── DIARIO.md             diário de bordo: decisões e números com fonte (pt-BR)
@@ -432,6 +436,44 @@ Resultado (MCC no teste, média ± desvio nos 5 folds externos): LightGBM 0,832 
 
 Para conferir que um fold se reproduz, use o trecho 4.10 (refaz a busca da árvore no fold 0 em cerca de 40 s). Rodar `make tune` de novo não refaz nada, porque todos os folds já existem.
 
+### Etapa 8 — Estimativa de desempenho e comparação de modelos
+
+```powershell
+make evaluate
+```
+
+Lê as predições fora do fold da Etapa 7 e aplica a análise pré-registrada em `configs/base.yaml` (seção `evaluation`; diário, entrada "2026-11-12 — Etapa 8 — Pré-registro da análise"). Leva cerca de 1,5 min e **não precisa dos dados brutos**: o `label34` de cada instância vem de `data/splits/nested_M.csv.gz`. Nada é retreinado, e nenhum limiar é ajustado.
+
+| Arquivo (`results/evaluation/`) | O que tem |
+|---|---|
+| `summary.csv` | Tabela principal: média e desvio, nos 5 folds externos de teste, das métricas de D5 e D6 |
+| `tests.csv` | *Corrected resampled t-test* de cada comparação pré-registrada, p ajustado por Holm, e intervalo de 95% da diferença de MCC por bootstrap pareado |
+| `bootstrap_ci.csv` | MCC de cada modelo nas predições juntas, com intervalo de bootstrap |
+| `confusion_matrix.csv` | Matriz de confusão de cada modelo, somando os 5 folds (`best` marca o melhor) |
+| `recall_by_group.csv`, `benign_fpr.csv` | Sensibilidade por tipo, categoria, grupo de janela e no total, e TFP no benigno, com intervalo de Wilson; parcela dos falsos negativos e das instâncias de cada grupo (H2) |
+| `metrics_by_window.csv` | Métricas com o benigno e os ataques de um grupo de janela só (D12) |
+| `reweighted.csv`, `type_weights.csv` | Métricas reponderadas para a distribuição original do dataset, e os pesos por rótulo (P1 a) |
+| `ppv_projection.csv` | Precisão projetada para outras prevalências de ataque (P1 b) |
+| `hypotheses.json` | Melhor modelo, H1 e H2 avaliadas pelas regras pré-registradas |
+| `fig_mcc_per_fold.png`, `fig_recall_by_type.png`, `fig_pr_roc.png` | MCC por fold externo; sensibilidade por tipo de ataque; curvas PR e ROC do melhor modelo |
+
+Resultado:
+- **Q1:** o LightGBM é o melhor modelo (MCC 0,832 ± 0,002), e as 4 diferenças pré-registradas são significativas.
+- **Q2:** todos os falsos negativos dele são de ataques de janela 10 (sensibilidade 0,714). As inundações, de janela 100, são detectadas em 100% das instâncias.
+- **Recorte por janela:** só com os ataques de janela 10, o MCC cai para 0,695.
+- **Distribuição original:** reponderadas, a sensibilidade sobe para 0,993 e a acurácia para 0,991, perto do benchmark do artigo do dataset.
+- **H1:** primeira metade confirmada; a segunda fica sem veredito, como pré-registrado. **H2:** confirmada.
+
+A leitura completa está no diário (entrada "2026-11-12 — Etapa 8").
+
+Para conferir que uma nova rodada dá os mesmos números, rode `make evaluate` e depois:
+
+```powershell
+git diff --stat -- results/evaluation ":(exclude)*.run.json"
+```
+
+Esperado: nenhuma saída.
+
 ---
 
 ## 7. Como validar tudo por conta própria
@@ -444,7 +486,7 @@ São cinco níveis, do mais rápido ao mais completo. Rode no terminal do VS Cod
 make test
 ```
 
-Esperado: `37 passed`. Os testes conferem, com dados pequenos inventados:
+Esperado: `49 passed`. Os testes conferem, com dados pequenos inventados:
 - que a ingestão preserva valores e descarta só linhas malformadas;
 - que o mapeamento de rótulos tem 34 rótulos e 12 ataques DDoS;
 - que a deduplicação segue as três regras e que E e M saem disjuntas e 50/50;
@@ -470,7 +512,13 @@ Esperado: `37 passed`. Os testes conferem, com dados pequenos inventados:
   - todos os espaços de busca de `search_spaces.yaml` geram configurações válidas, dentro dos limites, que chegam ao modelo;
   - durante a busca, cada ajuste recebe exatamente o treino do seu fold interno, o retreino recebe o treino externo inteiro e nenhuma instância de teste aparece em nenhum deles;
   - o Dummy é avaliado sem busca;
-  - a tabela consolidada só é gravada quando todos os modelos têm todos os folds.
+  - a tabela consolidada só é gravada quando todos os modelos têm todos os folds;
+- (`test_evaluation.py`, Etapa 8) que:
+  - o teste t corrigido, o Holm e o intervalo de Wilson batem com contas feitas à mão;
+  - o bootstrap é reprodutível com a semente, mantém o tamanho de cada estrato e dá diferença zero entre modelos idênticos;
+  - a reponderação com todos os pesos iguais a 1 dá as métricas sem peso;
+  - as regras pré-registradas da H1 e da H2 dão os vereditos esperados;
+  - as predições que não cobrem a amostra M uma vez, ou que discordam dos folds, são recusadas.
 
 ### Nível 2 — Refazer as Etapas 2, 3 e 5 e obter os mesmos arquivos (≈ 45 s)
 
@@ -717,6 +765,32 @@ Esperado:
 - `0.833506` duas vezes: o MCC gravado sai das predições gravadas;
 - `True 0.793446 0.793446`: refazer a busca da árvore no fold 0 escolhe a mesma configuração e dá o mesmo MCC no teste.
 
+**4.11 — A comparação de modelos: um teste t, a janela 10 e a reponderação refeitos por fora (Etapa 8, ≈ 10 s):**
+
+```python
+import polars as pl
+from src.data.labels import window_of
+from src.evaluation.metrics import binary_metrics
+from src.evaluation.stats import corrected_resampled_ttest
+folds = pl.read_csv("results/nested/folds.csv")
+mcc = {m: folds.filter(pl.col("model") == m).sort("outer_fold")["test_mcc"] for m in ("lightgbm", "random_forest")}
+print([round(v, 4) for v in corrected_resampled_ttest(mcc["lightgbm"], mcc["random_forest"], 154040, 38510)])
+print(pl.read_csv("results/evaluation/tests.csv").select("t", "p").row(0))
+labels = pl.read_csv("data/splits/nested_M.csv.gz", columns=["label34"]).with_row_index("position")
+p = pl.concat([pl.read_csv(f"results/nested/lightgbm/fold{k}_predictions.csv.gz") for k in range(5)])
+p = p.join(labels.with_columns(pl.col("position").cast(pl.Int64)), on="position")
+p = p.with_columns(pl.col("label34").map_elements(window_of, return_dtype=pl.Int64).alias("window"))
+print(p.filter(pl.col("y") == 1).group_by("window").agg(pl.col("pred").mean().round(4)).sort("window"))
+w = pl.read_csv("results/evaluation/type_weights.csv").select("label34", "weight")
+p = p.join(w, on="label34")
+print(round(binary_metrics(p["y"], p["pred"], p["score"], sample_weight=p["weight"].to_numpy())["mcc"], 4))
+```
+
+Esperado:
+- `[17.5924, 0.0001]` e `(17.59..., 6.13...e-05)`: o teste t entre LightGBM e Random Forest, refeito a partir dos MCC por fold, é o mesmo gravado em `tests.csv`;
+- a tabela: sensibilidade de 0,7142 nos ataques de janela 10 e de 1,0 nos de janela 100;
+- `0.8403`: o MCC do LightGBM reponderado para a distribuição original, igual à linha `pooled` de `reweighted.csv`.
+
 ### Nível 5 — Olhar as figuras e comparar com o diário
 
 Abra as figuras de `results/eda/` (clique no explorador do VS Code, ou `start results\eda\fig_number_by_type.png`). Para cada afirmação da entrada "Etapa 3 — EDA na amostra E" do diário, o arquivo citado deve mostrar o número citado. Por exemplo, a afirmação "MCC 0,653 com `Number`" está na primeira linha de `single_feature_models.csv` e na primeira barra de `fig_single_feature_mcc.png`.
@@ -750,6 +824,10 @@ Cada conclusão abaixo tem a evidência, onde ela está e como conferir.
 | 11 | Com hiperparâmetros ajustados, a estimativa de desempenho no laço externo é LightGBM 0,832 ± 0,002, Random Forest 0,824, MLP 0,801 e árvore de decisão 0,793, na mesma ordem em todos os folds. O teto continua perto de 0,83, e os testes estatísticos ficam para a Etapa 8 | `results/nested/folds.csv` | Nível 4.10 |
 | 12 | A escolha dos hiperparâmetros é estável: a mesma configuração na Random Forest em 5 de 5 folds e no LightGBM em 4 de 5; onde muda, as vencedoras ficam a no máximo 0,0017 uma da outra. A validação do laço interno fica um pouco abaixo do teste (treino menor) | `results/nested/<modelo>/fold<k>_search.csv`, `folds.csv` | Compare a coluna `rank` dos `fold<k>_search.csv` de um modelo |
 | 13 | O ajuste acabou com a memorização da árvore (diferença treino − validação de 0,277 para 0,026). O MLP escolheu a maior arquitetura oferecida em todos os folds, e a Random Forest, o maior `max_features`: os números deles podem ser um limite inferior (P8) | `folds.csv` (`inner_training_mcc`, `inner_validation_mcc`), `fold<k>.json` | Nível 4.10 e os `fold<k>.json` |
+| 14 | O LightGBM é o melhor modelo (MCC 0,832 ± 0,002). As 4 diferenças pré-registradas são significativas (teste t corrigido com Holm), e ele vence em todos os folds | `results/evaluation/summary.csv`, `tests.csv` | Nível 4.11 |
+| 15 | Todos os falsos negativos são de ataques de janela 10 (sensibilidade 0,714). As inundações, de janela 100, são detectadas em 100% das instâncias. Só com os ataques de janela 10, o MCC cai para 0,695 | `recall_by_group.csv`, `metrics_by_window.csv`, `fig_recall_by_type.png` | Nível 4.11 |
+| 16 | Na distribuição original do dataset, a sensibilidade vai a 0,993 e a acurácia a 0,991, perto dos 0,997 do artigo do dataset: os números altos da literatura vêm em grande parte da distribuição. Com 1% de ataques, só 14% dos alarmes seriam reais | `reweighted.csv`, `ppv_projection.csv` | Nível 4.11 |
+| 17 | H1: os ensembles superam a árvore (primeira metade confirmada); a segunda metade fica sem veredito, como pré-registrado. H2: Recon, Web e BruteForce concentram os falsos negativos | `hypotheses.json` | Abra o arquivo |
 
 **Consequência para o trabalho:** um modelo pode ter MCC alto aprendendo só "janela grande = ataque". Por isso:
 - a Etapa 9 compara `full` com `no_window`, `no_ttl` e `no_shortcut`;
@@ -791,13 +869,13 @@ Regras que valem sempre (estão no `CLAUDE.md`):
 
 ## 10. O que vem a seguir e o que está pendente
 
-**Próximas etapas** (cronograma do PLANO §8; em 07/11, a Etapa 7 terminou dentro da janela prevista):
+**Próximas etapas** (cronograma do PLANO §8; em 12/11, a Etapa 8 terminou com cerca de 2 dias de atraso):
 
 | Etapa | Previsto no plano | O que será feito |
 |---|---|---|
-| 8 | 08–10/11 | Estimativa de desempenho e comparação de modelos: tabelas, figuras, testes de hipóteses, intervalos de confiança por bootstrap (P5) e métricas na distribuição original (P1); Q1 e Q2 respondidas. Não precisa dos dados brutos (diário, 2026-11-07, "Confirmação da P1 e da P5") |
 | 9 | 10–13/11 | Interpretação do melhor modelo, ablação dos atalhos e *leave-capture-out*; Q3 respondida |
 | 10 | 13–15/11 | Modelo final treinado em toda a amostra M; `make all` funcionando |
+| 11 | 14–19/11 | Artigo completo e revisado; reprodução num clone novo, com ambiente criado do zero |
 
 **Pendências (desde 12/11, o trabalho é individual; ver o diário):**
 - decidir a P8: o que fazer com as configurações do MLP e da Random Forest que ficaram na borda do espaço de busca (entrada "2026-11-07 — Etapa 7" do diário);

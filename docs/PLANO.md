@@ -729,7 +729,7 @@ for k, (train_idx, test_idx) in enumerate(outer_folds(assign)):   # laço extern
 6. **Curvas PR e ROC** do melhor modelo, com AUPRC e AUC-ROC, a partir das predições fora do fold.
 7. **Distribuição original (D16, P1 adotada em 07/11):** (a) as métricas da tabela principal reponderadas para a distribuição original do dataset, com peso por `label34` igual à fração no dataset dividida pela fração em M; (b) a precisão projetada para outras prevalências de ataque a partir da sensibilidade e da especificidade, PPV = sens·π / (sens·π + (1 − espec)·(1 − π)).
 
-**Pronto quando:** as tabelas e figuras são geradas por `make evaluate` e Q1 e Q2 estão respondidas no diário.
+**Pronto quando:** as tabelas e figuras são geradas por `make evaluate` e Q1 e Q2 estão respondidas no diário. Concluído em 12/11 (resultados no commit `41aca33`; diário, entrada "2026-11-12 — Etapa 8"). Também saem as métricas por grupo de janela (D12), `results/evaluation/metrics_by_window.csv`.
 
 **Diário:** `[ENTREGA]` e `[DESCOBERTA]` para H1 e H2 (confirmadas ou não).
 
@@ -802,7 +802,7 @@ for k, (train_idx, test_idx) in enumerate(outer_folds(assign)):   # laço extern
 
 Hoje é **25/10/2026 (domingo)**. Restam quatro semanas até a meta interna de entrega (20/11, sexta-feira), com dois dias de folga antes do prazo oficial (22/11, 23h59).
 
-> **Situação em 07/11/2026:** Etapas 0 a 7 concluídas. As Etapas 4 e 5 terminaram em 05/11 (previsto: 01–02/11), a 6 em 06/11 (previsto: 03–04/11) e a 7 em 07/11, dentro da janela prevista (04–08/11). O atraso de cerca de 2 dias foi absorvido, a menos que a proposta P8 leve a refazer algum modelo. A validação cruzada aninhada levou cerca de 5,4 h de cálculo, o dobro do estimado. O plano de contingência (§8.2) continua valendo. O cronograma da disciplina (v2) confirma a revisão por pares em 24/11 e a apresentação em 01/12.
+> **Situação em 12/11/2026:** Etapas 0 a 8 concluídas. As Etapas 4 e 5 terminaram em 05/11 (previsto: 01–02/11), a 6 em 06/11 (previsto: 03–04/11), a 7 em 07/11 (previsto: 04–08/11) e a 8 em 12/11 (previsto: 08–10/11). O trabalho está cerca de 2 dias atrás deste cronograma e, desde 12/11, é individual. A validação cruzada aninhada levou cerca de 5,4 h de cálculo, o dobro do estimado. O plano de contingência (§8.2) continua valendo. O cronograma da disciplina (v2) confirma a revisão por pares em 24/11 e a apresentação em 01/12.
 
 | Período | Etapa(s) | Marco (pronto quando) |
 |---|---|---|
