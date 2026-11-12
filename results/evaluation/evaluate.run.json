@@ -1,7 +1,7 @@
 {
   "script": "src.evaluation.evaluate",
-  "started_at": "2026-11-12T21:04:08+00:00",
-  "git_commit": "e8fa68289b3da6dc5f03c41023428a8eda10d3ad",
+  "started_at": "2026-11-12T21:07:08+00:00",
+  "git_commit": "924f12867404970c414009a9cd6549c8f60cfb51",
   "git_dirty": false,
   "config_sha256": "62320c418bb3d7cc5fe5abcee70c3a2dac6af7fed59f903d674383b6eb342042",
   "seed": 42,
@@ -30,6 +30,7 @@
     "results/evaluation/fig_pr_roc.png": "e789cc1ba31a0c022e9f5cbc956fb956729e0b770a1ba00a8fca4695e7eb1a80",
     "results/evaluation/fig_recall_by_type.png": "0dcfd060e64f767c5ce60440959c541c95025878545f975b473c029fb38c67e8",
     "results/evaluation/hypotheses.json": "c275cdea2b6039b128efc623785d0797ba9b8033d7aac517b0b2b89a7369eb6d",
+    "results/evaluation/metrics_by_window.csv": "3268d860696e186cb8fa37020e7e3af1668a0eefda0d96fd8f9922450f691df4",
     "results/evaluation/ppv_projection.csv": "8122066669da7bd031f63e474bac86d624c4be1d97d7825c9783fc1d6bb3d223",
     "results/evaluation/recall_by_group.csv": "61e7cc8ff466aa8585d358319e4bb1760a42754580ddf2a7117bdffed7b1d345",
     "results/evaluation/reweighted.csv": "a527537ca09b4acad89fabb38d41f06b736769c0f30909dcd6a02a1cbfa11c6b",
@@ -37,5 +38,5 @@
     "results/evaluation/tests.csv": "bdc1d843cf3106afa1f35069059297c46733bad7ea606ce5954c5e2c85ce2beb",
     "results/evaluation/type_weights.csv": "d6ce6adad4537076ebecceef346166ca485a059287686637546f7d5f7b3fa208"
   },
-  "elapsed_s": 85.2
+  "elapsed_s": 90.3
 }
