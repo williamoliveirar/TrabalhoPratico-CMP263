@@ -72,3 +72,16 @@ nested:  # Etapa 7 — sample M, folds of make splits (outer: test; inner: valid
 interpretation:  # D11
   permutation_repeats: 10
   shap_rows_per_fold: 2000
+
+evaluation:  # Etapa 8 — out-of-fold predictions of results/nested (D5, D6, D10, D16); pre-registered 2026-11-12
+  models: [lightgbm, random_forest, mlp, decision_tree, dummy]  # table order; each model keeps its colour
+  confidence_level: 0.95
+  alpha: 0.05
+  comparisons:  # Holm family of the corrected resampled t-test (D10); Q1: first two pairs, H1: last two
+    - [lightgbm, random_forest]
+    - [lightgbm, mlp]
+    - [lightgbm, decision_tree]
+    - [random_forest, decision_tree]
+  bootstrap: {n_resamples: 1000, stratify: label34}  # P5: percentile intervals, paired across models; seed = seed
+  prevalences: [0.01, 0.05, 0.1, 0.5]  # P1 (b); the attack prevalence of the dataset is added from label_counts_total
+  h2_categories: [Web, BruteForce, Recon]  # H2 (PLANO §2.5): low-volume attacks
