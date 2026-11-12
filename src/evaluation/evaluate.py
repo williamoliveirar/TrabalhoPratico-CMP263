@@ -16,6 +16,8 @@ Pré-registro da análise") before this script computed any test:
 - recall_by_group.csv and benign_fpr.csv: sensitivity by attack type, category, window group and overall, and the
   false positive rate on benign traffic, with Wilson intervals (Q2, H2, D12);
 - reweighted.csv: the main metrics re-weighted to the original distribution of the dataset (P1 a);
+- metrics_by_window.csv: the main metrics on benign traffic plus the attacks of one window group (D12, decided on
+  2026-10-25: the 10-packet group is the comparison a window-size shortcut cannot win);
 - ppv_projection.csv: precision projected to other attack prevalences (P1 b);
 - hypotheses.json: best model, H1 and H2 evaluated with the pre-registered rules;
 - fig_mcc_per_fold.png, fig_recall_by_type.png, fig_pr_roc.png; evaluate.run.json.
@@ -182,6 +184,23 @@ def reweighted(oofs: dict, models: list[str], weights: pl.DataFrame) -> pl.DataF
         rows.append({"model": m, "statistic": "fold_mean", **{k: float(np.mean([f[k] for f in per_fold])) for k in METRICS}})
         rows.append({"model": m, "statistic": "fold_std", **{k: float(np.std([f[k] for f in per_fold], ddof=1)) for k in METRICS}})
         rows.append({"model": m, "statistic": "pooled", **{k: float(pooled[k]) for k in METRICS}})
+    return pl.DataFrame(rows)
+
+
+def metrics_by_window(oofs: dict, models: list[str]) -> pl.DataFrame:
+    """Main metrics on benign traffic plus the attacks of one window group only (D12): with the 10-packet attacks,
+    benign and attack share the window size, the comparison that a window-size shortcut cannot win."""
+    rows = []
+    for m in models:
+        for w in sorted(oofs[m]["window"].unique().to_list()):
+            sub = oofs[m].filter((pl.col("y") == 0) | (pl.col("window") == w))
+            per_fold = [binary_metrics(f["y"].to_numpy(), f["pred"].to_numpy(), f["score"].to_numpy())
+                        for _, f in sub.group_by("outer_fold", maintain_order=True)]
+            pooled = binary_metrics(sub["y"].to_numpy(), sub["pred"].to_numpy(), sub["score"].to_numpy())
+            base = {"model": m, "attack_window": w, "n_attack": int(sub["y"].sum()), "n_benign": int((sub["y"] == 0).sum())}
+            rows.append({**base, "statistic": "fold_mean", **{k: float(np.mean([f[k] for f in per_fold])) for k in METRICS}})
+            rows.append({**base, "statistic": "fold_std", **{k: float(np.std([f[k] for f in per_fold], ddof=1)) for k in METRICS}})
+            rows.append({**base, "statistic": "pooled", **{k: float(pooled[k]) for k in METRICS}})
     return pl.DataFrame(rows)
 
 
@@ -360,6 +379,7 @@ def main() -> None:
         recall = pl.concat([recall_by_group(oofs[m], m, level) for m in tuned])
         fpr = pl.DataFrame([benign_fpr(oofs[m], m, level) for m in tuned])
         rew = reweighted(oofs, models, weights)
+        by_window = metrics_by_window(oofs, tuned)
         ppv = ppv_table(oofs, tuned, weights, [float(p) for p in ev["prevalences"]], dataset_prevalence)
         hyp = hypotheses(summary, tests, confusion, recall, best, ev["h2_categories"])
 
@@ -370,6 +390,7 @@ def main() -> None:
         recall.write_csv(out_dir / "recall_by_group.csv")
         fpr.write_csv(out_dir / "benign_fpr.csv")
         rew.write_csv(out_dir / "reweighted.csv")
+        by_window.write_csv(out_dir / "metrics_by_window.csv")
         weights.write_csv(out_dir / "type_weights.csv")
         ppv.write_csv(out_dir / "ppv_projection.csv")
         write_json(hyp, out_dir / "hypotheses.json")

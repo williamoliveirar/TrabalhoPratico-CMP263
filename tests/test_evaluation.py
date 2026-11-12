@@ -6,7 +6,7 @@ import pytest
 from scipy import stats
 from sklearn.metrics import matthews_corrcoef
 
-from src.evaluation.evaluate import hypotheses, load_oof, recall_by_group
+from src.evaluation.evaluate import hypotheses, load_oof, metrics_by_window, recall_by_group
 from src.evaluation.metrics import binary_metrics
 from src.evaluation.stats import (bootstrap_counts, corrected_resampled_ttest, holm, mcc_from_counts,
                                   percentile_interval, projected_ppv, wilson)
@@ -111,6 +111,14 @@ def test_h1_first_half_needs_every_condition():
                               "reject_h0": [reject], "ci_low": [ci_low]})
         hyp = hypotheses(summary, tests, confusion, recall, "m", ["Web"])
         assert hyp["H1"]["first_half_ensembles_have_highest_mcc"] == "not confirmed"
+
+
+def test_metrics_by_window_keep_all_benign_and_one_window_of_attacks():
+    oof = tiny_oof({"Web": 5}).with_columns(pl.Series("outer_fold", [0, 1] * 25), pl.lit(0.5).alias("score"))
+    table = metrics_by_window({"m": oof}, ["m"]).filter(pl.col("statistic") == "pooled")
+    w10, w100 = (table.filter(pl.col("attack_window") == w).row(0, named=True) for w in (10, 100))
+    assert (w10["n_attack"], w10["n_benign"], w100["n_attack"], w100["n_benign"]) == (30, 10, 10, 10)
+    assert w10["sensitivity"] == pytest.approx(25 / 30) and w100["sensitivity"] == 1.0
 
 
 def test_load_oof_rejects_incomplete_predictions(tmp_path):
