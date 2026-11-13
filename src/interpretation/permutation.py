@@ -10,7 +10,11 @@ the MCC. Outputs in results/interpretation/:
 - fig_permutation_importance.png; permutation.run.json.
 
 Usage: python -m src.interpretation.permutation   (make interpret)
+       python -m src.interpretation.permutation --figure-only   (redraw the figure from permutation_summary.csv;
+       the importances are not recomputed; record in permutation_figure.run.json)
 """
+import argparse
+
 import numpy as np
 import polars as pl
 from sklearn.inspection import permutation_importance
@@ -28,7 +32,7 @@ from src.utils.run_metadata import recorded_run
 CANDIDATES = ("Number", "Time_To_Live")  # D12 shortcut candidates, marked in the figure
 
 
-def figure(summary: pl.DataFrame, target, color: str, label: str) -> None:
+def figure(summary: pl.DataFrame, target, color: str, label: str, repeats: int) -> None:
     s = summary.sort("rank", descending=True)
     fig, ax = plt.subplots(figsize=(6.4, 7.2))
     y = np.arange(s.height)
@@ -43,12 +47,32 @@ def figure(summary: pl.DataFrame, target, color: str, label: str) -> None:
             tick.set_fontweight("bold")
     ax.set_xlabel("Drop in test MCC when the feature is permuted (mean ± std over the 5 outer folds)")
     ax.set_title(f"Permutation importance — {label}", loc="left")
-    ax.text(0, -0.08, "10 permutations per feature and fold; Protocol Type permuted before its one-hot encoding.",
+    ax.text(0, -0.115, f"{repeats} permutations per feature and fold; Protocol Type permuted before its one-hot "
+                       "encoding.",
             transform=ax.transAxes, fontsize=8, color=INK_SECONDARY)
     save(fig, target)
 
 
+def redraw(cfg: dict) -> None:
+    """Redraw the figure from the recorded summary (layout changes only)."""
+    model_name = best_model(cfg)
+    out_dir = path(cfg, "results_dir") / "interpretation"
+    source, target = out_dir / "permutation_summary.csv", out_dir / "fig_permutation_importance.png"
+    apply_style()
+    with recorded_run(cfg, out_dir, "permutation_figure") as run:
+        figure(pl.read_csv(source), target, MODEL_COLOR[model_name], MODEL_LABEL[model_name],
+               int(cfg["interpretation"]["permutation_repeats"]))
+        run["model"] = model_name
+        run["inputs"] = {rel(source): sha256_file(source)}
+        run["outputs"] = {rel(target): sha256_file(target)}
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--figure-only", action="store_true", help="redraw the figure from permutation_summary.csv")
+    if parser.parse_args().figure_only:
+        redraw(load_config())
+        return
     cfg, feature_cfg, search_cfg = load_config(), load_config("features"), load_config("search_spaces")
     icfg, seed = cfg["interpretation"], int(cfg["seed"])
     model_name = best_model(cfg)
@@ -76,7 +100,8 @@ def main() -> None:
         per_fold.write_csv(out_dir / "permutation_per_fold.csv")
         summary.write_csv(out_dir / "permutation_summary.csv")
         write_json({"model": model_name, **stability}, out_dir / "permutation_stability.json")
-        figure(summary, out_dir / "fig_permutation_importance.png", MODEL_COLOR[model_name], MODEL_LABEL[model_name])
+        figure(summary, out_dir / "fig_permutation_importance.png", MODEL_COLOR[model_name], MODEL_LABEL[model_name],
+               int(icfg["permutation_repeats"]))
         run["model"] = model_name
         run["outputs"] = {rel(out_dir / n): sha256_file(out_dir / n) for n in
                           ("permutation_per_fold.csv", "permutation_summary.csv", "permutation_stability.json",
