@@ -1,0 +1,32 @@
+{
+  "script": "src.interpretation.permutation",
+  "started_at": "2026-11-13T04:37:56+00:00",
+  "git_commit": "2e019d977b5d0764cbb63e53d32225a68b2c48a7",
+  "git_dirty": false,
+  "config_sha256": "53dc549fc877eb18e69a815e53f172a50e424306b060f6cd32283f27262cf519",
+  "seed": 42,
+  "n_jobs": 6,
+  "python": "3.12.7",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "libraries": {
+    "numpy": "2.5.4",
+    "pandas": "3.1.0",
+    "pyarrow": "26.0.0",
+    "polars": "2.1.0",
+    "scikit-learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "shap": "0.54.1",
+    "scipy": "1.18.1",
+    "matplotlib": "3.11.2",
+    "PyYAML": "6.0.3",
+    "joblib": "1.6.0"
+  },
+  "model": "lightgbm",
+  "inputs": {
+    "results/interpretation/permutation_summary.csv": "e18a9480afe14143ef4d0af194c53aa9beee4d5f589d471022b049691731b273"
+  },
+  "outputs": {
+    "results/interpretation/fig_permutation_importance.png": "812c4231d0fa93b75005e5b1159057e0a4e7ce8bfcc837d7697a1898ac7cf254"
+  },
+  "elapsed_s": 1.2
+}
