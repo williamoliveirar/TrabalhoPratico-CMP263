@@ -1,0 +1,36 @@
+{
+  "script": "src.interpretation.shap_analysis",
+  "started_at": "2026-11-13T04:22:49+00:00",
+  "git_commit": "a98b5156184943cc739daccf009ae66996d0b5af",
+  "git_dirty": false,
+  "config_sha256": "53dc549fc877eb18e69a815e53f172a50e424306b060f6cd32283f27262cf519",
+  "seed": 42,
+  "n_jobs": 6,
+  "python": "3.12.7",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "libraries": {
+    "numpy": "2.5.4",
+    "pandas": "3.1.0",
+    "pyarrow": "26.0.0",
+    "polars": "2.1.0",
+    "scikit-learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "shap": "0.54.1",
+    "scipy": "1.18.1",
+    "matplotlib": "3.11.2",
+    "PyYAML": "6.0.3",
+    "joblib": "1.6.0"
+  },
+  "model": "lightgbm",
+  "outputs": {
+    "results/interpretation/shap_values.csv.gz": "32325f1ec9bb40af70adf0498322ba410aee849d4ad216d7155aacd9eeb3c9c7",
+    "results/interpretation/shap_importance_per_fold.csv": "e0cfd785dc3aa7042cf665660eb01157d101f50a95ec103a193c1cbd51524a86",
+    "results/interpretation/shap_summary.csv": "d8fa246ee8373d10e17022042093e721a7c52fcd8fc1eb00645b15ba5444fa9c",
+    "results/interpretation/shap_stability.json": "6f0e2302a11717d4c5248092f28ab9e052ba39d6091ad480baae158c3b6dece7",
+    "results/interpretation/local_explanations.csv": "44d3f34a9417dd8ec375b37d1577927bc63d33a2cdc968995a8c9516e7724d6e",
+    "results/interpretation/fig_shap_summary.png": "bc5f16e9fefb8392d13b5aaafb66f28605d38408e4e7b291be12933eadd7003e",
+    "results/interpretation/fig_shap_dependence.png": "b4288d7ac00114d321db7576d731118c894ed031ee2e40f15dec6d39d1d3b3c2",
+    "results/interpretation/fig_shap_local.png": "9f1b2774075fbf2363a72b4f095da9acb16af10e5e30eea7fc10ade6bb1bc752"
+  },
+  "elapsed_s": 734.1
+}

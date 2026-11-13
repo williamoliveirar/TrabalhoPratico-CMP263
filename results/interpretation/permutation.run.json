@@ -1,0 +1,32 @@
+{
+  "script": "src.interpretation.permutation",
+  "started_at": "2026-11-13T01:49:23+00:00",
+  "git_commit": "c1923d09cc7f4f692ec27c74c9fc3beaaae62262",
+  "git_dirty": false,
+  "config_sha256": "53dc549fc877eb18e69a815e53f172a50e424306b060f6cd32283f27262cf519",
+  "seed": 42,
+  "n_jobs": 6,
+  "python": "3.12.7",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "libraries": {
+    "numpy": "2.5.4",
+    "pandas": "3.1.0",
+    "pyarrow": "26.0.0",
+    "polars": "2.1.0",
+    "scikit-learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "shap": "0.54.1",
+    "scipy": "1.18.1",
+    "matplotlib": "3.11.2",
+    "PyYAML": "6.0.3",
+    "joblib": "1.6.0"
+  },
+  "model": "lightgbm",
+  "outputs": {
+    "results/interpretation/permutation_per_fold.csv": "1cefaf16b799269ee1ce40134275fa7e2c1f853e77bc557a94719c89d181cf68",
+    "results/interpretation/permutation_summary.csv": "e18a9480afe14143ef4d0af194c53aa9beee4d5f589d471022b049691731b273",
+    "results/interpretation/permutation_stability.json": "f5e13a4037c60c72314c56c697123ddadc1c95be393fe99b57486e2bda25ee25",
+    "results/interpretation/fig_permutation_importance.png": "4096d53e80ec04fbe8815dc4b7b4b27b0a2d0ea6efcbd36e0f4ec3d04c2c4393"
+  },
+  "elapsed_s": 9193.5
+}

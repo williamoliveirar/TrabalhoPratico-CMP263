@@ -1,0 +1,9 @@
+{
+  "model": "lightgbm",
+  "pairs": 10,
+  "spearman_mean": 0.978144078144078,
+  "spearman_min": 0.9529914529914528,
+  "top_k": 10,
+  "top_k_overlap_mean": 0.96,
+  "top_k_overlap_min": 0.9
+}
