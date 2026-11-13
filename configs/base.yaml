@@ -69,9 +69,12 @@ search:  # D9
 nested:  # Etapa 7 — sample M, folds of make splits (outer: test; inner: validation)
   feature_set: full
 
-interpretation:  # D11
+interpretation:  # D11 — Etapa 9, best model of Etapa 8 only; pre-registered 2026-11-12
   permutation_repeats: 10
-  shap_rows_per_fold: 2000
+  shap_rows_per_fold: 2000         # uniform random rows of each outer test fold
+  top_k: 10                        # ranking stability: overlap of the top-k features between folds
+  dependence_features: [Number, Time_To_Live, IAT]
+  local: {worst_types: 3, false_positives: 2}  # one typical false negative per worst type + benign FPs
 
 evaluation:  # Etapa 8 — out-of-fold predictions of results/nested (D5, D6, D10, D16); pre-registered 2026-11-12
   models: [lightgbm, random_forest, mlp, decision_tree, dummy]  # table order; each model keeps its colour
@@ -85,3 +88,13 @@ evaluation:  # Etapa 8 — out-of-fold predictions of results/nested (D5, D6, D1
   bootstrap: {n_resamples: 1000, stratify: label34}  # P5: percentile intervals, paired across models; seed = seed
   prevalences: [0.01, 0.05, 0.1, 0.5]  # P1 (b); the attack prevalence of the dataset is added from label_counts_total
   h2_categories: [Web, BruteForce, Recon]  # H2 (PLANO §2.5): low-volume attacks
+
+ablation:  # Etapa 9 (D12, Q3, H3): Etapa 7 repeated for the best model of Etapa 8 without the shortcut candidates
+  reference: full
+  feature_sets: [no_shortcut, no_window, no_ttl]  # run order; no_window and no_ttl are the first cut of PLANO §8.2
+  single_features: [Number, Time_To_Live, IAT]   # one-feature trees (depth eda.single_feature_depth) on M
+  mcc_drop: {small: 0.01, large: 0.05}           # size of a significant MCC drop: small < 0.01 <= moderate < 0.05 <= large
+  type_collapse: 0.10                            # per-type sensitivity drop with non-overlapping Wilson intervals
+
+final:  # Etapa 10 task 1 (also feeds the leave-capture-out of Etapa 9): search on all of M, never re-evaluated
+  cv_splits: 3                                   # stratified by label34, like the inner loop
