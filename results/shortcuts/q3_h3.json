@@ -1,0 +1,63 @@
+{
+  "model": "lightgbm",
+  "Q3": {
+    "answer": "performance is robust to the shortcut candidates",
+    "primary_comparison": {
+      "model": "lightgbm",
+      "reference": "full",
+      "feature_set": "no_shortcut",
+      "mcc_reference": 0.8319334393145448,
+      "mcc_ablated": 0.8245726022879734,
+      "drop_mean": 0.007360837026571576,
+      "drop_std": 0.0006970297493333828,
+      "folds_with_drop": 5,
+      "t": 15.742352439956976,
+      "p": 9.512160196177273e-05,
+      "drop_pooled": 0.007361766577256845,
+      "ci_low": 0.006109117836550146,
+      "ci_high": 0.008651934357322973,
+      "p_holm": 0.0002853648058853182,
+      "significant_drop": true,
+      "reading": "small"
+    },
+    "collapsed_types": []
+  },
+  "H3": {
+    "first_part_ttl_alone_separates_much_traffic": "partially confirmed (pattern of Etapa 3 repeated on M)",
+    "ttl_only_on_M": {
+      "feature": "Time_To_Live",
+      "mcc_mean": 0.4596277308758229,
+      "mcc_std": 0.002672516888479353,
+      "tpr_window10": 0.3447616587004263,
+      "tpr_window100": 0.9539343408025014,
+      "fpr": 0.2497948584783173,
+      "mcc_E": 0.459262,
+      "tpr_window10_E": 0.342228,
+      "tpr_window100_E": 0.954738,
+      "fpr_E": 0.249667
+    },
+    "second_part_reflects_attacker_os": "not testable with these data (no OS metadata); hypothesis",
+    "evidence_no_ttl": {
+      "model": "lightgbm",
+      "reference": "full",
+      "feature_set": "no_ttl",
+      "mcc_reference": 0.8319334393145448,
+      "mcc_ablated": 0.8255697040389738,
+      "drop_mean": 0.006363735275571281,
+      "drop_std": 0.0009467809983117286,
+      "folds_with_drop": 5,
+      "t": 10.019736836265755,
+      "p": 0.0005577294917277217,
+      "drop_pooled": 0.00636468835351911,
+      "ci_low": 0.005057485107486087,
+      "ci_high": 0.007640207741157692,
+      "p_holm": 0.0011154589834554433,
+      "significant_drop": true,
+      "reading": "small"
+    }
+  },
+  "interpretation_agreement": {
+    "spearman_permutation_vs_shap": 0.9395604395604396,
+    "features": 27
+  }
+}

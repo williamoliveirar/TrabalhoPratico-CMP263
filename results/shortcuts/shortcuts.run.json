@@ -1,0 +1,39 @@
+{
+  "script": "src.experiments.shortcuts",
+  "started_at": "2026-11-13T07:32:10+00:00",
+  "git_commit": "399ff01d790fbaf666dd6892063a1c67959e1474",
+  "git_dirty": false,
+  "config_sha256": "53dc549fc877eb18e69a815e53f172a50e424306b060f6cd32283f27262cf519",
+  "seed": 42,
+  "n_jobs": 6,
+  "python": "3.12.7",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "libraries": {
+    "numpy": "2.5.4",
+    "pandas": "3.1.0",
+    "pyarrow": "26.0.0",
+    "polars": "2.1.0",
+    "scikit-learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "shap": "0.54.1",
+    "scipy": "1.18.1",
+    "matplotlib": "3.11.2",
+    "PyYAML": "6.0.3",
+    "joblib": "1.6.0"
+  },
+  "feature_sets": [
+    "no_shortcut",
+    "no_window",
+    "no_ttl"
+  ],
+  "outputs": {
+    "results/shortcuts/single_feature_M.csv": "30826c6d41b4c3c838275750841c30c888ff00b226bb7250d3e7dedbbab042a1",
+    "results/shortcuts/single_feature_summary.csv": "635bde66edc712fa0b474a4873444e7a7c2769344968f71f4a20af089e652c86",
+    "results/shortcuts/ablation_tests.csv": "4f4008d00cb02c9b2a115aaea2967dff5cf20f66140b20281ee65f8efb424f02",
+    "results/shortcuts/ablation_by_window.csv": "4af5adb80fc625298ed25227e2c631efa11793d87304ff2a0efd5972c3877e78",
+    "results/shortcuts/ablation_recall_by_type.csv": "f1704c39a9d5872d537accaf1e016fc0ccc7c68482802d10ea61f40f9303cc2c",
+    "results/shortcuts/q3_h3.json": "61cf17424b82de271b8d05425ef957d3b91ff4fa369d3870db05584adf6c2258",
+    "results/shortcuts/fig_ablation_recall_by_type.png": "9962e30933a832f5d360a5d7e4af6bfc737ccd9621e90a02f16755038d9e69c4"
+  },
+  "elapsed_s": 41.3
+}
