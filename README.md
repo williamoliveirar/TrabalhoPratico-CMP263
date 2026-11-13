@@ -6,7 +6,7 @@ Final project for **CMP263 – Machine Learning** (PPGC/UFRGS, 2026/2). We build
 - **Q2 (where it fails):** which attack types escape the best model (sensitivity per attack type), and what is its false positive rate on benign traffic?
 - **Q3 (shortcuts):** does performance rely on features that identify the capture environment or the data processing (TTL, packet-window size) rather than the attack itself?
 
-> **Status:** work in progress (Etapas 0–8 done; next: Etapa 9, interpretation of the best model, LightGBM, and the shortcut ablation). The full plan is in [`docs/PLANO.md`](docs/PLANO.md), the logbook with every decision and number is in [`docs/DIARIO.md`](docs/DIARIO.md), and a hands-on guide to running and validating everything is in [`docs/GUIA.md`](docs/GUIA.md). All three are in Portuguese and use the terminology of the course (glossary in `docs/PLANO.md` §1.4). Code, figures and the paper are in English.
+> **Status:** work in progress (Etapas 0–9 done; next: Etapa 10, `make all` and a reproduction from a fresh clone, then the paper). The full plan is in [`docs/PLANO.md`](docs/PLANO.md), the logbook with every decision and number is in [`docs/DIARIO.md`](docs/DIARIO.md), and a hands-on guide to running and validating everything is in [`docs/GUIA.md`](docs/GUIA.md). All three are in Portuguese and use the terminology of the course (glossary in `docs/PLANO.md` §1.4). Code, figures and the paper are in English.
 
 ## Machine learning workflow
 
@@ -63,11 +63,13 @@ The raw data is **not** redistributed here. To reproduce:
 | `make splits` | 5 | Frozen training/validation/test folds: spot-checking on E, outer (test) and inner (validation) folds on M, and complementary leave-capture-out folds on M (proposal) |
 | `make spotcheck` | 6 | 8 algorithms (logistic regression, Gaussian NB, kNN, decision tree, RBF SVM, MLP, random forest, LightGBM) + dummy baseline with default hyperparameters on the frozen folds of E |
 | `make tune` | 7 | Hyperparameter tuning and model selection with nested CV (5 outer × 3 inner folds, randomized search) for the 3 finalists on M |
-| `make evaluate` | 8 | Performance estimates on the outer test folds, corrected resampled t-test, per-attack sensitivity, PR/ROC |
-| `make interpret` / `make ablation` | 9 | Permutation importance, SHAP, shortcut ablation |
-| `make final` / `make report` | 10 | Final model and every table and figure of the paper |
+| `make evaluate` | 8 | Performance estimates on the outer test folds, corrected resampled t-test with Holm, bootstrap intervals, per-attack sensitivity, metrics re-weighted to the original distribution, PR/ROC |
+| `make interpret` | 9 | Permutation importance and SHAP of the best model in each outer test fold; local explanations of typical errors |
+| `make ablation` | 9 | Shortcut ablation (nested CV of the best model without the candidates), one-feature models on M, answer to Q3 and verdict on H3 (run after `make interpret`) |
+| `make final` | 10 (and 9) | Final model searched and trained on all of M (never re-evaluated); leave-capture-out with its configuration |
+| `make report` | 10 | Every table and figure of the paper |
 | `make all` | — | Everything above, from the raw CSVs |
-| `make test` | — | Ingestion, sampling, EDA, data-leakage, split and spot-checking tests |
+| `make test` | — | Ingestion, sampling, EDA, data-leakage, split, spot-checking, nested-CV, evaluation, interpretation and shortcut tests |
 | `make check-mirror` / `make check-ingest` | — | Optional cross-checks against the Kaggle mirror |
 
 ## Reproducibility rules
@@ -87,9 +89,9 @@ configs/      base.yaml (seed, paths, sizes), features.yaml, search_spaces.yaml
 data/         raw/, external/, interim/, processed/ (not versioned); raw_manifest.csv, sample_index.csv.gz, splits/ (versioned)
 src/          data/, features/, models/, experiments/, evaluation/, interpretation/, reporting/, utils/
 notebooks/    exploration and visualisation only; logic lives in src/
-results/      inspection/, sampling/, eda/, spotcheck/, nested/, ablation/, interpretation/, figures/, tables/
-models/       final model and metadata
-tests/        ingestion, sampling, EDA, data-leakage, split and spot-checking tests
+results/      inspection/, sampling/, eda/, splits/, spotcheck/, nested/, evaluation/, interpretation/, ablation/, shortcuts/, final/, capture/, figures/, tables/
+models/       final model (not versioned; size decided in Etapa 10) and the cached fold models of Etapa 9
+tests/        ingestion, sampling, EDA, data-leakage, split, spot-checking, nested-CV, evaluation, interpretation and shortcut tests
 docs/         PLANO.md, DIARIO.md, IA_LOG.md, enunciado.pdf, artigo/
 ```
 

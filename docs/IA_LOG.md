@@ -295,3 +295,36 @@ Antes disso, na mesma sessão, a dupla autorizou o push dos commits da Etapa 5 (
 
 **Limitações ou potencialidades observadas:**
 - *Potencialidade:* a ferramenta apontou que o enunciado pede trabalho em dupla, o que exige confirmação com a professora.
+
+## 2026-11-12 — Claude Code (Claude Opus 5.5, app desktop) — push da Etapa 8 e Etapa 9
+
+**Finalidade:** enviar os commits da Etapa 8 e executar a Etapa 9 (interpretação do modelo e análise de atalhos). A sessão foi de 12/11 à madrugada de 13/11.
+
+**Prompts (texto integral), em sequência:**
+
+> Pode fazer o push
+
+> Começar a Etapa 9
+
+**O que a ferramenta produziu:**
+- o envio dos commits da Etapa 8, depois da conferência de autoria feita em passo separado;
+- o pré-registro da Etapa 9 no diário e em `configs/base.yaml`, commitado antes de qualquer cálculo;
+- o código da etapa:
+  - ablação sobre um executor reaproveitável da validação cruzada aninhada;
+  - retreino e conferência dos modelos de cada fold;
+  - importância por permutação, SHAP e explicações locais;
+  - síntese da Q3 e da H3;
+  - modelo final e *leave-capture-out*;
+  - 8 testes novos;
+- as execuções (cerca de 9 h de cálculo, em parte em paralelo) e o commit de cada resultado;
+- a correção de uma figura com texto sobreposto, redesenhada sem recalcular;
+- a entrada do diário com a leitura dos resultados e as atualizações do guia, do PLANO e do README.
+
+**O que foi aproveitado:** [a preencher por William]
+
+**O que foi rejeitado ou corrigido, e por quê:** [a preencher por William]
+
+**Limitações ou potencialidades observadas:**
+- *Limitação:* a ferramenta fez commits enquanto a ablação rodava. Por isso os `run.json` dos três conjuntos registram commits diferentes, e foi preciso conferir pelo `git diff` que nada do que a ablação importa tinha mudado.
+- *Limitação:* o pré-registro escrito com a ferramenta deixou "sensibilidade alta" sem número. O limiar (0,90) foi fixado no código antes da execução, mas depois do pré-registro.
+- *Potencialidade:* a ferramenta apontou, antes de ver os resultados, que importância não é dependência e que só a ablação responde a Q3. Depois, apontou a confusão total entre janela de 100 pacotes e ataques de DDoS, DoS e Mirai, e o `HTTPS` como possível atalho fora da lista pré-registrada.

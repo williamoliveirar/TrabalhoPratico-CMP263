@@ -753,7 +753,7 @@ for k, (train_idx, test_idx) in enumerate(outer_folds(assign)):   # laço extern
 5. **Leitura dos resultados:** queda pequena indica que o modelo é robusto a esses atributos; queda grande é evidência de atalho; colapso em tipos específicos de ataque indica quais ataques são reconhecidos pelo ambiente, e não pelo comportamento.
 6. ***Leave-capture-out*** (análise complementar da D8, item (a), adotado em 2026-11-06): treinar o melhor algoritmo, com a configuração de hiperparâmetros do modelo final (Etapa 10, tarefa 1, que pode rodar antes desta), nos folds do laço externo (`nested_M`) e nos folds por captura (`capture_M`). Comparar a sensibilidade por tipo, sobre as predições fora do fold, nos 16 tipos agrupados por captura. Uma queda grande indica que o desempenho depende de ver, no treino, janelas da mesma captura que está no teste. Custo: 10 treinos.
 
-**Pronto quando:** Q3 está respondida no diário com números e figuras.
+**Pronto quando:** Q3 está respondida no diário com números e figuras. Concluído em 13/11 (resultados nos commits `0a162be`, `4bb3aa9`, `399ff01` e `a09a2ea`; modelo final e *leave-capture-out* no `a98b515`; diário, entrada "2026-11-13 — Etapa 9"). Q3: robusto aos candidatos a atalho. As ablações separadas (`no_window` e `no_ttl`) também rodaram.
 
 **Diário:** `[ENTREGA]` e `[DESCOBERTA]` para H3.
 
@@ -763,7 +763,7 @@ for k, (train_idx, test_idx) in enumerate(outer_folds(assign)):   # laço extern
 
 **Tarefas:**
 
-1. **Modelo final para disponibilização:** rodar a busca de hiperparâmetros (3 folds) em toda a amostra M com o melhor algoritmo, retreinar e salvar `models/final_model.joblib` com os hiperparâmetros, as versões, a semente, o hash dos dados e o commit. Esse modelo **não é avaliado de novo**: a estimativa de desempenho dele é a da validação cruzada aninhada. É o último passo do *holdout* das aulas (Aula 04): depois de estimar o desempenho, o modelo final é treinado com todos os dados disponíveis. Ele não é nenhum dos modelos dos folds. Escolher o modelo do fold de melhor desempenho seria um erro metodológico. Isso deve ser dito no artigo.
+1. **Modelo final para disponibilização** (feito na Etapa 9, que o usa no *leave-capture-out*; `results/final/final_model.json`, commit `a98b515`): rodar a busca de hiperparâmetros (3 folds) em toda a amostra M com o melhor algoritmo, retreinar e salvar `models/final_model.joblib` com os hiperparâmetros, as versões, a semente, o hash dos dados e o commit. Esse modelo **não é avaliado de novo**: a estimativa de desempenho dele é a da validação cruzada aninhada. É o último passo do *holdout* das aulas (Aula 04): depois de estimar o desempenho, o modelo final é treinado com todos os dados disponíveis. Ele não é nenhum dos modelos dos folds. Escolher o modelo do fold de melhor desempenho seria um erro metodológico. Isso deve ser dito no artigo.
 2. **`make all`:** executa tudo, dos CSVs brutos às tabelas (CSV e LaTeX) e figuras, via `src/reporting/`.
 3. **README:** visão geral, requisitos, como baixar os dados (com os hashes esperados), comandos `make`, tempo de execução esperado, máquina usada e um mapa de cada figura e tabela do artigo para o script que a gera.
 4. **Reprodução cruzada:** cada integrante da dupla clona o repositório num ambiente limpo e roda `make all`. Com o trabalho individual (12/11), a reprodução é feita por William num clone novo, com um ambiente virtual criado do zero, de preferência em outra máquina ou sistema operacional. Comparar hashes e métricas. Diferenças (por exemplo, não determinismo com várias threads) são corrigidas ou documentadas. Esse teste vale um parágrafo no artigo.
@@ -802,7 +802,7 @@ for k, (train_idx, test_idx) in enumerate(outer_folds(assign)):   # laço extern
 
 Hoje é **25/10/2026 (domingo)**. Restam quatro semanas até a meta interna de entrega (20/11, sexta-feira), com dois dias de folga antes do prazo oficial (22/11, 23h59).
 
-> **Situação em 12/11/2026:** Etapas 0 a 8 concluídas. As Etapas 4 e 5 terminaram em 05/11 (previsto: 01–02/11), a 6 em 06/11 (previsto: 03–04/11), a 7 em 07/11 (previsto: 04–08/11) e a 8 em 12/11 (previsto: 08–10/11). O trabalho está cerca de 2 dias atrás deste cronograma e, desde 12/11, é individual. A validação cruzada aninhada levou cerca de 5,4 h de cálculo, o dobro do estimado. O plano de contingência (§8.2) continua valendo. O cronograma da disciplina (v2) confirma a revisão por pares em 24/11 e a apresentação em 01/12.
+> **Situação em 13/11/2026:** Etapas 0 a 9 concluídas. As Etapas 4 e 5 terminaram em 05/11 (previsto: 01–02/11), a 6 em 06/11 (previsto: 03–04/11), a 7 em 07/11 (previsto: 04–08/11), a 8 em 12/11 (previsto: 08–10/11) e a 9 em 13/11 (previsto: 10–13/11). O atraso de cerca de 2 dias foi absorvido na Etapa 9, com as execuções longas rodando em paralelo durante a noite. Desde 12/11, o trabalho é individual. A validação cruzada aninhada levou cerca de 5,4 h de cálculo, o dobro do estimado, e a ablação, cerca de 5,8 h. O plano de contingência (§8.2) continua valendo; o primeiro corte não foi necessário. O cronograma da disciplina (v2) confirma a revisão por pares em 24/11 e a apresentação em 01/12.
 
 | Período | Etapa(s) | Marco (pronto quando) |
 |---|---|---|

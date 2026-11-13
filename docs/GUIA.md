@@ -1,6 +1,6 @@
-# Guia prático do projeto (Etapas 0 a 8)
+# Guia prático do projeto (Etapas 0 a 9)
 
-*Situação em 12/11/2026; código da Etapa 8 nos commits `ae0e693`, `e8fa682` e `924f128` e resultados da comparação de modelos no commit `41aca33`. Desde 12/11 o trabalho é individual. Atualize este guia ao fim de cada etapa.*
+*Situação em 13/11/2026; código da Etapa 9 nos commits `c3a996d`, `c1923d0`, `18945cf` e `2e019d9`, e resultados nos commits `a98b515`, `0a162be`, `4bb3aa9`, `399ff01` e `a09a2ea`. Desde 12/11 o trabalho é individual. Atualize este guia ao fim de cada etapa.*
 
 Este guia explica, do zero, o que já foi construído, como rodar cada parte e como conferir sozinho os resultados e as conclusões. O plano completo está em `docs/PLANO.md`; as decisões e os números, com fonte, em `docs/DIARIO.md`. Aqui o foco é prático: o que é cada coisa, que comando rodar e o que você deve ver. Os termos são os das aulas. O glossário completo está no PLANO, §1.4, e o mapa das etapas formais do treinamento de modelos no PLANO, §1.3.
 
@@ -37,9 +37,12 @@ Sumário:
 | 4 | Pré-processamento | Antes da divisão (regras fixas) e dentro do `Pipeline` (ajustado no treino de cada fold) | Concluída |
 | 5 | Divisão em treino, validação e teste | Folds congelados para o spot-checking (E) e para a validação cruzada aninhada (M) | Concluída |
 | 6 | Treinamento e spot-checking | 8 algoritmos + Dummy com hiperparâmetros padrão em E; 3 finalistas | Concluída |
-| 7 | Otimização de hiperparâmetros e seleção de modelos | Validação cruzada aninhada dos finalistas em M | Próxima |
+| 7 | Otimização de hiperparâmetros e seleção de modelos | Validação cruzada aninhada dos finalistas em M | Concluída |
+| 8 | Estimativa de desempenho e comparação de modelos | Testes de hipóteses entre os modelos, erros por tipo de ataque, distribuição original | Concluída |
+| 9 | Interpretação do modelo | Permutação, SHAP e explicações locais do LightGBM; ablação dos atalhos; *leave-capture-out* | Concluída |
+| 10 | Modelo final e reprodutibilidade | Modelo final (já treinado na Etapa 9), `make all`, reprodução num clone novo | Próxima |
 
-**O caminho dos dados**, do arquivo bruto até a escolha dos finalistas:
+**O caminho dos dados**, do arquivo bruto até a interpretação do melhor modelo:
 
 ```
 309 CSVs oficiais (8,9 GB, fora do repositório)
@@ -64,6 +67,17 @@ data/splits/   folds de treino, validação e teste, gerados uma vez e versionad
    │  make spotcheck (≈ 15 min, só E)
    ▼
 results/spotcheck/   ranking dos 8 algoritmos  →  finalistas (configs/base.yaml, search.finalist_models)
+   │  make tune     (≈ 5,4 h, só M)
+   ▼
+results/nested/   configuração escolhida, MCC e predições fora do fold de cada modelo e fold externo
+   │  make evaluate (≈ 1,5 min)
+   ▼
+results/evaluation/   comparação de modelos (Q1) e erros por tipo (Q2)  →  melhor modelo: LightGBM
+   │  make final, make interpret, make ablation   (Etapa 9; tempos na seção 6)
+   ▼
+results/final/, results/capture/        modelo final (models/final_model.joblib) e leave-capture-out
+results/interpretation/                 permutação, SHAP e explicações locais nos folds externos de teste
+results/ablation/, results/shortcuts/   ablação dos atalhos, modelos de um atributo em M, Q3 e H3
 ```
 
 ---
@@ -201,18 +215,28 @@ TrabalhoPratico-CPM263/
 │   ├── experiments/
 │   │   ├── make_splits.py    Etapa 5: folds congelados; funções que os entregam ao scikit-learn (cv=)
 │   │   ├── spotcheck.py      Etapa 6: spot-checking em E; ranking e grupo de empate
-│   │   └── nested_cv.py      Etapa 7: validação cruzada aninhada em M (busca no laço interno, teste no externo)
+│   │   ├── nested_cv.py      Etapa 7: validação cruzada aninhada em M (busca no laço interno, teste no externo)
+│   │   ├── ablation.py       Etapa 9: repete a Etapa 7 do LightGBM sem os candidatos a atalho (make ablation)
+│   │   ├── shortcuts.py      Etapa 9: modelos de um atributo em M, testes da ablação, Q3 e H3 (make ablation)
+│   │   ├── final_model.py    Etapa 10, antecipada: busca em toda a M e modelo final (make final)
+│   │   └── leave_capture_out.py   Etapa 9: divisão por linha × divisão por captura (make final)
 │   ├── evaluation/
 │   │   ├── metrics.py        métricas de D5 e D6 (MCC, sensibilidade, especificidade, AUC-ROC...), com peso opcional
 │   │   ├── stats.py          Etapa 8: teste t corrigido, Holm, Wilson, bootstrap, precisão projetada
 │   │   └── evaluate.py       Etapa 8: comparação de modelos e análise de erros (make evaluate)
-│   └── features/, interpretation/   (vazios; Etapas 8 a 10)
-├── tests/                    test_ingest.py, test_sample.py, test_eda.py, test_no_leakage.py, test_splits.py, test_spotcheck.py, test_nested_cv.py, test_evaluation.py (49 testes); synthetic.py (dados inventados)
+│   ├── interpretation/
+│   │   ├── fold_models.py    Etapa 9: retreina o modelo de cada fold externo e confere que reproduz a Etapa 7
+│   │   ├── common.py         melhor modelo, estabilidade do ranking, escolha dos casos típicos
+│   │   ├── permutation.py    Etapa 9: importância por permutação (make interpret)
+│   │   └── shap_analysis.py  Etapa 9: SHAP global, dependência e explicações locais (make interpret)
+│   └── features/             (vazio)
+├── tests/                    test_ingest.py, test_sample.py, test_eda.py, test_no_leakage.py, test_splits.py, test_spotcheck.py, test_nested_cv.py, test_evaluation.py, test_interpretation.py, test_shortcuts.py (57 testes); synthetic.py (dados inventados)
 ├── data/
 │   ├── raw_manifest.csv      versionado: tamanho, SHA-256 e linhas de cada um dos 309 CSVs
 │   ├── sample_index.csv.gz   versionado: quais linhas (source_file, row_idx) estão em E e em M
 │   ├── splits/               versionado: folds de treino, validação e teste de E e de M (Etapa 5)
 │   └── interim/, processed/  não versionados: Parquet da ingestão e amostras
+├── models/                   não versionado: final_model.joblib (Etapa 10) e etapa9/ (modelos dos folds, cache)
 ├── results/
 │   ├── inspection/           saídas da Etapa 1
 │   ├── sampling/             saídas da Etapa 2
@@ -220,7 +244,12 @@ TrabalhoPratico-CPM263/
 │   ├── splits/               saídas da Etapa 5 (tamanho de cada partição, conferências, hashes)
 │   ├── spotcheck/            saídas da Etapa 6 (métricas por fold, resumo, ranking, figura)
 │   ├── nested/               saídas da Etapa 7 (por modelo e fold: configuração, busca, predições; folds.csv)
-│   └── evaluation/           saídas da Etapa 8 (tabela principal, testes, sensibilidade por tipo, P1, figuras)
+│   ├── evaluation/           saídas da Etapa 8 (tabela principal, testes, sensibilidade por tipo, P1, figuras)
+│   ├── interpretation/       saídas da Etapa 9: permutação, SHAP, explicações locais, figuras
+│   ├── ablation/             saídas da Etapa 9: validação cruzada aninhada do LightGBM sem os atalhos, um conjunto por pasta
+│   ├── shortcuts/            saídas da Etapa 9: testes da ablação, modelos de um atributo em M, Q3 e H3, figura central
+│   ├── final/                modelo final: busca em toda a M e configuração escolhida
+│   └── capture/              leave-capture-out: divisão por linha × divisão por captura
 └── docs/
     ├── PLANO.md              o plano do trabalho (pt-BR)
     ├── DIARIO.md             diário de bordo: decisões e números com fonte (pt-BR)
@@ -245,6 +274,11 @@ Nenhum número "mágico" fica no código: semente, caminhos e tamanhos vêm de `
 | `validation` (D8) | número de folds da divisão em treino, validação e teste | spot-checking 5 × 2 (validação cruzada repetida); laço externo 5 (teste); laço interno 3 (validação); a divisão por captura usa os 5 folds do laço externo |
 | `spotcheck` | conjunto de atributos do spot-checking | `full` (27 atributos) |
 | `search` (D9) | busca de hiperparâmetros e finalistas | 30 configurações; finalistas: LightGBM, Random Forest e MLP |
+| `nested` | conjunto de atributos da Etapa 7 | `full` |
+| `evaluation` (Etapa 8) | análise pré-registrada da comparação de modelos | nível de 95%, α = 0,05; 4 comparações; bootstrap de 1.000 reamostragens estratificado por `label34`; prevalências 1%, 5%, 10% e 50% |
+| `interpretation` (D11, Etapa 9) | permutação e SHAP | 10 repetições; 2.000 linhas por fold no SHAP; top 10; dependência de `Number`, `Time_To_Live` e `IAT`; 3 piores tipos e 2 falsos positivos nas explicações locais |
+| `ablation` (D12, Etapa 9) | ablação dos atalhos e regras de leitura | referência `full`; conjuntos `no_shortcut`, `no_window`, `no_ttl`; queda pequena < 0,01 ≤ moderada < 0,05 ≤ grande; colapso de um tipo: queda ≥ 0,10 |
+| `final` (Etapa 10) | busca do modelo final em toda a M | 3 folds estratificados por `label34` |
 
 `configs/features.yaml` (D13, decidido em 26/10) diz o que acontece com cada coluna antes dos modelos:
 - `drop`: 12 colunas removidas, cada uma com o motivo e a entrada do diário. Ficam 27 atributos (limpeza, antes da divisão);
@@ -474,6 +508,55 @@ git diff --stat -- results/evaluation ":(exclude)*.run.json"
 
 Esperado: nenhuma saída.
 
+### Etapa 9 — Interpretação do modelo e análise de atalhos
+
+```powershell
+make interpret
+```
+
+```powershell
+make final
+```
+
+```powershell
+make ablation
+```
+
+Seguem o pré-registro (diário, entrada "2026-11-12 — Etapa 9 — Pré-registro da análise"; seções `interpretation`, `ablation` e `final` de `configs/base.yaml`). Os três retreinam modelos e por isso precisam de `sample_M.parquet` (`make sample`). `make interpret` e `make final` são independentes; `make ablation` vem depois do `make interpret`, porque a síntese lê os rankings da permutação e do SHAP.
+
+Tempos nesta máquina (`elapsed_s` dos `run.json`; até 3 rodaram ao mesmo tempo, o que infla os números):
+- `make interpret`: cerca de 2,8 h. A permutação levou 9.194 s, já incluindo o retreino dos 5 modelos de fold, e o SHAP, 734 s;
+- `make final`: cerca de 50 min. O modelo final levou 2.451 s, e o *leave-capture-out*, 663 s;
+- `make ablation`: cerca de 5,8 h. São 3 conjuntos de atributos × 5 folds, cada um com a busca completa da Etapa 7; a síntese leva 41 s.
+
+Como na Etapa 7, cada fold da ablação grava os seus arquivos ao terminar, e uma execução interrompida recomeça do fold que falta. **Deixe a tampa do notebook aberta** (seção 11).
+
+| Pasta | O que tem |
+|---|---|
+| `results/interpretation/` | Permutação: `permutation_per_fold.csv`, `permutation_summary.csv`, `permutation_stability.json`, `fig_permutation_importance.png`. SHAP: `shap_importance_per_fold.csv`, `shap_summary.csv`, `shap_stability.json`, `shap_values.csv.gz` (as 10.000 linhas explicadas), `fig_shap_summary.png`, `fig_shap_dependence.png`. Explicações locais: `local_explanations.csv`, `fig_shap_local.png` |
+| `results/ablation/<conjunto>/` | Como `results/nested/`, para `no_shortcut`, `no_window` e `no_ttl`: `folds.csv` e, por fold, a busca, a configuração escolhida e as predições fora do fold |
+| `results/shortcuts/` | `ablation_tests.csv` (a tabela central: queda de MCC, teste t corrigido com Holm, bootstrap), `ablation_by_window.csv`, `ablation_recall_by_type.csv`, `fig_ablation_recall_by_type.png`; modelos de um atributo em M (`single_feature_M.csv`, `single_feature_summary.csv`); `q3_h3.json` (resposta à Q3, veredito da H3 e concordância entre permutação e SHAP) |
+| `results/final/` | `final_model.json` e `final_search.csv`: busca em toda a M e configuração escolhida. O modelo vai para `models/final_model.joblib`, que não é versionado |
+| `results/capture/` | *Leave-capture-out*: `summary.json`, `recall_by_type.csv`, `folds.csv`, `predictions.csv.gz`, `fig_capture_recall.png` |
+| `models/etapa9/` | Os 5 modelos do LightGBM retreinados por fold, em cache; não versionados |
+
+Resultado:
+- **Q3:** o desempenho é robusto aos candidatos a atalho. Sem `Number` e `Time_To_Live`, o MCC cai 0,007 (queda pequena, pela regra pré-registrada), e nenhum tipo colapsa. Quase toda a queda vem do TTL e fica nos ataques de janela 10.
+- **Importância não é dependência:** `Number` é o atributo mais importante na permutação e no SHAP, mas retirá-lo não muda o MCC (0,831 contra 0,832).
+- **H3:** a primeira parte se mantém em M (o TTL sozinho dá MCC 0,460 e TFP 0,25). A segunda, sobre o sistema operacional, não é testável com estes dados.
+- ***Leave-capture-out*:** nenhum dos 16 tipos agrupados por captura colapsa, mas os 16 são de janela 100.
+- **Limitação:** neste dataset, janela de 100 pacotes e ataque de DDoS, DoS ou Mirai são a mesma coisa.
+
+A leitura completa está no diário (entrada "2026-11-13 — Etapa 9").
+
+Para conferir que a síntese dá os mesmos números sem refazer a ablação (≈ 1 min), rode `python -m src.experiments.shortcuts` e depois:
+
+```powershell
+git diff --stat -- results/shortcuts ":(exclude)*.run.json"
+```
+
+Esperado: nenhuma saída.
+
 ---
 
 ## 7. Como validar tudo por conta própria
@@ -486,7 +569,7 @@ São cinco níveis, do mais rápido ao mais completo. Rode no terminal do VS Cod
 make test
 ```
 
-Esperado: `49 passed`. Os testes conferem, com dados pequenos inventados:
+Esperado: `57 passed`. Os testes conferem, com dados pequenos inventados:
 - que a ingestão preserva valores e descarta só linhas malformadas;
 - que o mapeamento de rótulos tem 34 rótulos e 12 ataques DDoS;
 - que a deduplicação segue as três regras e que E e M saem disjuntas e 50/50;
@@ -518,7 +601,15 @@ Esperado: `49 passed`. Os testes conferem, com dados pequenos inventados:
   - o bootstrap é reprodutível com a semente, mantém o tamanho de cada estrato e dá diferença zero entre modelos idênticos;
   - a reponderação com todos os pesos iguais a 1 dá as métricas sem peso;
   - as regras pré-registradas da H1 e da H2 dão os vereditos esperados;
-  - as predições que não cobrem a amostra M uma vez, ou que discordam dos folds, são recusadas.
+  - as predições que não cobrem a amostra M uma vez, ou que discordam dos folds, são recusadas;
+- (`test_interpretation.py`, Etapa 9) que:
+  - o modelo de um fold, retreinado, é recusado se as predições não baterem com as gravadas;
+  - os valores SHAP das colunas *one-hot* somam no atributo original e, somados ao valor de referência, dão o escore;
+  - a estabilidade do ranking entre folds e a escolha do caso "típico" seguem a regra pré-registrada;
+- (`test_shortcuts.py`, Etapa 9) que:
+  - o Holm deixa de fora da família uma comparação que não pôde ser testada;
+  - a leitura da queda de MCC (pequena, moderada, grande) e a regra de colapso de um tipo seguem os limiares pré-registrados;
+  - no *leave-capture-out*, um tipo só colapsa com queda grande e intervalos que não se sobrepõem.
 
 ### Nível 2 — Refazer as Etapas 2, 3 e 5 e obter os mesmos arquivos (≈ 45 s)
 
@@ -791,6 +882,27 @@ Esperado:
 - a tabela: sensibilidade de 0,7142 nos ataques de janela 10 e de 1,0 nos de janela 100;
 - `0.8403`: o MCC do LightGBM reponderado para a distribuição original, igual à linha `pooled` de `reweighted.csv`.
 
+**4.12 — A ablação e o SHAP refeitos por fora (Etapa 9, ≈ 5 s):**
+
+```python
+import json, polars as pl
+from src.evaluation.stats import corrected_resampled_ttest
+full = pl.read_csv("results/nested/folds.csv").filter(pl.col("model") == "lightgbm").sort("outer_fold")["test_mcc"]
+abl = pl.read_csv("results/ablation/no_shortcut/folds.csv").sort("outer_fold")["test_mcc"]
+print(round((full - abl).mean(), 4), [round(v, 4) for v in corrected_resampled_ttest(full, abl, 154040, 38510)])
+print(pl.read_csv("results/shortcuts/ablation_tests.csv").select("feature_set", "drop_mean", "t", "p").row(0))
+shap = pl.read_csv("results/interpretation/shap_values.csv.gz")
+print(shap.group_by(pl.col("value_Number") <= 10).agg(pl.len(), pl.col("shap_Number").mean().round(2)).sort("value_Number"))
+print(round(shap["base_value"].mean(), 2))
+print(json.load(open("results/shortcuts/q3_h3.json", encoding="utf-8"))["Q3"]["answer"])
+```
+
+Esperado:
+- `0.0074 [15.7424, 0.0001]` e `('no_shortcut', 0.00736..., 15.74..., 9.51...e-05)`: a queda de MCC sem `Number` e `Time_To_Live` e o teste t, refeitos a partir dos MCC por fold, são os gravados em `ablation_tests.csv`;
+- a tabela: nas 7.108 linhas com `Number` ≤ 10, a contribuição média de `Number` é −2,36; nas 2.892 demais, +4,63;
+- `1.79`: o valor de referência do explicador. Numa janela de 10 pacotes, `Number` sozinho anula o ponto de partida do modelo;
+- `performance is robust to the shortcut candidates`: a resposta à Q3 pela regra pré-registrada.
+
 ### Nível 5 — Olhar as figuras e comparar com o diário
 
 Abra as figuras de `results/eda/` (clique no explorador do VS Code, ou `start results\eda\fig_number_by_type.png`). Para cada afirmação da entrada "Etapa 3 — EDA na amostra E" do diário, o arquivo citado deve mostrar o número citado. Por exemplo, a afirmação "MCC 0,653 com `Number`" está na primeira linha de `single_feature_models.csv` e na primeira barra de `fig_single_feature_mcc.png`.
@@ -828,10 +940,16 @@ Cada conclusão abaixo tem a evidência, onde ela está e como conferir.
 | 15 | Todos os falsos negativos são de ataques de janela 10 (sensibilidade 0,714). As inundações, de janela 100, são detectadas em 100% das instâncias. Só com os ataques de janela 10, o MCC cai para 0,695 | `recall_by_group.csv`, `metrics_by_window.csv`, `fig_recall_by_type.png` | Nível 4.11 |
 | 16 | Na distribuição original do dataset, a sensibilidade vai a 0,993 e a acurácia a 0,991, perto dos 0,997 do artigo do dataset: os números altos da literatura vêm em grande parte da distribuição. Com 1% de ataques, só 14% dos alarmes seriam reais | `reweighted.csv`, `ppv_projection.csv` | Nível 4.11 |
 | 17 | H1: os ensembles superam a árvore (primeira metade confirmada); a segunda metade fica sem veredito, como pré-registrado. H2: Recon, Web e BruteForce concentram os falsos negativos | `hypotheses.json` | Abra o arquivo |
+| 18 | Os modelos de cada fold se reproduzem, e as explicações são estáveis: os rankings da permutação e do SHAP mudam pouco entre folds (Spearman médio 0,98 e 0,99) e concordam entre si (0,94). `Number`, `HTTPS`, `Header_Length` e `Max` estão entre os primeiros nos dois | `results/interpretation/permutation_summary.csv`, `shap_summary.csv`, `*_stability.json`; `results/shortcuts/q3_h3.json` | Abra os arquivos |
+| 19 | Numa janela de 10 pacotes, `Number` sozinho anula o ponto de partida do modelo (−2,36 log-odds, em média, contra um valor de referência de 1,79). Por isso os ataques de janela 10 que escapam parecem benignos | `shap_values.csv.gz`, `local_explanations.csv`, `fig_shap_dependence.png`, `fig_shap_local.png` | Nível 4.12 |
+| 20 | Q3: o desempenho é robusto aos candidatos a atalho. Sem `Number` e `Time_To_Live`, o MCC cai 0,007 (queda significativa, mas pequena), e nenhum tipo colapsa. Quase toda a queda vem do TTL, nos ataques de janela 10 | `results/shortcuts/ablation_tests.csv`, `ablation_by_window.csv`, `ablation_recall_by_type.csv`, `fig_ablation_recall_by_type.png` | Nível 4.12 |
+| 21 | Importância não é dependência: sem `Number`, o atributo mais importante, o MCC não muda (0,831 contra 0,832; p = 0,12 depois de Holm) | `ablation_tests.csv` | Abra o arquivo |
+| 22 | H3: o TTL sozinho repete em M o padrão de E (MCC 0,460, TFP 0,25), mas separa quase só as inundações. A parte do sistema operacional não é testável com estes dados | `single_feature_summary.csv`, `q3_h3.json` | Abra os arquivos |
+| 23 | *Leave-capture-out*: nenhum dos 16 tipos agrupados por captura colapsa. Os 16 são de janela 100, e o resultado não diz nada sobre os ataques difíceis | `results/capture/summary.json`, `recall_by_type.csv` | Abra os arquivos |
 
-**Consequência para o trabalho:** um modelo pode ter MCC alto aprendendo só "janela grande = ataque". Por isso:
-- a Etapa 9 compara `full` com `no_window`, `no_ttl` e `no_shortcut`;
-- todas as métricas são reportadas separadamente para os ataques de janela 10, em que benigno e ataque têm a mesma janela. Essa é a comparação mais honesta.
+**Consequência para o trabalho:** um modelo pode ter MCC alto aprendendo só "janela grande = ataque". A Etapa 9 mostrou que o LightGBM não precisa do atributo `Number` para isso. Mas, neste dataset, janela de 100 pacotes e ataque de DDoS, DoS ou Mirai são a mesma coisa, e nenhuma análise com estes dados separa as duas leituras. Por isso:
+- todas as métricas são reportadas separadamente para os ataques de janela 10, em que benigno e ataque têm a mesma janela. Essa é a comparação mais honesta;
+- o artigo trata a janela, o TTL e o `HTTPS` como ameaças à validade, e não como questões resolvidas.
 
 ---
 
@@ -869,12 +987,11 @@ Regras que valem sempre (estão no `CLAUDE.md`):
 
 ## 10. O que vem a seguir e o que está pendente
 
-**Próximas etapas** (cronograma do PLANO §8; em 12/11, a Etapa 8 terminou com cerca de 2 dias de atraso):
+**Próximas etapas** (cronograma do PLANO §8; em 13/11, a Etapa 9 terminou dentro do previsto):
 
 | Etapa | Previsto no plano | O que será feito |
 |---|---|---|
-| 9 | 10–13/11 | Interpretação do melhor modelo, ablação dos atalhos e *leave-capture-out*; Q3 respondida |
-| 10 | 13–15/11 | Modelo final treinado em toda a amostra M; `make all` funcionando |
+| 10 | 13–15/11 | `make all` funcionando; notas de reprodução e mapa das figuras e tabelas do artigo no README. O modelo final já foi treinado na Etapa 9 |
 | 11 | 14–19/11 | Artigo completo e revisado; reprodução num clone novo, com ambiente criado do zero |
 
 **Pendências (desde 12/11, o trabalho é individual; ver o diário):**
@@ -883,7 +1000,8 @@ Regras que valem sempre (estão no `CLAUDE.md`):
 - baixar a pasta *Supplementary material* do dataset (o formulário pede nome, e-mail e instituição) para confirmar se as linhas estão em ordem cronológica. Isso só importa se for preciso reabrir a análise complementar (b) da D8, de blocos contíguos, que não foi adotada;
 - escolher a licença do repositório;
 - confirmar com a professora que o trabalho pode ser concluído individualmente (o enunciado pede dupla);
-- antes das execuções longas da Etapa 9, deixar o notebook na tomada com a tampa aberta, ou mudar a ação de fechar a tampa para "Não fazer nada" com o carregador ligado (seção 11).
+- decidir se o `HTTPS`, segundo atributo mais importante e fora da lista de candidatos, ganha uma ablação própria (com pré-registro) ou fica só como ameaça à validade (entrada "2026-11-13 — Etapa 9" do diário);
+- antes de execuções longas, deixar o notebook na tomada com a tampa aberta, ou mudar a ação de fechar a tampa para "Não fazer nada" com o carregador ligado (seção 11). Somando os tempos registrados, o `make all` completo passa de 14 h nesta máquina.
 
 ---
 
