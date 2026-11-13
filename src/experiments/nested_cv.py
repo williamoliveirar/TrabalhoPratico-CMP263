@@ -153,6 +153,47 @@ def collect(root, models: list[str], n_outer: int) -> pl.DataFrame | None:
     return pl.DataFrame(rows, infer_schema_length=None)
 
 
+def run_nested(cfg: dict, feature_cfg: dict, search_cfg: dict, M: pl.DataFrame, feature_set: str, root,
+               models: list[str], run_models: list[str], run_folds: list[int], run_name: str) -> None:
+    """Nested CV of `run_models` × `run_folds` on sample M with `feature_set`, written under `root`; folds already
+    done are skipped. Once every model of `models` has every outer fold, root/folds.csv gathers them."""
+    n_outer = int(cfg["validation"]["outer"]["n_splits"])
+    features = feature_names(M.columns, feature_cfg, feature_set, auxiliary_columns(cfg))
+    X, y = prepare(M, features, feature_cfg), M[cfg["columns"]["target"]].to_numpy()
+    assign = load_assignment(cfg, NESTED, M)
+    root.mkdir(parents=True, exist_ok=True)
+    with recorded_run(cfg, root, run_name) as run:
+        run["feature_set"], run["features"] = feature_set, features
+        done, outputs = [], {}
+        for k in run_folds:
+            for name in run_models:
+                out_dir = root / name
+                if (out_dir / f"fold{k}.json").exists():
+                    print(f"{name} fold {k}: already done, skipped", flush=True)
+                    continue
+                timing = run_fold(name, k, X, y, assign, cfg, feature_cfg, search_cfg, features, out_dir)
+                score = json.loads((out_dir / f"fold{k}.json").read_text("utf-8"))["test"]["mcc"]
+                print(f"{feature_set} {name} fold {k}: test MCC {score:.4f} ({timing['search_and_refit_s']:.0f} s)",
+                      flush=True)
+                done.append(f"{name}/fold{k}")
+                outputs |= {rel(f): sha256_file(f) for f in sorted(out_dir.glob(f"fold{k}*"))
+                            if not f.name.endswith("_timing.json")}
+        table = collect(root, models, n_outer)
+        if table is not None:  # every model has every outer fold: consolidated table for Etapas 8 and 9
+            table.write_csv(root / "folds.csv")
+            outputs[rel(root / "folds.csv")] = sha256_file(root / "folds.csv")
+            print(f"wrote {rel(root / 'folds.csv')} ({table.height} rows)")
+        run["computed"] = done
+        run["outputs"] = outputs
+
+
+def load_sample_M(cfg: dict) -> pl.DataFrame:
+    source = path(cfg, "sample_M")
+    if not source.exists():
+        raise SystemExit(f"{source} not found; run `make sample` first")
+    return pl.read_parquet(source)
+
+
 def main() -> None:
     cfg, feature_cfg, search_cfg = load_config(), load_config("features"), load_config("search_spaces")
     models = [*cfg["search"]["finalist_models"], *cfg["search"]["reference_models"]]
@@ -161,39 +202,11 @@ def main() -> None:
     parser.add_argument("--models", nargs="+", default=models, choices=models)
     parser.add_argument("--folds", nargs="+", type=int, default=list(range(n_outer)), choices=range(n_outer))
     args = parser.parse_args()
-
-    source = path(cfg, "sample_M")
-    if not source.exists():
-        raise SystemExit(f"{source} not found; run `make sample` first")
-    M = pl.read_parquet(source)
-    features = feature_names(M.columns, feature_cfg, cfg["nested"]["feature_set"], auxiliary_columns(cfg))
-    X, y = prepare(M, features, feature_cfg), M[cfg["columns"]["target"]].to_numpy()
-    assign = load_assignment(cfg, NESTED, M)
-    root = path(cfg, "results_dir") / "nested"
     # one run record per invocation scope, so resuming in several invocations keeps the provenance of each part
     scope = ([] if args.models == models else args.models) + \
             ([] if args.folds == list(range(n_outer)) else [f"fold{k}" for k in args.folds])
-    with recorded_run(cfg, root, "_".join(["nested_cv", *scope])) as run:
-        done, outputs = [], {}
-        for k in args.folds:
-            for name in args.models:
-                out_dir = root / name
-                if (out_dir / f"fold{k}.json").exists():
-                    print(f"{name} fold {k}: already done, skipped", flush=True)
-                    continue
-                timing = run_fold(name, k, X, y, assign, cfg, feature_cfg, search_cfg, features, out_dir)
-                score = json.loads((out_dir / f"fold{k}.json").read_text("utf-8"))["test"]["mcc"]
-                print(f"{name} fold {k}: test MCC {score:.4f} ({timing['search_and_refit_s']:.0f} s)", flush=True)
-                done.append(f"{name}/fold{k}")
-                outputs |= {rel(f): sha256_file(f) for f in sorted(out_dir.glob(f"fold{k}*"))
-                            if not f.name.endswith("_timing.json")}
-        table = collect(root, models, n_outer)
-        if table is not None:  # every model has every outer fold: consolidated table for Etapa 8
-            table.write_csv(root / "folds.csv")
-            outputs[rel(root / "folds.csv")] = sha256_file(root / "folds.csv")
-            print(f"wrote {rel(root / 'folds.csv')} ({table.height} rows)")
-        run["computed"] = done
-        run["outputs"] = outputs
+    run_nested(cfg, feature_cfg, search_cfg, load_sample_M(cfg), cfg["nested"]["feature_set"],
+               path(cfg, "results_dir") / "nested", models, args.models, args.folds, "_".join(["nested_cv", *scope]))
 
 
 if __name__ == "__main__":
