@@ -1,0 +1,38 @@
+{
+  "model": "lightgbm",
+  "configuration": "final model (results/final/final_model.json)",
+  "grouped_types": [
+    "DDoS-ACK_Fragmentation",
+    "DDoS-ICMP_Flood",
+    "DDoS-ICMP_Fragmentation",
+    "DDoS-PSHACK_Flood",
+    "DDoS-RSTFINFlood",
+    "DDoS-SYN_Flood",
+    "DDoS-SynonymousIP_Flood",
+    "DDoS-TCP_Flood",
+    "DDoS-UDP_Flood",
+    "DDoS-UDP_Fragmentation",
+    "DoS-SYN_Flood",
+    "DoS-TCP_Flood",
+    "DoS-UDP_Flood",
+    "Mirai-greeth_flood",
+    "Mirai-greip_flood",
+    "Mirai-udpplain"
+  ],
+  "collapse_rule": "drop >= 0.1 and non-overlapping 95% Wilson intervals",
+  "collapsed_types": [],
+  "grouped_mean_sensitivity": {
+    "by_row": 1.0,
+    "by_capture": 1.0
+  },
+  "mcc": {
+    "capture_M": {
+      "mean": 0.8325222029638354,
+      "std": 0.0023649166147970816
+    },
+    "nested_M": {
+      "mean": 0.8320265897352398,
+      "std": 0.0020421126990000315
+    }
+  }
+}

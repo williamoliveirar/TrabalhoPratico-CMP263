@@ -1,0 +1,32 @@
+{
+  "script": "src.experiments.leave_capture_out",
+  "started_at": "2026-11-13T02:36:05+00:00",
+  "git_commit": "18945cf2379bdbb9a23e5f5dfd9df5b76c3467c3",
+  "git_dirty": false,
+  "config_sha256": "53dc549fc877eb18e69a815e53f172a50e424306b060f6cd32283f27262cf519",
+  "seed": 42,
+  "n_jobs": 6,
+  "python": "3.12.7",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "libraries": {
+    "numpy": "2.5.4",
+    "pandas": "3.1.0",
+    "pyarrow": "26.0.0",
+    "polars": "2.1.0",
+    "scikit-learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "shap": "0.54.1",
+    "scipy": "1.18.1",
+    "matplotlib": "3.11.2",
+    "PyYAML": "6.0.3",
+    "joblib": "1.6.0"
+  },
+  "outputs": {
+    "results/capture/predictions.csv.gz": "fa881a59a23002c1f70e5e084256da027dd1cecff309ffc16f57fe05ffe62baa",
+    "results/capture/folds.csv": "b2d4ef3ff4384a02352b577e0e93db6b299cd1b7d68ae37c53ed05a61d5e7c28",
+    "results/capture/recall_by_type.csv": "e86ac97a83467d7ae798c498e32d67f15df914518dd214c2171cb6843f12ff4a",
+    "results/capture/summary.json": "0129544c43333d96356987b5c3bb1f5d4ce7f5f52feed992b5a6b7891a961095",
+    "results/capture/fig_capture_recall.png": "524fd152f79ba889fb3ac47736d30f91f583543a4c61869547c5a34732a3af41"
+  },
+  "elapsed_s": 663.3
+}
