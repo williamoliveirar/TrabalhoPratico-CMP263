@@ -56,11 +56,13 @@ interpret:      ## Etapa 9 — permutation importance and SHAP
 	$(PY) -m src.interpretation.permutation
 	$(PY) -m src.interpretation.shap_analysis
 
-ablation:       ## Etapa 9 — shortcut ablation (full vs no_shortcut)
+ablation:       ## Etapa 9 — shortcut ablation (nested CV without the candidates), one-feature models, Q3/H3 (after interpret)
 	$(PY) -m src.experiments.ablation
+	$(PY) -m src.experiments.shortcuts
 
-final:          ## Etapa 10 — final model trained on all of M
+final:          ## Etapa 10 — final model trained on all of M; Etapa 9 leave-capture-out with its configuration
 	$(PY) -m src.experiments.final_model
+	$(PY) -m src.experiments.leave_capture_out
 
 report:         ## Etapa 10 — paper tables (CSV/LaTeX) and figures
 	$(PY) -m src.reporting.tables

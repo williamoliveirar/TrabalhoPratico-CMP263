@@ -8,6 +8,7 @@ data/**
 
 # --- Models: size decided in Etapa 10 (GitHub rejects files > 100 MB) ---
 models/*.joblib
+models/**/*.joblib
 
 # --- Machine-specific settings (templates: configs/local.example.yaml, Makefile header) ---
 configs/local.yaml

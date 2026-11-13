@@ -26,11 +26,14 @@ def corrected_resampled_ttest(scores_a, scores_b, n_train: int, n_test: int) -> 
 
 
 def holm(pvalues) -> np.ndarray:
-    """Holm step-down adjusted p-values, in the input order."""
+    """Holm step-down adjusted p-values, in the input order. A missing p-value (nan: a test that could not be run)
+    stays nan and does not count in the family."""
     p = np.asarray(pvalues, dtype=float)
-    adjusted, running = np.empty_like(p), 0.0
-    for rank, i in enumerate(np.argsort(p, kind="stable")):
-        running = max(running, (p.size - rank) * p[i])
+    adjusted = np.full_like(p, np.nan)
+    tested = np.flatnonzero(~np.isnan(p))
+    running = 0.0
+    for rank, i in enumerate(tested[np.argsort(p[tested], kind="stable")]):
+        running = max(running, (tested.size - rank) * p[i])
         adjusted[i] = min(1.0, running)
     return adjusted
 
