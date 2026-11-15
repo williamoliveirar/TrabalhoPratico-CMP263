@@ -6,7 +6,7 @@ Final project for **CMP263 – Machine Learning** (PPGC/UFRGS, 2026/2). We build
 - **Q2 (where it fails):** which attack types escape the best model (sensitivity per attack type), and what is its false positive rate on benign traffic?
 - **Q3 (shortcuts):** does performance rely on features that identify the capture environment or the data processing (TTL, packet-window size) rather than the attack itself?
 
-> **Status:** work in progress (Etapas 0–9 done; Etapa 10, reproducibility, in progress: `make report` is in place and a reproduction from a fresh clone is running). The full plan is in [`docs/PLANO.md`](docs/PLANO.md), the logbook with every decision and number is in [`docs/DIARIO.md`](docs/DIARIO.md), and a hands-on guide to running and validating everything is in [`docs/GUIA.md`](docs/GUIA.md). All three are in Portuguese and use the terminology of the course (glossary in `docs/PLANO.md` §1.4). Code and figures are in English.
+> **Status:** Etapas 0–10 done; the whole pipeline was reproduced from a fresh clone with byte-identical results (see [Reproducing](#reproducing)). The full plan is in [`docs/PLANO.md`](docs/PLANO.md), and a hands-on guide to running and validating everything is in [`docs/GUIA.md`](docs/GUIA.md). All three are in Portuguese and use the terminology of the course (glossary in `docs/PLANO.md` §1.4). Code and figures are in English.
 
 ## Machine learning workflow
 
@@ -68,9 +68,42 @@ The raw data is **not** redistributed here. To reproduce:
 | `make ablation` | 9 | Shortcut ablation (nested CV of the best model without the candidates), one-feature models on M, answer to Q3 and verdict on H3 (run after `make interpret`) |
 | `make final` | 10 (and 9) | Final model searched and trained on all of M (never re-evaluated); leave-capture-out with its configuration |
 | `make report` | 10 | Summary tables (CSV and Markdown) in `results/tables/`, read from the recorded results; a checked index of every figure in `results/figures/index.csv` |
+| `make compare-reproduction CLONE=<folder>` | 10 | Compares a fresh clone where `make all` ran with the recorded results, file by file (see Reproducing) |
 | `make all` | — | Everything above, from the raw CSVs |
-| `make test` | — | Ingestion, sampling, EDA, data-leakage, split, spot-checking, nested-CV, evaluation, interpretation and shortcut tests |
+| `make test` | — | Ingestion, sampling, EDA, data-leakage, split, spot-checking, nested-CV, evaluation, interpretation, shortcut, reporting and reproduction tests |
 | `make check-mirror` / `make check-ingest` | — | Optional cross-checks against the Kaggle mirror |
+
+## Reproducing
+
+From a fresh clone, with the raw CSVs in place (see Data):
+
+1. `make env` and `make test`.
+2. Delete `results/nested/` and `results/ablation/`. `make tune` and `make ablation` resume an interrupted run by skipping every fold whose `fold<k>.json` exists, and those files are versioned: without this step they recompute nothing.
+3. `make all`. Keep the computer from sleeping: a suspension does not change the results, only the recorded runtimes.
+4. From the original copy, `make compare-reproduction CLONE=<path to the clone>`. It hashes every versioned file under `data/` and `results/` in both copies (run records excluded) and writes `results/reproduction/`. In the clone, `git status` shows the same differences, plus the run records.
+
+We did this on 2026-11-15, in a fresh clone at commit `0708f7b` with a new virtual environment ([`results/reproduction/summary.json`](results/reproduction/summary.json), commit `f1cf531`):
+
+- 224 of the 262 versioned files are byte-identical. They include the raw-data manifest, the sample index, the folds, every metric, prediction, test, table and figure, and the final model's metadata. The final model file (`models/final_model.joblib`, not versioned) has the SHA-256 recorded in `results/final/final_model.json`.
+- The other 38 hold wall-clock runtimes: the `fold<k>_timing.json` files of the nested CV and of the ablation, and `results/spotcheck/timings_per_fold.csv`.
+- Limitation: same machine and operating system as the original runs. On other hardware, floating-point differences in multithreaded code may change the last digits; the comparison then has to be made on the metrics, with a tolerance.
+
+Runtime of each target in that run (`elapsed_s` in `results/reproduction/runs.csv`). Machine: AMD Ryzen 5 5500U (6 cores, 12 threads), 17.9 GB of RAM, Windows 10 Pro, Python 3.12.7, 6 parallel jobs (`n_jobs` in `configs/base.yaml`).
+
+| Target | Runtime |
+|---|---|
+| `make env` | ≈ 3 min (download and install) |
+| `make test` | ≈ 20 s |
+| `make ingest` | 8 min |
+| `make inspect`, `sample`, `eda`, `splits` | 1 min together |
+| `make spotcheck` | 19 min |
+| `make tune` | 4.9 h |
+| `make evaluate` | 42 s |
+| `make interpret` | 1.0 h |
+| `make ablation` | 4.7 h |
+| `make final` | 24 min |
+| `make report` | 1 s |
+| **`make all`** | **11.5 h** |
 
 ## Reproducibility rules
 
@@ -89,10 +122,10 @@ configs/      base.yaml (seed, paths, sizes), features.yaml, search_spaces.yaml
 data/         raw/, external/, interim/, processed/ (not versioned); raw_manifest.csv, sample_index.csv.gz, splits/ (versioned)
 src/          data/, features/, models/, experiments/, evaluation/, interpretation/, reporting/, utils/
 notebooks/    exploration and visualisation only; logic lives in src/
-results/      inspection/, sampling/, eda/, splits/, spotcheck/, nested/, evaluation/, interpretation/, ablation/, shortcuts/, final/, capture/, figures/, tables/
+results/      inspection/, sampling/, eda/, splits/, spotcheck/, nested/, evaluation/, interpretation/, ablation/, shortcuts/, final/, capture/, figures/, tables/, reproduction/
 models/       final model (not versioned; size decided in Etapa 10) and the cached fold models of Etapa 9
-tests/        ingestion, sampling, EDA, data-leakage, split, spot-checking, nested-CV, evaluation, interpretation and shortcut tests
-docs/         PLANO.md, DIARIO.md, IA_LOG.md, enunciado.pdf, artigo/
+tests/        ingestion, sampling, EDA, data-leakage, split, spot-checking, nested-CV, evaluation, interpretation, shortcut, reporting and reproduction tests
+docs/         PLANO.md, GUIA.md, IA_LOG.md, artigo/
 ```
 
 ## Figures and tables

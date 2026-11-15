@@ -1,7 +1,6 @@
 """Etapa 9 synthesis (Q3, H3, D12): one-feature models on M and the comparison of the shortcut ablation.
 
-Every rule here was pre-registered on 2026-11-12 (diary, "Etapa 9 — Pré-registro da análise"; configs/base.yaml,
-`ablation`):
+Every rule here was pre-registered on 2026-11-12 (configs/base.yaml, `ablation`):
 - one-feature trees (depth `eda.single_feature_depth`) on Number, Time_To_Live and IAT, trained on each outer
   training set of M and tested on the outer test fold, compared with the same models on E (Etapa 3);
 - the best model with `ablation.reference` (results/nested) against each ablated feature set (results/ablation):
@@ -70,6 +69,7 @@ def ablation_tests(cfg: dict, model: str, sets: list[str], oofs: dict, folds: di
         if cfg["evaluation"]["bootstrap"]["stratify"] else None
     counts = bootstrap_counts(y, preds, strata, int(cfg["evaluation"]["bootstrap"]["n_resamples"]), int(cfg["seed"]))
     boot = mcc_from_counts(counts[..., 0], counts[..., 1], counts[..., 2], counts[..., 3])
+    # MCC of the pooled out-of-fold confusion matrix, cells in the order tn, fp, fn, tp
     pooled = {n: float(mcc_from_counts(*(int(((oofs[n]["y"] == a) & (oofs[n]["pred"] == b)).sum())
                                          for a, b in ((0, 0), (0, 1), (1, 0), (1, 1))))) for n in names}
     rows = []
@@ -77,7 +77,7 @@ def ablation_tests(cfg: dict, model: str, sets: list[str], oofs: dict, folds: di
         a = folds[ref].sort("outer_fold")
         b = folds[s].sort("outer_fold")
         t, p = corrected_resampled_ttest(a["test_mcc"], b["test_mcc"], int(a["n_train"][0]), int(a["n_test"][0]))
-        low, high = percentile_interval(boot[:, 0] - boot[:, i], level)
+        low, high = percentile_interval(boot[:, 0] - boot[:, i], level)  # column 0 is the reference
         d = a["test_mcc"].to_numpy() - b["test_mcc"].to_numpy()
         rows.append({"model": model, "reference": ref, "feature_set": s, "mcc_reference": float(a["test_mcc"].mean()),
                      "mcc_ablated": float(b["test_mcc"].mean()), "drop_mean": float(d.mean()),
@@ -137,6 +137,7 @@ def figure(recall: pl.DataFrame, ablated: str, model: str, target) -> None:
 
 
 def main() -> None:
+    """Run the pre-registered Etapa 9 analyses on the nested and ablation results and write the Q3/H3 verdicts."""
     cfg, feature_cfg = load_config(), load_config("features")
     acfg = cfg["ablation"]
     level, alpha = float(cfg["evaluation"]["confidence_level"]), float(cfg["evaluation"]["alpha"])
@@ -167,6 +168,7 @@ def main() -> None:
         by_window = metrics_by_window(oofs, [ref, *ablated]).rename({"model": "feature_set"})
         recall = recall_comparison(oofs, ref, ablated, level, float(acfg["type_collapse"]))
 
+        # the first set of ablation.feature_sets (required above) is the primary comparison for Q3
         primary = tests.row(0, named=True)
         collapsed = recall.filter((pl.col("feature_set") == primary["feature_set"]) & pl.col("collapses"))
         depends = (primary["significant_drop"] and primary["reading"] in ("moderate", "large")) or collapsed.height > 0
@@ -186,7 +188,7 @@ def main() -> None:
                    "primary_comparison": primary, "collapsed_types": collapsed["label34"].to_list()},
             "H3": {"first_part_ttl_alone_separates_much_traffic":
                    "partially confirmed (pattern of Etapa 3 repeated on M)" if repeats
-                   else "pattern of Etapa 3 not repeated on M (see the diary)",
+                   else "pattern of Etapa 3 not repeated on M",
                    "ttl_only_on_M": ttl,
                    "second_part_reflects_attacker_os": "not testable with these data (no OS metadata); hypothesis",
                    "evidence_no_ttl": no_ttl.row(0, named=True) if no_ttl.height else None},

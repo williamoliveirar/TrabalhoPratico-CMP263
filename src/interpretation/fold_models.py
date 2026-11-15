@@ -32,12 +32,14 @@ class FoldData:
 
 
 def fold_data(cfg: dict, feature_cfg: dict, M: pl.DataFrame, feature_set: str) -> FoldData:
+    """FoldData of sample M: the attributes of `feature_set`, target y, label34 and the nested outer folds."""
     features = feature_names(M.columns, feature_cfg, feature_set, auxiliary_columns(cfg))
     return FoldData(M, prepare(M, features, feature_cfg), M[cfg["columns"]["target"]].to_numpy(),
                     M[cfg["columns"]["label"]].to_numpy(), features, outer_folds(load_assignment(cfg, NESTED, M)))
 
 
 def _check(model, data: FoldData, test: np.ndarray, recorded: pl.DataFrame) -> bool:
+    """True if the model reproduces the recorded test fold: same positions, same classes, scores within tolerance."""
     pred, score = predictions_and_scores(model, data.X.iloc[test])
     return (np.array_equal(recorded["position"].to_numpy(), test) and np.array_equal(pred, recorded["pred"].to_numpy())
             and float(np.max(np.abs(score - recorded["score"].to_numpy()))) <= SCORE_TOLERANCE)
@@ -55,6 +57,7 @@ def fold_model(cfg: dict, feature_cfg: dict, search_cfg: dict, data: FoldData, m
             return model
     params = __import__("json").loads((results_root / model_name / f"fold{k}.json").read_text("utf-8"))["best_params"]
     model = build_pipeline(model_name, data.features, feature_cfg, search_cfg, int(cfg["seed"]), n_jobs=1)
+    # JSON turned tuple values (e.g. the MLP's hidden_layer_sizes) into lists
     model.set_params(**{f"model__{p}": tuple(v) if isinstance(v, list) else v for p, v in params.items()})
     model.fit(data.X.iloc[train], data.y[train])
     if not _check(model, data, test, recorded):
@@ -65,4 +68,5 @@ def fold_model(cfg: dict, feature_cfg: dict, search_cfg: dict, data: FoldData, m
 
 
 def models_dir(cfg: dict):
+    """Cache directory of the refitted fold models (models/etapa9/, not versioned)."""
     return path(cfg, "models_dir") / "etapa9"

@@ -23,6 +23,7 @@ DROPPED_BY_MIRROR = "Tot size"  # duplicate of AVG
 
 
 def main() -> None:
+    """Compare the ingested Parquet with the Kaggle mirror file by file and cell by cell; write the JSON report."""
     cfg = load_config()
     cols = cfg["columns"]
     levels = [cols["label"], cols["category"], cols["target"]]
@@ -35,6 +36,7 @@ def main() -> None:
     k_features = [c for c in kaggle.collect_schema().names() if c not in KAGGLE_EXTRA]
     if len(features) != len(k_features):
         raise ValueError("column sets differ; mapping by position is invalid")
+    # the mirror uses its own column names but keeps the CSV column order, so columns are paired by position
     rename = dict(zip(features, k_features))
 
     with recorded_run(cfg, out_dir, "check_ingest") as run:
@@ -42,6 +44,7 @@ def main() -> None:
                  .join(kaggle.group_by("source_file", *KAGGLE_LABELS).agg(pl.len().alias("n_kaggle")).collect(),
                        on="source_file", how="full", coalesce=True)
                  .sort("source_file"))
+        # ne_missing: a file present on only one side (null count) also counts as a mismatch
         count_mismatch = files.filter(pl.col("n_ours").ne_missing(pl.col("n_kaggle")))
         label_mismatch = files.filter(pl.col(cols["label"]).ne_missing(pl.col("label")))
         pairs = {
@@ -65,6 +68,7 @@ def main() -> None:
                 y = b[rename[c]].cast(pl.Float64).to_numpy()
                 differ = ~np.isclose(x, y, rtol=REL_TOL, atol=0.0, equal_nan=True)
                 per_column[c]["cells_differing"] += int(differ.sum())
+                # inf or empty (nan) in our data: cells the mirror capped or set to 0, so they are expected to differ
                 per_column[c]["of_which_nonfinite_in_csv"] += int((differ & ~np.isfinite(x)).sum())
             n_rows_compared += a.height
             print(f"{folder}: {a.height} rows compared")

@@ -29,6 +29,7 @@ TRACKED = ("src", "configs", "Makefile", "requirements.txt")  # paths whose unco
 
 
 def _git(*args: str) -> str | None:
+    """Stripped output of a git command run at the repository root; None if git is missing or the command fails."""
     try:
         return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
     except (OSError, subprocess.CalledProcessError):
@@ -42,10 +43,11 @@ def config_hash(cfg: dict) -> str:
 
 
 def run_metadata(cfg: dict) -> dict:
+    """Provenance fields of a run record, taken at the start of the run (elapsed_s is added by recorded_run)."""
     main = sys.modules["__main__"]
     status = _git("status", "--porcelain", "--", *TRACKED)
     return {
-        "script": getattr(main.__spec__, "name", None) or Path(sys.argv[0]).name,
+        "script": getattr(main.__spec__, "name", None) or Path(sys.argv[0]).name,  # module name under `python -m`
         "started_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "git_commit": _git("rev-parse", "HEAD"),
         "git_dirty": None if status is None else bool(status),

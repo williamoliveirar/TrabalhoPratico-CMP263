@@ -58,6 +58,7 @@ def compare(recall: pl.DataFrame, grouped: set[str], collapse: float) -> pl.Data
 
 
 def figure(table: pl.DataFrame, model_name: str, target) -> None:
+    """Per-type sensitivity of the grouped types, split by row vs by capture; collapsed types are starred."""
     g = table.filter(pl.col("grouped")).sort("sensitivity")
     fig, ax = plt.subplots(figsize=(6.4, 5.4))
     y = np.arange(g.height)[::-1]
@@ -80,6 +81,7 @@ def figure(table: pl.DataFrame, model_name: str, target) -> None:
 
 
 def main() -> None:
+    """Train the final configuration on both fold designs, compare per-type sensitivity and write the outputs."""
     cfg, feature_cfg, search_cfg = load_config(), load_config("features"), load_config("search_spaces")
     final = json.loads((path(cfg, "results_dir") / "final" / "final_model.json").read_text("utf-8"))
     model_name, params = final["model"], final["best_params"]
@@ -101,6 +103,7 @@ def main() -> None:
             for k, (train, test) in enumerate(splits):
                 model = build_pipeline(model_name, features, feature_cfg, search_cfg, int(cfg["seed"]),
                                        n_jobs=int(cfg["n_jobs"]))
+                # JSON stores tuples (e.g. hidden_layer_sizes) as lists: convert them back
                 model.set_params(**{f"model__{p}": tuple(v) if isinstance(v, list) else v for p, v in params.items()})
                 model.fit(X.iloc[train], y[train])
                 pred, score = predictions_and_scores(model, X.iloc[test])

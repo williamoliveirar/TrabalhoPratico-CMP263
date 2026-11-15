@@ -1,44 +1,32 @@
 # Feature sets (docs/PLANO.md D12, D13), decided on sample E only (make eda, results/eda/, commit c3b2bf2).
-# Each removed feature has a reason and a pointer to the diary entry that justifies it.
-# Status: decided (D13 confirmed on 2026-10-26; DIARIO.md — 2026-10-25 — Etapa 3 — EDA na amostra E).
+# Each removed feature has the reason for its removal.
+# Status: decided (D13, confirmed on 2026-10-26).
 
 drop:  # removed before any split, in every pipeline (fixed: no learned parameters)
   - name: Tot size
     reason: identical to AVG in every row (correlated_pairs.csv; also schema.json over the whole dataset)
-    diary: "DIARIO.md — 2026-10-25 — Etapa 3 — EDA na amostra E"
   - name: LLC
     reason: identical to IPv (correlated_pairs.csv)
-    diary: "DIARIO.md — 2026-10-25 — Etapa 3 — EDA na amostra E"
   - name: IPv
     reason: equals 1 - ARP up to rounding (structural_checks.json); ARP is kept
-    diary: "DIARIO.md — 2026-10-25 — Etapa 3 — EDA na amostra E"
   - name: Variance
     reason: equals Std squared (structural_checks.json); Std is kept
-    diary: "DIARIO.md — 2026-10-25 — Etapa 3 — EDA na amostra E"
   - name: ack_count
     reason: equals ack_flag_number × Number (structural_checks.json); window-scaled copy (D12)
-    diary: "DIARIO.md — 2026-10-25 — Etapa 3 — EDA na amostra E"
   - name: syn_count
     reason: equals syn_flag_number × Number (structural_checks.json); window-scaled copy (D12)
-    diary: "DIARIO.md — 2026-10-25 — Etapa 3 — EDA na amostra E"
   - name: fin_count
     reason: equals fin_flag_number × Number (structural_checks.json); window-scaled copy (D12)
-    diary: "DIARIO.md — 2026-10-25 — Etapa 3 — EDA na amostra E"
   - name: rst_count
     reason: equals rst_flag_number × Number (structural_checks.json); window-scaled copy (D12)
-    diary: "DIARIO.md — 2026-10-25 — Etapa 3 — EDA na amostra E"
   - name: Tot sum
     reason: equals AVG × Number (structural_checks.json); window-scaled copy (D12)
-    diary: "DIARIO.md — 2026-10-25 — Etapa 3 — EDA na amostra E"
   - name: Rate
     reason: Spearman -0.994 with IAT (correlated_pairs.csv) and the only column with infinite values; IAT is kept
-    diary: "DIARIO.md — 2026-10-25 — Etapa 3 — EDA na amostra E"
   - name: Telnet
     reason: quasi-constant, 0 in 99.97% of rows (feature_summary.csv, threshold eda.quasi_constant_share)
-    diary: "DIARIO.md — 2026-10-25 — Etapa 3 — EDA na amostra E"
   - name: SMTP
     reason: quasi-constant, 0 in 99.95% of rows (feature_summary.csv, threshold eda.quasi_constant_share)
-    diary: "DIARIO.md — 2026-10-25 — Etapa 3 — EDA na amostra E"
 
 fill_null:  # fixed, before any split
   Std: 0.0  # null only in one-packet windows (Number = 1), which have no dispersion (structural_checks.json)

@@ -37,6 +37,7 @@ WINDOW = "window"  # packet-window size of each label per the dataset paper (10 
 
 
 def finite_values(s: pl.Series) -> np.ndarray:
+    """Finite values of a series as a numpy array (nulls, nan and ±inf dropped)."""
     return s.drop_nulls().filter(s.drop_nulls().is_finite()).to_numpy()
 
 
@@ -48,6 +49,7 @@ def as_model_input(s: pl.Series) -> np.ndarray:
 
 
 def composition(df: pl.DataFrame, levels: list[str]) -> pl.DataFrame:
+    """Rows and fraction per value of each level (class, category, attack type), most frequent first."""
     parts = [df.group_by(level).agg(pl.len().alias("n_rows"))
              .select(pl.lit(level).alias("level"), pl.col(level).cast(pl.String).alias("value"), "n_rows")
              .sort(["n_rows", "value"], descending=[True, False]) for level in levels]
@@ -56,13 +58,18 @@ def composition(df: pl.DataFrame, levels: list[str]) -> pl.DataFrame:
 
 def feature_summary(df: pl.DataFrame, features: list[str], quasi_share: float, skew_threshold: float,
                     categorical: set[str]) -> pl.DataFrame:
-    """heavy_tailed: unbounded (max > 1), non-negative, skewed and not categorical; [0, 1] shares are left alone."""
+    """One row per feature: null/inf counts, distinct values and mode on the raw column; range, centre, spread,
+    skewness and IQR outlier share on its finite values.
+
+    heavy_tailed: unbounded (max > 1), non-negative, skewed and not categorical; [0, 1] shares are left alone.
+    """
     rows = []
     for c in features:
         x = df[c]
         f = finite_values(x)
         q1, q3 = np.quantile(f, [0.25, 0.75])
         iqr = q3 - q1
+        # ties broken by value (nulls last) so the reported mode is deterministic
         counts = x.value_counts(name="n").sort(["n", c], descending=[True, False], nulls_last=True)
         mode, mode_n = counts.row(0)
         skew = float(stats.skew(f)) if f.std() > 0 else 0.0
@@ -81,6 +88,11 @@ def feature_summary(df: pl.DataFrame, features: list[str], quasi_share: float, s
 
 
 def correlated_pairs(df: pl.DataFrame, features: list[str], threshold: float) -> pl.DataFrame:
+    """Pairs that are identical or have |Pearson| or |Spearman| above threshold (correlations on finite values).
+
+    Returns the pairs table and the full Spearman matrix (a pandas DataFrame, used for the heatmap).
+    """
+    # non-finite values become null, which pandas corr leaves out pairwise
     finite = df.select([pl.when(pl.col(c).is_finite()).then(pl.col(c)).alias(c) for c in features]).to_pandas()
     pearson, spearman = finite.corr("pearson"), finite.corr("spearman")
     rows = []
@@ -96,6 +108,7 @@ def correlated_pairs(df: pl.DataFrame, features: list[str], threshold: float) ->
 
 
 def structural_checks(df: pl.DataFrame) -> dict:
+    """Identities that follow from the window definition, each as a boolean or a maximum deviation (0 = holds)."""
     rel_diff = lambda a, b: (a - b).abs() / b.abs()  # noqa: E731
     std_null = df[STD].is_null()
     return {
@@ -115,6 +128,7 @@ def structural_checks(df: pl.DataFrame) -> dict:
 
 
 def number_by_label(df: pl.DataFrame, label: str, category: str) -> pl.DataFrame:
+    """Per attack type, rows with Number = 10, 100 or other, and the share equal to the paper's window size."""
     return (df.group_by(label, category, WINDOW)
             .agg(pl.len().alias("n_rows"),
                  (pl.col(NUMBER) == 10).sum().alias("n_number_10"),
@@ -131,6 +145,8 @@ def auc(attack: np.ndarray, benign: np.ndarray) -> float:
 
 
 def univariate(df: pl.DataFrame, features: list[str], target: str) -> pl.DataFrame:
+    """AUC and separability max(AUC, 1 - AUC) of each feature alone, benign vs all attacks and vs each window
+    group, plus the KS statistic for all attacks. Nulls are dropped; ±inf are kept (ranks handle them)."""
     rows = []
     benign_rows = df.filter(pl.col(target) == 0)
     groups = {"all": df.filter(pl.col(target) == 1),
@@ -151,8 +167,11 @@ def univariate(df: pl.DataFrame, features: list[str], target: str) -> pl.DataFra
 
 def single_feature_models(df: pl.DataFrame, features: list[str], label: str, target: str, depth: int,
                           n_splits: int, seed: int) -> pl.DataFrame:
+    """MCC (mean and sd over folds), out-of-fold TPR per window group and FPR of a shallow tree on each feature
+    alone, in stratified CV on sample E."""
     y = df[target].to_numpy()
     window = df[WINDOW].to_numpy()
+    # stratified by attack type (label34), which also keeps the class balance; y only fills the X slot
     folds = list(StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=seed).split(y, df[label].to_numpy()))
     rows = []
     for c in features:
@@ -171,6 +190,7 @@ def single_feature_models(df: pl.DataFrame, features: list[str], label: str, tar
 
 
 def by_type_summary(df: pl.DataFrame, features: list[str], label: str, category: str) -> pl.DataFrame:
+    """Quartiles (q25, median, q75) of each feature per attack type, in long format (one block per feature)."""
     parts = [df.group_by(label, category, WINDOW)
              .agg(pl.len().alias("n_rows"), pl.col(c).quantile(0.25).alias("q25"),
                   pl.col(c).median().alias("median"), pl.col(c).quantile(0.75).alias("q75"))
@@ -188,6 +208,7 @@ def type_order(df: pl.DataFrame, label: str, category: str) -> list[str]:
 
 
 def type_tick(lab: str) -> str:
+    """Axis tick of an attack type: its name and window size, e.g. 'DDoS-SYN_Flood (100)'."""
     return f"{lab} ({window_of(lab)})"
 
 
@@ -200,6 +221,7 @@ def log_scales(summary: pl.DataFrame) -> dict[str, str]:
 
 
 def display(c: str, scales: dict[str, str]):
+    """Transform and axis label for feature c on its display scale (identity if it has none)."""
     if scales.get(c) == "log10":
         return np.log10, "log10(value)"
     if scales.get(c) == "log10p1":
@@ -208,6 +230,7 @@ def display(c: str, scales: dict[str, str]):
 
 
 def fig_number_by_type(nbl: pl.DataFrame, order: list[str], label: str, target) -> None:
+    """Bar chart of the share of windows with Number = 100 per attack type, coloured by class."""
     share = dict(zip(nbl[label], nbl["n_number_100"] / nbl["n_rows"]))
     fig, ax = plt.subplots(figsize=(6.5, 7.5))
     ys = np.arange(len(order))[::-1]
@@ -224,6 +247,7 @@ def fig_number_by_type(nbl: pl.DataFrame, order: list[str], label: str, target) 
 
 
 def fig_single_feature_mcc(models: pl.DataFrame, candidates: set[str], target) -> None:
+    """Bar chart of the single-feature MCC (± sd over folds), with the shortcut candidates highlighted."""
     m = models.sort(["mcc_mean", "feature"], descending=[False, True])
     fig, ax = plt.subplots(figsize=(6.5, 7.5))
     ys = np.arange(m.height)
@@ -241,6 +265,7 @@ def fig_single_feature_mcc(models: pl.DataFrame, candidates: set[str], target) -
 
 def fig_distributions(df: pl.DataFrame, features: list[str], scales: dict[str, str], target_col: str,
                       target) -> None:
+    """Grid of benign vs attack histograms (density, finite values) of the given features, on display scales."""
     n_cols = 3
     n_rows = int(np.ceil(len(features) / n_cols))
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(9, 2.6 * n_rows))
@@ -251,6 +276,7 @@ def fig_distributions(df: pl.DataFrame, features: list[str], scales: dict[str, s
             values[name] = tf(finite_values(df.filter(pl.col(target_col) == y)[c]))
         lo = min(v.min() for v in values.values())
         hi = max(v.max() for v in values.values())
+        # a constant feature gets a unit-wide range so that the bin edges are valid
         bins = np.linspace(lo, hi if hi > lo else lo + 1, 50)
         for name, color in (("benign", BENIGN_COLOR), ("attack", ATTACK_COLOR)):
             ax.hist(values[name], bins=bins, density=True, histtype="step", color=color, linewidth=1.5, label=name)
@@ -267,6 +293,7 @@ def fig_distributions(df: pl.DataFrame, features: list[str], scales: dict[str, s
 
 
 def fig_spearman(spearman, target) -> None:
+    """Heatmap of the Spearman matrix; nan entries (constant features) are masked."""
     fig, ax = plt.subplots(figsize=(8.5, 7.5))
     im = ax.imshow(np.ma.masked_invalid(spearman.to_numpy()), cmap=DIVERGING, vmin=-1, vmax=1)
     ticks = np.arange(len(spearman.columns))
@@ -280,6 +307,7 @@ def fig_spearman(spearman, target) -> None:
 
 def fig_by_type(summary: pl.DataFrame, features: list[str], scales: dict[str, str], order: list[str], label: str,
                 target) -> None:
+    """One panel per feature with the median and IQR of every attack type, in the given order, on display scales."""
     fig, axes = plt.subplots(1, len(features), figsize=(3.2 * len(features), 7.5), sharey=True)
     ys = np.arange(len(order))[::-1]
     for ax, c in zip(np.atleast_1d(axes), features):
@@ -300,6 +328,7 @@ def fig_by_type(summary: pl.DataFrame, features: list[str], scales: dict[str, st
 
 
 def main() -> None:
+    """Run the Etapa 3 analysis on sample E and write every table and figure to results/eda."""
     cfg = load_config()
     cols, e = cfg["columns"], cfg["eda"]
     label, category, target = cols["label"], cols["category"], cols["target"]

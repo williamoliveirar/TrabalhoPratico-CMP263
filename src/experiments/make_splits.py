@@ -43,6 +43,7 @@ UNUSED = -1  # fold id of an instance that is not part of the split (inner<k> of
 # --- fold assignments ------------------------------------------------------------------------------------------
 
 def _assign(n: int, held_out: list[np.ndarray]) -> np.ndarray:
+    """Fold id of each of `n` instances, from the held-out positions of each fold; UNUSED where no fold holds it."""
     fold = np.full(n, UNUSED, dtype=np.int8)
     for f, rows in enumerate(held_out):
         fold[rows] = f
@@ -84,6 +85,7 @@ def capture_assignment(labels: np.ndarray, captures: np.ndarray, outer: np.ndarr
         if len(np.unique(captures[rows])) < n_splits:
             continue
         grouped.append(lab)
+        # no shuffle, no seed: GroupKFold places the largest captures first, each in the fold with fewest rows
         for f, (_, test) in enumerate(GroupKFold(n_splits=n_splits).split(rows, groups=captures[rows])):
             fold[rows[test]] = f
     return fold, grouped
@@ -146,6 +148,7 @@ def check_kfold(labels: np.ndarray, fold: np.ndarray, n_splits: int, what: str) 
 
 
 def check_nested(labels: np.ndarray, outer: np.ndarray, inner: np.ndarray, n_inner: int) -> None:
+    """No outer test instance enters the inner loop of its fold; each inner loop is a valid stratified k-fold."""
     for k in range(inner.shape[1]):
         test = outer == k
         if not (inner[test, k] == UNUSED).all():
@@ -155,6 +158,8 @@ def check_nested(labels: np.ndarray, outer: np.ndarray, inner: np.ndarray, n_inn
 
 def check_capture(labels: np.ndarray, captures: np.ndarray, outer: np.ndarray, capture: np.ndarray,
                   grouped: list[str]) -> None:
+    """Labels not grouped keep their outer fold, each capture of a grouped label lies in a single fold, and every
+    grouped label appears in every test fold."""
     is_grouped = np.isin(labels, grouped)
     if not np.array_equal(capture[~is_grouped], outer[~is_grouped]):
         raise AssertionError("capture folds: a label that is not grouped changed fold")
@@ -171,6 +176,8 @@ def check_capture(labels: np.ndarray, captures: np.ndarray, outer: np.ndarray, c
 # --- report ----------------------------------------------------------------------------------------------------
 
 def partition_sizes(labels: np.ndarray, design: str, iteration: str, pairs: dict[str, np.ndarray]) -> list[dict]:
+    """One row per set of `pairs` (set name -> positions): instances, attack and benign counts, labels present and
+    the smallest label count."""
     rows = []
     for name, positions in pairs.items():
         lab = labels[positions]
@@ -183,6 +190,7 @@ def partition_sizes(labels: np.ndarray, design: str, iteration: str, pairs: dict
 
 def size_table(labels_E: np.ndarray, labels_M: np.ndarray, spot: pl.DataFrame, nested: pl.DataFrame,
                capture: pl.DataFrame) -> pl.DataFrame:
+    """Sizes of every training, validation and test set of the three designs (results/splits/partition_sizes.csv)."""
     rows = []
     n_splits = int(spot["repeat0"].max()) + 1
     for i, (train, val) in enumerate(spotcheck_folds(spot)):
@@ -191,6 +199,7 @@ def size_table(labels_E: np.ndarray, labels_M: np.ndarray, spot: pl.DataFrame, n
     for k, (train, test) in enumerate(outer_folds(nested)):
         rows += partition_sizes(labels_M, NESTED, f"k{k}", {"training": train, "test": test})
         for j, (tr, val) in enumerate(inner_folds(nested, k)):
+            # inner positions are relative to the outer training set: map them back to positions in M
             rows += partition_sizes(labels_M, NESTED, f"k{k}j{j}", {"training": train[tr], "validation": train[val]})
     for k, (train, test) in enumerate(folds(capture["capture_outer"].to_numpy())):
         rows += partition_sizes(labels_M, CAPTURE, f"k{k}", {"training": train, "test": test})
@@ -198,8 +207,9 @@ def size_table(labels_E: np.ndarray, labels_M: np.ndarray, spot: pl.DataFrame, n
 
 
 def summary(sizes: pl.DataFrame) -> dict:
-    """Range of the partition sizes of each design and set, for the report and the diary."""
+    """Range of the partition sizes of each design and set, for the report."""
     out = {}
+    # iterations named k<k>j<j> belong to an inner loop
     for (design, part, inner), g in sizes.with_columns(pl.col("iteration").str.contains("j").alias("inner")) \
             .group_by("design", "set", "inner", maintain_order=True):
         key = f"{design}{' inner' if inner else ''}"
@@ -210,6 +220,7 @@ def summary(sizes: pl.DataFrame) -> dict:
 
 
 def main() -> None:
+    """Draw, check and write the frozen fold assignments of E and M, plus the partition sizes and the report."""
     cfg = load_config()
     cols, v, seed = cfg["columns"], cfg["validation"], int(cfg["seed"])
     keys, label = cols["provenance"], cols["label"]
@@ -219,6 +230,7 @@ def main() -> None:
         raise SystemExit(f"{missing} not found; run `make sample` first")
     out_dir, splits_dir = path(cfg, "results_dir") / "splits", path(cfg, "splits_dir")
     E, M = (pl.read_parquet(sources[name], columns=[*keys, label]) for name in ("E", "M"))
+    # each source file is one capture
     lab_E, lab_M, cap_M = E[label].to_numpy(), M[label].to_numpy(), M[SOURCE_FILE].to_numpy()
 
     with recorded_run(cfg, out_dir, "make_splits") as run:

@@ -21,6 +21,7 @@ def corrected_resampled_ttest(scores_a, scores_b, n_train: int, n_test: int) -> 
     var = np.var(d, ddof=1)
     if var == 0:
         return float("nan"), float("nan")
+    # Nadeau-Bengio correction: the n_test / n_train term accounts for the overlap of the training sets
     t = d.mean() / np.sqrt((1 / k + n_test / n_train) * var)
     return float(t), float(2 * stats.t.sf(abs(t), df=k - 1))
 
@@ -33,7 +34,7 @@ def holm(pvalues) -> np.ndarray:
     tested = np.flatnonzero(~np.isnan(p))
     running = 0.0
     for rank, i in enumerate(tested[np.argsort(p[tested], kind="stable")]):
-        running = max(running, (tested.size - rank) * p[i])
+        running = max(running, (tested.size - rank) * p[i])  # running maximum keeps the adjusted values monotone
         adjusted[i] = min(1.0, running)
     return adjusted
 
@@ -80,6 +81,7 @@ def bootstrap_counts(y: np.ndarray, preds: np.ndarray, strata: np.ndarray | None
         for g in groups:
             draw = g[rng.integers(0, g.size, g.size)]
             yd, pd = y[draw], preds[:, draw]
+            # yd and pd are 0/1, so each product counts one cell: tn, fp, fn, tp
             out[b, :, 0] += ((1 - pd) * (1 - yd)).sum(axis=1)
             out[b, :, 1] += (pd * (1 - yd)).sum(axis=1)
             out[b, :, 2] += ((1 - pd) * yd).sum(axis=1)

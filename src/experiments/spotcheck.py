@@ -14,7 +14,7 @@ warnings, and the training and prediction times.
 Selection (PLANO §7, Etapa 6, task 4): the ranking by mean validation MCC and the tie group, the algorithms whose
 mean is within one standard deviation (of the best algorithm) of the best mean. If the tie group is larger than
 `search.finalists`, the spot-checking did not discriminate among its members, and the finalists are chosen among
-them by diversity of inductive bias (INDUCTIVE_BIAS). The choice is a decision recorded in docs/DIARIO.md and
+them by diversity of inductive bias (INDUCTIVE_BIAS). The choice is a decision recorded in
 configs/base.yaml; this script only reports.
 
 Outputs (results/spotcheck/): metrics_per_fold.csv, summary.csv, selection.json and fig_spotcheck_mcc.png, which are
@@ -57,6 +57,7 @@ def evaluate_fold(pipe, X, y: np.ndarray, train: np.ndarray, val: np.ndarray) ->
     predict_s = time.perf_counter() - start
     train_pred, _ = predictions_and_scores(pipe, X.iloc[train])
     n_convergence = sum(issubclass(w.category, ConvergenceWarning) for w in caught)
+    # only convergence warnings are counted and silenced; any other warning is re-emitted
     for w in caught:
         if not issubclass(w.category, ConvergenceWarning):
             warnings.warn_explicit(w.message, w.category, w.filename, w.lineno)
@@ -130,6 +131,7 @@ def figure(per_fold: pl.DataFrame, summary: pl.DataFrame, baseline: str, target)
 
 
 def main() -> None:
+    """Run every algorithm on every spot-checking fold of E, summarise, report the selection and draw the figure."""
     cfg, feature_cfg, search_cfg = load_config(), load_config("features"), load_config("search_spaces")
     seed, n_jobs, n_splits = int(cfg["seed"]), int(cfg["n_jobs"]), int(cfg["validation"]["spotcheck"]["n_splits"])
     source = path(cfg, "sample_E")

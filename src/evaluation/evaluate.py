@@ -6,8 +6,8 @@ Inputs (all versioned; no raw data or sample parquet needed):
 - results/inspection/label_counts_total.csv (Etapa 1) and results/sampling/sample_counts.csv (Etapa 2), for the
   weights that restore the original distribution of the dataset (D16, P1).
 
-Every choice below was pre-registered in configs/base.yaml (`evaluation`) and in the diary (2026-11-12, "Etapa 8 —
-Pré-registro da análise") before this script computed any test:
+Every choice below was pre-registered in configs/base.yaml (`evaluation`) on 2026-11-12, before this script
+computed any test:
 - summary.csv: mean ± std over the 5 outer test folds of the metrics of D5 and D6 (main table);
 - tests.csv: corrected resampled t-test for each pre-registered comparison, Holm-adjusted over the family, with the
   paired bootstrap interval of the MCC difference (P5);
@@ -116,7 +116,7 @@ def comparison_table(folds: pl.DataFrame, comparisons: list[list[str]], boot_mcc
         if n_train.len() != 1 or n_test.len() != 1:
             raise ValueError("the outer folds must have equal training and test sizes for the corrected t-test")
         t, p = corrected_resampled_ttest(fa["test_mcc"], fb["test_mcc"], int(n_train[0]), int(n_test[0]))
-        diff = boot_mcc[:, models.index(a)] - boot_mcc[:, models.index(b)]
+        diff = boot_mcc[:, models.index(a)] - boot_mcc[:, models.index(b)]  # paired: same resamples for both
         low, high = percentile_interval(diff, level)
         d = fa["test_mcc"].to_numpy() - fb["test_mcc"].to_numpy()
         rows.append({"model_a": a, "model_b": b, "mcc_a_mean": fa["test_mcc"].mean(), "mcc_b_mean": fb["test_mcc"].mean(),
@@ -165,6 +165,7 @@ def recall_by_group(oof: pl.DataFrame, model: str, level: float) -> pl.DataFrame
 
 
 def benign_fpr(oof: pl.DataFrame, model: str, level: float) -> dict:
+    """False positive rate of one model on the pooled out-of-fold benign instances, with its Wilson interval."""
     benign = oof.filter(pl.col("y") == 0)
     fp, n = int(benign["pred"].sum()), benign.height
     lo, hi = wilson(fp, n, level)
@@ -212,6 +213,7 @@ def ppv_table(oofs: dict, models: list[str], weights: pl.DataFrame, prevalences:
         o = oofs[m].join(weights.select("label34", "weight"), on="label34", how="left")
         att, ben = o.filter(pl.col("y") == 1), o.filter(pl.col("y") == 0)
         sens = float(att["pred"].mean())
+        # each attack type weighted to its share in the original dataset instead of its share in M
         sens_original = float((att["pred"] * att["weight"]).sum() / att["weight"].sum())
         spec = 1 - float(ben["pred"].mean())
         for prevalence, source in [*((p, "config") for p in prevalences), (dataset_prevalence, "dataset")]:
@@ -325,6 +327,7 @@ def figure_pr_roc(oof: pl.DataFrame, summary: pl.DataFrame, best: str, target) -
 
 
 def main() -> None:
+    """Check the recorded folds and predictions, then write every Etapa 8 table, test and figure listed above."""
     cfg = load_config()
     ev = cfg["evaluation"]
     models, level, alpha = ev["models"], float(ev["confidence_level"]), float(ev["alpha"])
@@ -347,6 +350,7 @@ def main() -> None:
         labels = label_table(cfg)
         oofs = {m: load_oof(root, m, n_outer, labels) for m in models}
         weights = type_weights(cfg, labels)
+        # attack prevalence of the original dataset (official CSV rows), added to the configured prevalences
         dataset_prevalence = 1 - float(weights.filter(pl.col("label34") == BENIGN)["dataset_fraction"][0])
 
         summary = summary_table(folds, models)

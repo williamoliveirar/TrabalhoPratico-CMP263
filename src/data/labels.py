@@ -61,6 +61,7 @@ def window_of(label: str) -> int:
 
 
 def label_of_folder(folder: str) -> str:
+    """label34 of a capture folder: its name, respelled for the three folders above; unknown folders raise KeyError."""
     label = FOLDER_RENAMES.get(folder, folder)
     if label not in CATEGORY:
         raise KeyError(f"unknown capture folder: {folder!r}")

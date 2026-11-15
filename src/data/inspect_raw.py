@@ -20,6 +20,7 @@ NUMBER, RATE, STD, VARIANCE = "Number", "Rate", "Std", "Variance"
 
 
 def column_stats(lf: pl.LazyFrame, c: str) -> dict:
+    """Null, nan and ±inf counts, finite range, distinct values and whether the finite values are integers."""
     x = pl.col(c)
     finite = x.filter(x.is_finite())
     return lf.select(
@@ -36,6 +37,7 @@ def column_stats(lf: pl.LazyFrame, c: str) -> dict:
 
 
 def label_totals(by_file: pl.DataFrame, levels: list[str]) -> pl.DataFrame:
+    """Files, rows and fraction of rows per value of each level (label, category, class), from per-file counts."""
     n_total = by_file["n_rows"].sum()
     parts = [by_file.group_by(level)
              .agg(pl.len().alias("n_files"), pl.col("n_rows").sum())
@@ -46,6 +48,7 @@ def label_totals(by_file: pl.DataFrame, levels: list[str]) -> pl.DataFrame:
 
 
 def main() -> None:
+    """Compute the global Etapa 1 inspection (counts, schema, value checks) from the interim Parquet."""
     cfg = load_config()
     cols = cfg["columns"]
     levels = [cols["label"], cols["category"], cols["target"]]
@@ -66,6 +69,7 @@ def main() -> None:
         label_totals(by_file, levels).write_csv(out_dir / "label_counts_total.csv")
 
         manifest = pl.read_csv(path(cfg, "raw_manifest"))
+        # file name without capture number and extension (BenignTraffic1.pcap.csv -> BenignTraffic) vs label34
         file_stems = (by_file
                       .with_columns(pl.col("source_file").str.split("/").list.last()
                                     .str.replace(r"\d*\.pcap\.csv$", "").alias("file_stem"))

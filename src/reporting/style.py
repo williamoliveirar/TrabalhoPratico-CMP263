@@ -18,6 +18,7 @@ DIVERGING = (LinearSegmentedColormap.from_list("blue_red", ["#104281", "#2a78d6"
 
 
 def apply_style() -> None:
+    """Set the shared matplotlib rcParams: grey recessive axes, light grid, no top or right spine, 200 dpi PNGs."""
     plt.rcParams.update({
         "figure.dpi": 100, "savefig.dpi": 200, "savefig.bbox": "tight",
         "font.family": "sans-serif", "font.size": 9,

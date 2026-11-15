@@ -10,6 +10,7 @@ from src.utils.config import ROOT
 
 
 def write_json(obj, target: Path) -> None:
+    """Indented UTF-8 JSON with LF line endings and a final newline; creates the parent directory."""
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(obj, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
 
@@ -22,6 +23,7 @@ def write_csv_gz(df: pl.DataFrame, target: Path) -> None:
 
 
 def sha256_file(p: Path, chunk_bytes: int = 1 << 20) -> str:
+    """Hex SHA-256 of a file, read in chunks (1 MiB by default) so large files never sit whole in memory."""
     h = hashlib.sha256()
     with open(p, "rb") as f:
         while block := f.read(chunk_bytes):

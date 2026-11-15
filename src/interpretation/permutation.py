@@ -33,6 +33,7 @@ CANDIDATES = ("Number", "Time_To_Live")  # D12 shortcut candidates, marked in th
 
 
 def figure(summary: pl.DataFrame, target, color: str, label: str, repeats: int) -> None:
+    """Mean ± std over folds of each feature's importance, rank 1 at the top; shortcut candidates in bold."""
     s = summary.sort("rank", descending=True)
     fig, ax = plt.subplots(figsize=(6.4, 7.2))
     y = np.arange(s.height)
@@ -68,6 +69,7 @@ def redraw(cfg: dict) -> None:
 
 
 def main() -> None:
+    """Permutation importance of each fold model on its outer test fold, then the summary, stability and figure."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--figure-only", action="store_true", help="redraw the figure from permutation_summary.csv")
     if parser.parse_args().figure_only:

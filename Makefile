@@ -21,7 +21,7 @@ env:            ## Etapa 0 — create the virtual env and install the pinned req
 	$(PY) -m pip install --upgrade pip
 	$(PY) -m pip install -r requirements.txt
 
-lock:           ## Etapa 0 — reinstall from requirements.in and re-pin requirements.txt (record in DIARIO)
+lock:           ## Etapa 0 — reinstall from requirements.in and re-pin requirements.txt
 	$(PY) -m pip install -r requirements.in
 	$(PY) -m pip freeze > requirements.txt
 

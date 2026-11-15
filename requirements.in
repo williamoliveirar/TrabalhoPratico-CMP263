@@ -1,5 +1,5 @@
 # Top-level dependencies. The pinned, complete list lives in requirements.txt
-# (regenerate with `make lock` and record the change in docs/DIARIO.md).
+# (regenerate with `make lock`).
 numpy
 pandas
 pyarrow

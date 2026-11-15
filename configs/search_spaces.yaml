@@ -1,5 +1,4 @@
-# Hyperparameter search spaces (docs/PLANO.md, Etapa 7). Adjust if the search hits the bounds,
-# and record the change in docs/DIARIO.md.
+# Hyperparameter search spaces (docs/PLANO.md, Etapa 7). Adjust if the search hits the bounds.
 # dist: loguniform {low, high} | randint {low, high} (inclusive) | uniform {low, high} | choice {values}
 # Write exponents with a sign (1.0e-3) or plain decimals (100.0): PyYAML reads 1.0e2 as a string.
 # `fixed` holds non-searched parameters passed to the estimator.

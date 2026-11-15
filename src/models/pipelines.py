@@ -55,8 +55,11 @@ def prepare(df: pl.DataFrame, features: list[str], feature_cfg: dict) -> pd.Data
 
 
 def preprocessor(model_name: str, features: list[str], feature_cfg: dict) -> ColumnTransformer:
+    """Unfitted pre-processing of `model_name`: one-hot of the nominal attribute; numeric attributes as they are or,
+    for TRANSFORMED algorithms, standardised (after log1p for the `log1p` columns of features.yaml)."""
     categorical = [c for c in features if c in feature_cfg["categorical"]]
     numeric = [c for c in features if c not in categorical]
+    # a category absent from the training rows of the fold is encoded as all zeros instead of raising
     onehot = ("onehot", OneHotEncoder(handle_unknown="ignore", sparse_output=False), categorical)
     if model_name not in TRANSFORMED:
         return ColumnTransformer([("attributes", "passthrough", numeric), onehot])

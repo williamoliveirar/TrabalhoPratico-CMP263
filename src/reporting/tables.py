@@ -20,6 +20,7 @@ P_VALUES = ("p", "p_holm")
 
 
 def round_floats(df: pl.DataFrame) -> pl.DataFrame:
+    """Float columns rounded to DIGITS decimals, except p-values, which keep P_VALUE_DIGITS significant digits."""
     p_cols = [c for c in P_VALUES if c in df.columns]
     df = df.with_columns(pl.col(pl.Float64).exclude(p_cols).round(DIGITS))
     return df.with_columns(pl.col(c).map_elements(lambda v: float(f"{v:.{P_VALUE_DIGITS}g}"), return_dtype=pl.Float64)
@@ -27,7 +28,9 @@ def round_floats(df: pl.DataFrame) -> pl.DataFrame:
 
 
 def markdown(df: pl.DataFrame) -> str:
+    """The table as a Markdown pipe table, header row first."""
     def cell(v):
+        """Cell text: empty for null, with `|` escaped so it does not split the column."""
         return "" if v is None else str(v).replace("|", "\\|")
     lines = ["| " + " | ".join(df.columns) + " |", "|" + "---|" * df.width]
     lines += ["| " + " | ".join(cell(v) for v in row) + " |" for row in df.iter_rows()]
@@ -40,6 +43,7 @@ def mean_std(df: pl.DataFrame, metrics: list[str]) -> pl.DataFrame:
 
 
 def build(cfg: dict, feature_cfg: dict) -> dict[str, tuple[str, list, pl.DataFrame]]:
+    """Every summary table by name, as (title, source files, table), read from the recorded results."""
     res = path(cfg, "results_dir")
     best = json.loads((res / "evaluation" / "hypotheses.json").read_text(encoding="utf-8"))["best_model"]
     tables: dict[str, tuple[str, list, pl.DataFrame]] = {}
@@ -154,6 +158,7 @@ def build(cfg: dict, feature_cfg: dict) -> dict[str, tuple[str, list, pl.DataFra
 
 
 def main() -> None:
+    """Write each table as CSV and Markdown, plus results/tables/index.csv, inside a recorded run."""
     cfg, feature_cfg = load_config(), load_config("features")
     out_dir = path(cfg, "results_dir") / "tables"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -164,6 +169,7 @@ def main() -> None:
             csv, md = out_dir / f"{name}.csv", out_dir / f"{name}.md"
             df.write_csv(csv)
             md.write_bytes((f"**{title}**\n\n" + markdown(df)).encode("utf-8"))
+            # a string source is a repository path cited as is (configs/features.yaml): listed, not hashed
             names = [rel(s) if not isinstance(s, str) else s for s in sources]
             index.append({"table": name, "title": title, "sources": "; ".join(names), "csv_sha256": sha256_file(csv)})
             outputs |= {rel(csv): sha256_file(csv), rel(md): sha256_file(md)}

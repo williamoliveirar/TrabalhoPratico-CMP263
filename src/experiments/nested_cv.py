@@ -93,7 +93,7 @@ def tune_and_test(pipe, distributions: dict, X, y: np.ndarray, train: np.ndarray
     start = time.perf_counter()
     pred, score = predictions_and_scores(model, X.iloc[test])  # the only use of the outer test set
     predict_s = time.perf_counter() - start
-    train_pred, _ = predictions_and_scores(model, X.iloc[train])
+    train_pred, _ = predictions_and_scores(model, X.iloc[train])  # training MCC of the refitted model (P4)
     out = {"model": model, "pred": pred, "score": score, "test": binary_metrics(y[test], pred, score),
            "outer_training_mcc": matthews_corrcoef(y[train], train_pred),
            "timing": {"search_and_refit_s": round(fit_s, 1), "predict_test_s": round(predict_s, 2)}}
@@ -188,6 +188,7 @@ def run_nested(cfg: dict, feature_cfg: dict, search_cfg: dict, M: pl.DataFrame, 
 
 
 def load_sample_M(cfg: dict) -> pl.DataFrame:
+    """Sample M in its stored row order, the order the fold assignments refer to; exits if it does not exist yet."""
     source = path(cfg, "sample_M")
     if not source.exists():
         raise SystemExit(f"{source} not found; run `make sample` first")
@@ -195,6 +196,7 @@ def load_sample_M(cfg: dict) -> pl.DataFrame:
 
 
 def main() -> None:
+    """Nested CV of the requested models and outer folds on sample M, with the `nested.feature_set` features."""
     cfg, feature_cfg, search_cfg = load_config(), load_config("features"), load_config("search_spaces")
     models = [*cfg["search"]["finalist_models"], *cfg["search"]["reference_models"]]
     n_outer = int(cfg["validation"]["outer"]["n_splits"])

@@ -18,6 +18,7 @@ from src.utils.config import load_config, path
 
 
 def best_model(cfg: dict) -> str:
+    """Best model of Etapa 8, read from results/evaluation/hypotheses.json (pre-registered rule)."""
     source = path(cfg, "results_dir") / "evaluation" / "hypotheses.json"
     if not source.exists():
         raise SystemExit(f"{source} not found; run `make evaluate` first")
@@ -25,6 +26,7 @@ def best_model(cfg: dict) -> str:
 
 
 def main() -> None:
+    """Nested CV of the best model for each requested ablated feature set, on the same outer folds as Etapa 7."""
     cfg, feature_cfg, search_cfg = load_config(), load_config("features"), load_config("search_spaces")
     sets, n_outer = cfg["ablation"]["feature_sets"], int(cfg["validation"]["outer"]["n_splits"])
     parser = argparse.ArgumentParser(description="Etapa 9: shortcut ablation (nested CV without the candidates)")
@@ -32,6 +34,7 @@ def main() -> None:
     parser.add_argument("--folds", nargs="+", type=int, default=list(range(n_outer)), choices=range(n_outer))
     args = parser.parse_args()
     model, M = best_model(cfg), load_sample_M(cfg)
+    # a partial run (subset of folds) gets its own run record, so each resumed part keeps its provenance
     scope = [] if args.folds == list(range(n_outer)) else [f"fold{k}" for k in args.folds]
     for feature_set in args.feature_sets:
         root = path(cfg, "results_dir") / "ablation" / feature_set

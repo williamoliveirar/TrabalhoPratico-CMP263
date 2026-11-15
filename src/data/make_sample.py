@@ -58,6 +58,7 @@ def draw_candidates(pf: pq.ParquetFile, index: pl.DataFrame, n_draw: dict[str, i
     picks = {}
     for lab in sorted(n_draw):
         groups = index.filter(pl.col(label) == lab)
+        # positions over the label's captures laid end to end; searchsorted maps each back to its capture
         starts = np.concatenate([[0], np.cumsum(groups["n_rows"].to_numpy())])
         pos = np.sort(rng.choice(int(starts[-1]), size=n_draw[lab], replace=False))
         owner = np.searchsorted(starts, pos, side="right") - 1
@@ -79,6 +80,7 @@ def deduplicate(df: pl.DataFrame, features: list[str], label: str, target: str) 
 
     Equality follows polars: nulls equal nulls, inf equals inf and -0.0 equals 0.0.
     """
+    # sorted first so that the exact copy kept is the earliest by (source_file, row_idx)
     flags = (df.sort(SOURCE_FILE, ROW_IDX)
              .with_columns(pl.col(target).n_unique().over(features).alias("_n_y"),
                            pl.col(label).n_unique().over(features).alias("_n_label"),
@@ -104,6 +106,7 @@ def split_samples(unique: pl.DataFrame, label: str, per_type: dict[str, tuple[in
     parts_E, parts_M, counts = [], [], []
 
     def cut(lab: str, n_e: int, n_m: int, rare: bool) -> None:
+        """Shuffle the unique rows of lab, give the first n_e to E and the next n_m to M, and record the counts."""
         rows = unique.filter(pl.col(label) == lab)
         perm = rng.permutation(rows.height)
         parts_E.append(rows[perm[:n_e]])
@@ -115,6 +118,7 @@ def split_samples(unique: pl.DataFrame, label: str, per_type: dict[str, tuple[in
         e_t, m_t = per_type[lab]
         if n >= e_t + m_t:
             cut(lab, e_t, m_t, False)
+        # too few unique rows: a genuinely rare type only if every row was drawn, else the oversampling was short
         elif complete[lab]:
             n_e = math.floor(rare_fraction_E * n)
             cut(lab, n_e, n - n_e, True)
@@ -131,12 +135,14 @@ def split_samples(unique: pl.DataFrame, label: str, per_type: dict[str, tuple[in
 
 
 def composition(df: pl.DataFrame, cols: dict) -> dict:
+    """Rows of a sample in total, per class (y as string keys, for JSON) and per category."""
     by = lambda c: dict(df.group_by(c).agg(pl.len()).sort(c).iter_rows())  # noqa: E731
     return {"n_rows": df.height, "by_y": {str(k): v for k, v in by(cols["target"]).items()},
             "by_category": by(cols["category"])}
 
 
 def main() -> None:
+    """Build samples E and M from the interim Parquet, check they are disjoint and duplicate-free, write outputs."""
     cfg = load_config()
     cols, s = cfg["columns"], cfg["sampling"]
     label, target = cols["label"], cols["target"]
@@ -157,7 +163,7 @@ def main() -> None:
     n_draw = {lab: min(available[lab], math.ceil(s["oversample_factor"] * wanted[lab])) for lab in available}
     complete = {lab: n_draw[lab] == available[lab] for lab in available}
 
-    rng = make_rng(cfg)
+    rng = make_rng(cfg)  # one generator, consumed in a fixed order: candidate draw, then the E/M cuts
     with recorded_run(cfg, out_dir, "make_sample") as run:
         candidates = draw_candidates(pf, index, n_draw, label, rng)
         unique, removed = deduplicate(candidates, features, label, target)

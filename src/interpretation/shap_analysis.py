@@ -42,13 +42,14 @@ LOCAL_FEATURES = 8     # bars per local explanation; the rest are summed
 
 def explain(model, X, categorical: list[str]) -> tuple[np.ndarray, float, list[str]]:
     """SHAP values per original attribute (one-hot columns summed), the base value, and the attribute names."""
-    pre, est = model[:-1], model[-1]
+    pre, est = model[:-1], model[-1]  # TreeExplainer takes the bare estimator, so preprocess first
     Xt = pre.transform(X)
     explainer = shap.TreeExplainer(est)
     sv = np.asarray(explainer.shap_values(Xt))
     if sv.ndim == 3:  # (rows, columns, classes) in some shap versions: keep the attack class
         sv = sv[..., -1]
     base = float(np.atleast_1d(explainer.expected_value)[-1])
+    # raw_score=True: LightGBM's output before the sigmoid, i.e. the log-odds the SHAP values add up to
     error = np.abs(base + sv.sum(axis=1) - est.predict(Xt, raw_score=True)).max()
     if error > ADDITIVITY_TOLERANCE:
         raise RuntimeError(f"SHAP values do not add up to the model output (max error {error:.2e})")
@@ -67,7 +68,7 @@ def figure_summary(values: pl.DataFrame, summary: pl.DataFrame, data_rows, targe
         y = len(top) - 1 - i
         s = values[f"shap_{f}"].to_numpy()
         v = data_rows[f].to_numpy()
-        colour = stats.rankdata(v) / len(v)
+        colour = stats.rankdata(v) / len(v)  # rank, not raw value: skewed attributes would be a single colour
         ax.scatter(s, y + rng.uniform(-0.3, 0.3, s.size), c=colour, cmap=DIVERGING, vmin=0, vmax=1, s=2, alpha=0.5,
                    linewidths=0, rasterized=True)
     ax.axvline(0, color=INK_MUTED, linewidth=0.8)
@@ -83,6 +84,7 @@ def figure_summary(values: pl.DataFrame, summary: pl.DataFrame, data_rows, targe
 
 
 def figure_dependence(values: pl.DataFrame, data_rows, features: list[str], target, label: str) -> None:
+    """SHAP value against attribute value for each dependence feature, coloured by class; IAT on a symlog axis."""
     fig, axes = plt.subplots(1, len(features), figsize=(3.0 * len(features), 3.2), sharey=True)
     y = values["y"].to_numpy()
     for ax, f in zip(np.atleast_1d(axes), features):
@@ -103,6 +105,7 @@ def figure_dependence(values: pl.DataFrame, data_rows, features: list[str], targ
 
 
 def figure_local(local: pl.DataFrame, target) -> None:
+    """One bar chart per chosen error: its LOCAL_FEATURES largest |SHAP| contributions, the rest summed."""
     cases = local.select("case", "kind", "label34", "score", "base_value").unique("case").sort("case")
     fig, axes = plt.subplots(len(cases), 1, figsize=(6.4, 2.0 * len(cases)))
     for ax, case in zip(np.atleast_1d(axes), cases.iter_rows(named=True)):
@@ -122,6 +125,7 @@ def figure_local(local: pl.DataFrame, target) -> None:
 
 
 def main() -> None:
+    """Global SHAP on a random sample of each outer test fold, then local SHAP of the pre-registered typical errors."""
     cfg, feature_cfg, search_cfg = load_config(), load_config("features"), load_config("search_spaces")
     icfg, seed = cfg["interpretation"], int(cfg["seed"])
     model_name = best_model(cfg)

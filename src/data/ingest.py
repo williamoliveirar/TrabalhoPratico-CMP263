@@ -37,6 +37,7 @@ def read_capture(data: bytes, header: list[str]) -> tuple[pa.Table, np.ndarray, 
     malformed = []
 
     def skip(row):  # with use_threads=False, row.number is the physical line (1 = header)
+        """Invalid-row handler: record the row with its 0-based row_idx and tell pyarrow to skip it."""
         if row.number is None:
             raise ValueError("malformed row without a line number")
         malformed.append({"row_idx": row.number - 2, "n_fields": row.actual_columns, "text": row.text})
@@ -63,6 +64,10 @@ def read_capture(data: bytes, header: list[str]) -> tuple[pa.Table, np.ndarray, 
 
 
 def main() -> None:
+    """Convert every capture CSV into the interim Parquet and write the raw manifest and the malformed-row log.
+
+    The Parquet goes to a .tmp file renamed only after the last capture, so a failed run leaves no partial file.
+    """
     cfg = load_config()
     cols = cfg["columns"]
     csv_dir = path(cfg, "raw_csv_dir")
@@ -82,7 +87,7 @@ def main() -> None:
                 source = f.relative_to(csv_dir).as_posix()
                 data = f.read_bytes()
                 file_header = data.split(b"\n", 1)[0].decode("utf-8").rstrip("\r").split(",")
-                header = header or file_header
+                header = header or file_header  # the first file sets the reference header
                 if file_header != header:
                     raise ValueError(f"{source}: header differs from the first file")
                 table, row_idx, malformed = read_capture(data, header)
@@ -97,6 +102,7 @@ def main() -> None:
                          .append_column("row_idx", pa.array(row_idx, pa.int64())))
                 if writer is None:
                     writer = pq.ParquetWriter(tmp, table.schema, compression=cfg["ingest"]["parquet_compression"])
+                # one row group per capture: make_sample reads captures by row group
                 writer.write_table(table, row_group_size=n)
 
                 manifest.append({"source_file": source, "size_bytes": len(data),
@@ -107,6 +113,7 @@ def main() -> None:
             writer.close()
             tmp.replace(target)
         finally:
+            # tmp still exists only if the run failed before the rename: discard the partial file
             if tmp.exists():
                 if writer is not None:
                     writer.close()

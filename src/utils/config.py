@@ -7,6 +7,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def _merge(base: dict, override: dict) -> dict:
+    """Copy of base with override merged in: nested dicts merge key by key, any other value replaces the base one."""
     out = dict(base)
     for key, value in override.items():
         if isinstance(value, dict) and isinstance(out.get(key), dict):
@@ -17,6 +18,7 @@ def _merge(base: dict, override: dict) -> dict:
 
 
 def load_config(name: str = "base") -> dict:
+    """configs/<name>.yaml as a dict; only for "base", configs/local.yaml (if present) is merged over it."""
     cfg = yaml.safe_load((ROOT / "configs" / f"{name}.yaml").read_text(encoding="utf-8"))
     local = ROOT / "configs" / "local.yaml"
     if name == "base" and local.exists():

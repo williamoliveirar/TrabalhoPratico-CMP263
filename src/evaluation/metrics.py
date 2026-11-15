@@ -25,7 +25,7 @@ def predictions_and_scores(model, X) -> tuple[np.ndarray, np.ndarray]:
         proba = model.predict_proba(X)
         return classes[proba.argmax(axis=1)], proba[:, int(np.flatnonzero(classes == POSITIVE)[0])]
     score = model.decision_function(X)
-    if classes[1] != POSITIVE:
+    if classes[1] != POSITIVE:  # scikit-learn's decision_function is positive towards classes_[1]
         raise ValueError("decision_function must score the positive class")
     return classes[(score > 0).astype(int)], score
 

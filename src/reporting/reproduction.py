@@ -34,6 +34,7 @@ RUNS_SCHEMA = {"record": pl.String, "script": pl.String, "make_target": pl.Strin
 
 
 def git(repo: Path, *args: str) -> str:
+    """Standard output of `git -C repo <args>`; raises CalledProcessError if git fails."""
     return subprocess.run(["git", "-C", str(repo), *args], check=True, capture_output=True,
                           encoding="utf-8").stdout
 
@@ -45,6 +46,7 @@ def versioned_files(repo: Path, out_prefix: str) -> list[str]:
 
 
 def compare_files(names: list[str], original: Path, clone: Path) -> pl.DataFrame:
+    """SHA-256 of each file here and in the clone; a file missing from the clone gets a null hash (not identical)."""
     rows = []
     for name in names:
         here, there = original / name, clone / name
@@ -69,6 +71,7 @@ def runs_table(clone: Path, results_rel: str, commit: str, targets: dict[str, st
 
 
 def summarize(files: pl.DataFrame, runs: pl.DataFrame, commit: str) -> dict:
+    """Content of summary.json: file agreement, run count, dirty runs, environments and runtime per make target."""
     per_target = runs.group_by("make_target", maintain_order=True).agg(pl.col("elapsed_s").sum())
     return {
         "reproduction_commit": commit,
@@ -85,6 +88,7 @@ def summarize(files: pl.DataFrame, runs: pl.DataFrame, commit: str) -> dict:
 
 
 def main() -> None:
+    """Compare this copy with the clone given on the command line; refuses if data/ or results/ are uncommitted."""
     if len(sys.argv) != 2:
         raise SystemExit("usage: python -m src.reporting.reproduction <clone_dir>")
     clone = Path(sys.argv[1]).resolve()

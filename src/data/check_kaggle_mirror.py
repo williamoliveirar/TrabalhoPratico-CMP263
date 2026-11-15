@@ -19,6 +19,7 @@ REL_TOL = 1e-6    # Parquet stores several columns as float32
 
 
 def main() -> None:
+    """Compare the mirror with the CSVs (row counts per file, values of the first HEAD_ROWS rows); write the report."""
     cfg = load_config()
     csv_dir = path(cfg, "raw_csv_dir")
     lf = pl.scan_parquet(path(cfg, "kaggle_parquet"))
@@ -43,6 +44,7 @@ def main() -> None:
              .rename(rename).to_numpy())
         b = (lf.filter(pl.col("source_file") == rel).head(HEAD_ROWS).select(pq_features)
              .cast(pl.Float64).collect().to_numpy())
+        # a file shorter on one side is compared on the common rows; count differences are reported separately
         n = min(len(a), len(b))
         close = np.isclose(a[:n], b[:n], rtol=REL_TOL, atol=0.0, equal_nan=True)
         bad_cols = [pq_features[j] for j in np.where(~close.all(axis=0))[0]]

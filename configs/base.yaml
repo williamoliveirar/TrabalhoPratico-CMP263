@@ -35,7 +35,7 @@ ingest:  # Etapa 1, D15
 inspection:  # Etapa 1
   top_values: 20  # most frequent values listed for columns that look like counts (e.g. Number)
 
-sampling:  # D3 — adjustable to machine memory; record changes in docs/DIARIO.md
+sampling:  # D3 — adjustable to machine memory
   E: {benign: 25000, attack: 25000}  # attack split equally among the 33 types (integer division)
   M: {benign: 100000, attack: 100000}
   oversample_factor: 1.3   # candidates drawn per label = 1.3 × target: slack for duplicate removal (Etapa 2, step 3)
@@ -63,7 +63,7 @@ spotcheck:  # Etapa 6 — sample E, folds of make splits (validation role); defa
 search:  # D9
   n_iter: 30
   finalists: 3
-  finalist_models: [lightgbm, random_forest, mlp]  # Etapa 6 (results/spotcheck/selection.json; DIARIO 2026-11-06)
+  finalist_models: [lightgbm, random_forest, mlp]  # Etapa 6 (results/spotcheck/selection.json)
   reference_models: [decision_tree, dummy]  # tree tuned too, to test H1 (P7, 2026-11-06); dummy = floor, never tuned
 
 nested:  # Etapa 7 — sample M, folds of make splits (outer: test; inner: validation)

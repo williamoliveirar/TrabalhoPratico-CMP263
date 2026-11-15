@@ -30,6 +30,7 @@ from src.utils.run_metadata import recorded_run
 
 
 def search_table(res: dict) -> pl.DataFrame:
+    """One row per candidate configuration of the search, with its validation and training MCC (from cv_results_)."""
     return pl.DataFrame({
         "candidate": np.arange(len(res["params"])),
         "params": [json.dumps({k.removeprefix("model__"): plain(v) for k, v in p.items()}, sort_keys=True)
@@ -39,6 +40,7 @@ def search_table(res: dict) -> pl.DataFrame:
 
 
 def main() -> None:
+    """Tune the best model on all of M, refit it, save it and record its configuration (no new estimate)."""
     cfg, feature_cfg, search_cfg = load_config(), load_config("features"), load_config("search_spaces")
     seed, model_name = int(cfg["seed"]), best_model(cfg)
     out_dir, model_file = path(cfg, "results_dir") / "final", path(cfg, "models_dir") / "final_model.joblib"
@@ -48,6 +50,7 @@ def main() -> None:
         features = feature_names(M.columns, feature_cfg, cfg["nested"]["feature_set"], auxiliary_columns(cfg))
         X, y = prepare(M, features, feature_cfg), M[cfg["columns"]["target"]].to_numpy()
         labels = M[cfg["columns"]["label"]].to_numpy()
+        # folds stratified by label34 (not only by the binary target), like every other split of the project
         cv = list(StratifiedKFold(n_splits=int(cfg["final"]["cv_splits"]), shuffle=True, random_state=seed)
                   .split(np.zeros(labels.size), labels))
         search = RandomizedSearchCV(build_pipeline(model_name, features, feature_cfg, search_cfg, seed, n_jobs=1),

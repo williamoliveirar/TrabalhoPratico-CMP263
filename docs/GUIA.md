@@ -1,6 +1,4 @@
-# Guia prático do projeto (Etapas 0 a 9)
-
-*Situação em 13/11/2026; código da Etapa 9 nos commits `c3a996d`, `c1923d0`, `18945cf` e `2e019d9`, e resultados nos commits `a98b515`, `0a162be`, `4bb3aa9`, `399ff01` e `a09a2ea`. Desde 12/11 o trabalho é individual. Atualize este guia ao fim de cada etapa.*
+# Guia prático do projeto (Etapas 0 a 10)
 
 Este guia explica, do zero, o que já foi construído, como rodar cada parte e como conferir sozinho os resultados e as conclusões. O plano completo está em `docs/PLANO.md`; as decisões e os números, com fonte, em `docs/DIARIO.md`. Aqui o foco é prático: o que é cada coisa, que comando rodar e o que você deve ver. Os termos são os das aulas. O glossário completo está no PLANO, §1.4, e o mapa das etapas formais do treinamento de modelos no PLANO, §1.3.
 
@@ -40,7 +38,7 @@ Sumário:
 | 7 | Otimização de hiperparâmetros e seleção de modelos | Validação cruzada aninhada dos finalistas em M | Concluída |
 | 8 | Estimativa de desempenho e comparação de modelos | Testes de hipóteses entre os modelos, erros por tipo de ataque, distribuição original | Concluída |
 | 9 | Interpretação do modelo | Permutação, SHAP e explicações locais do LightGBM; ablação dos atalhos; *leave-capture-out* | Concluída |
-| 10 | Modelo final e reprodutibilidade | Modelo final (já treinado na Etapa 9), `make all`, reprodução num clone novo | Próxima |
+| 10 | Modelo final e reprodutibilidade | Modelo final (treinado na Etapa 9), `make report`, reprodução num clone novo | Concluída |
 
 **O caminho dos dados**, do arquivo bruto até a interpretação do melhor modelo:
 
@@ -141,7 +139,7 @@ results/ablation/, results/shortcuts/   ablação dos atalhos, modelos de um atr
 
 | O quê | Onde (nesta máquina) | Observação |
 |---|---|---|
-| Repositório | `...\Trabalho prático - Aprendizado de Máquina\TrabalhoPratico-CPM263` | GitHub: `williamoliveirar/TrabalhoPratico-CPM263` (privado) |
+| Repositório | `...\Trabalho prático - Aprendizado de Máquina\TrabalhoPratico-CMP263` | GitHub: `williamoliveirar/TrabalhoPratico-CMP263` (privado) |
 | Dados brutos (CSVs) | `..\CICIoT2023-Dataset\CICIoT2023-Dataset-CSV\CSV` (ao lado do repositório) | Nunca vão para o Git |
 | Espelho do Kaggle | `..\CICIoT2023-Dataset\Cleaned-CICIoT2023-Dataset Parquet ...\` | Só para conferência |
 | Caminhos desta máquina | `configs/local.yaml` | Não versionado; modelo em `configs/local.example.yaml` |
@@ -153,7 +151,7 @@ results/ablation/, results/shortcuts/   ablação dos atalhos, modelos de um atr
 | Dados gerados | `data/interim/`, `data/processed/` | Não versionados; recriados pelo pipeline |
 
 **Abrindo o projeto no VS Code:**
-1. *File → Open Folder* → pasta `TrabalhoPratico-CPM263`.
+1. *File → Open Folder* → pasta `TrabalhoPratico-CMP263`.
 2. `Ctrl+Shift+P` → *Python: Select Interpreter* → escolha `C:\Users\will_\.venvs\cmp263\Scripts\python.exe`.
 3. *Terminal → New Terminal* (PowerShell). Todos os comandos deste guia rodam a partir da raiz do repositório.
 
@@ -184,7 +182,7 @@ Abre o interpretador interativo (`>>>`). Rode-o na raiz do repositório para que
 ## 4. Mapa do repositório
 
 ```
-TrabalhoPratico-CPM263/
+TrabalhoPratico-CMP263/
 ├── CLAUDE.md                 regras permanentes do projeto (lidas pelo Claude Code)
 ├── README.md                 visão geral em inglês (para quem for reproduzir)
 ├── Makefile                  um alvo por etapa: make ingest, make sample, make eda, make test...
@@ -211,7 +209,11 @@ TrabalhoPratico-CPM263/
 │   ├── models/
 │   │   ├── registry.py       Etapas 4 e 6: os 8 algoritmos de D7 (com o SVM) + Dummy, com hiperparâmetros padrão
 │   │   └── pipelines.py      Etapa 4: prepare() antes da divisão; build_pipeline() = pré-processamento + modelo
-│   ├── reporting/style.py    estilo e cores das figuras (benigno azul, ataque laranja)
+│   ├── reporting/
+│   │   ├── style.py          estilo e cores das figuras (benigno azul, ataque laranja)
+│   │   ├── tables.py         Etapa 10: tabelas-resumo lidas dos resultados registrados (make report)
+│   │   ├── figures.py        Etapa 10: índice das figuras, conferido pelos hashes dos run.json (make report)
+│   │   └── reproduction.py   Etapa 10: compara um clone onde o make all rodou com os resultados registrados
 │   ├── experiments/
 │   │   ├── make_splits.py    Etapa 5: folds congelados; funções que os entregam ao scikit-learn (cv=)
 │   │   ├── spotcheck.py      Etapa 6: spot-checking em E; ranking e grupo de empate
@@ -230,7 +232,7 @@ TrabalhoPratico-CPM263/
 │   │   ├── permutation.py    Etapa 9: importância por permutação (make interpret)
 │   │   └── shap_analysis.py  Etapa 9: SHAP global, dependência e explicações locais (make interpret)
 │   └── features/             (vazio)
-├── tests/                    test_ingest.py, test_sample.py, test_eda.py, test_no_leakage.py, test_splits.py, test_spotcheck.py, test_nested_cv.py, test_evaluation.py, test_interpretation.py, test_shortcuts.py (57 testes); synthetic.py (dados inventados)
+├── tests/                    test_ingest.py, test_sample.py, test_eda.py, test_no_leakage.py, test_splits.py, test_spotcheck.py, test_nested_cv.py, test_evaluation.py, test_interpretation.py, test_shortcuts.py, test_reporting.py, test_reproduction.py (63 testes); synthetic.py (dados inventados)
 ├── data/
 │   ├── raw_manifest.csv      versionado: tamanho, SHA-256 e linhas de cada um dos 309 CSVs
 │   ├── sample_index.csv.gz   versionado: quais linhas (source_file, row_idx) estão em E e em M
@@ -249,7 +251,10 @@ TrabalhoPratico-CPM263/
 │   ├── ablation/             saídas da Etapa 9: validação cruzada aninhada do LightGBM sem os atalhos, um conjunto por pasta
 │   ├── shortcuts/            saídas da Etapa 9: testes da ablação, modelos de um atributo em M, Q3 e H3, figura central
 │   ├── final/                modelo final: busca em toda a M e configuração escolhida
-│   └── capture/              leave-capture-out: divisão por linha × divisão por captura
+│   ├── capture/              leave-capture-out: divisão por linha × divisão por captura
+│   ├── tables/               Etapa 10: tabelas-resumo (CSV e Markdown) e index.csv
+│   ├── figures/              Etapa 10: index.csv das 15 figuras
+│   └── reproduction/         Etapa 10: comparação da reprodução num clone novo
 └── docs/
     ├── PLANO.md              o plano do trabalho (pt-BR)
     ├── DIARIO.md             diário de bordo: decisões e números com fonte (pt-BR)
@@ -557,11 +562,40 @@ git diff --stat -- results/shortcuts ":(exclude)*.run.json"
 
 Esperado: nenhuma saída.
 
+### Etapa 10 — Relatório e reprodutibilidade
+
+```powershell
+make report
+```
+
+Lê os resultados já registrados e não recalcula nada (≈ 1 s):
+- `results/tables/`: 14 tabelas-resumo em CSV e Markdown, com 4 casas (os p-valores, com 2 algarismos significativos). `index.csv` lista cada tabela, os arquivos de onde ela veio e o SHA-256 do CSV;
+- `results/figures/index.csv`: as 15 figuras, cada uma com o script e o alvo do `make` que a desenhou. O passo para se o SHA-256 de alguma figura não bater com o `run.json` que a gravou.
+
+O modelo final (`make final`) foi treinado na Etapa 9, que o usa no *leave-capture-out*. A estimativa de desempenho dele é a da validação cruzada aninhada; ele não é avaliado de novo.
+
+**Reprodução num clone novo** (nível 6 da seção 7): em 15/11, o `make all` rodou num clone novo, com o ambiente criado do zero, e deu os mesmos arquivos, byte a byte. Só mudaram os arquivos de tempo (`results/reproduction/summary.json`). Tempos dessa execução, sem concorrência nem suspensão (`results/reproduction/runs.csv`):
+
+| Alvo | Tempo |
+|---|---|
+| `make ingest` | 8 min |
+| `make inspect`, `sample`, `eda` e `splits` | 1 min, somados |
+| `make spotcheck` | 19 min |
+| `make tune` | 4,9 h |
+| `make evaluate` | 42 s |
+| `make interpret` | 1,0 h |
+| `make ablation` | 4,7 h |
+| `make final` | 24 min |
+| `make report` | 1 s |
+| **`make all`** | **11,5 h** |
+
+Os tempos citados nas Etapas 7 e 9 são maiores porque várias execuções rodaram ao mesmo tempo.
+
 ---
 
 ## 7. Como validar tudo por conta própria
 
-São cinco níveis, do mais rápido ao mais completo. Rode no terminal do VS Code, na raiz do repositório.
+São seis níveis, do mais rápido ao mais completo. Rode no terminal do VS Code, na raiz do repositório.
 
 ### Nível 1 — Os testes passam (≈ 15 s)
 
@@ -569,7 +603,7 @@ São cinco níveis, do mais rápido ao mais completo. Rode no terminal do VS Cod
 make test
 ```
 
-Esperado: `57 passed`. Os testes conferem, com dados pequenos inventados:
+Esperado: `63 passed`. Os testes conferem, com dados pequenos inventados:
 - que a ingestão preserva valores e descarta só linhas malformadas;
 - que o mapeamento de rótulos tem 34 rótulos e 12 ataques DDoS;
 - que a deduplicação segue as três regras e que E e M saem disjuntas e 50/50;
@@ -609,7 +643,11 @@ Esperado: `57 passed`. Os testes conferem, com dados pequenos inventados:
 - (`test_shortcuts.py`, Etapa 9) que:
   - o Holm deixa de fora da família uma comparação que não pôde ser testada;
   - a leitura da queda de MCC (pequena, moderada, grande) e a regra de colapso de um tipo seguem os limiares pré-registrados;
-  - no *leave-capture-out*, um tipo só colapsa com queda grande e intervalos que não se sobrepõem.
+  - no *leave-capture-out*, um tipo só colapsa com queda grande e intervalos que não se sobrepõem;
+- (`test_reporting.py` e `test_reproduction.py`, Etapa 10) que:
+  - o arredondamento preserva os p-valores muito pequenos e o Markdown escapa os caracteres especiais;
+  - o índice das figuras lê os alvos do `Makefile` e recusa uma figura cujo hash não bate com o `run.json`;
+  - a comparação da reprodução aponta arquivos diferentes e ausentes e só conta as execuções feitas no clone.
 
 ### Nível 2 — Refazer as Etapas 2, 3 e 5 e obter os mesmos arquivos (≈ 45 s)
 
@@ -907,6 +945,32 @@ Esperado:
 
 Abra as figuras de `results/eda/` (clique no explorador do VS Code, ou `start results\eda\fig_number_by_type.png`). Para cada afirmação da entrada "Etapa 3 — EDA na amostra E" do diário, o arquivo citado deve mostrar o número citado. Por exemplo, a afirmação "MCC 0,653 com `Number`" está na primeira linha de `single_feature_models.csv` e na primeira barra de `fig_single_feature_mcc.png`.
 
+### Nível 6 — Reproduzir tudo num clone novo (≈ 11,5 h)
+
+É o teste mais completo: outra pasta, ambiente criado do zero e tudo recalculado desde os CSVs brutos. Fora da pasta do projeto:
+
+```powershell
+git clone https://github.com/williamoliveirar/TrabalhoPratico-CMP263.git repro
+```
+
+Depois, dentro de `repro`:
+1. crie `configs/local.yaml` apontando para a pasta dos CSVs (modelo em `configs/local.example.yaml`) e, no Windows, um `local.mk` com o ambiente num caminho curto (seção 3);
+2. rode `make env` e `make test`;
+3. apague as pastas da validação cruzada aninhada e da ablação. **Sem isso, nada é recalculado:** os dois passos retomam uma execução interrompida pulando os folds que já têm `fold<k>.json`, e esses arquivos são versionados.
+
+```powershell
+Remove-Item -Recurse -Force results\nested, results\ablation
+```
+
+4. rode `make all`, com o notebook na tomada e a tampa aberta;
+5. na cópia original, compare as duas cópias:
+
+```powershell
+make compare-reproduction CLONE=C:/caminho/para/repro
+```
+
+Esperado: só os arquivos de tempo diferem (`fold<k>_timing.json` e `results/spotcheck/timings_per_fold.csv`). Foi o resultado de 15/11: 224 de 262 arquivos idênticos, e os 38 restantes são de tempo (`results/reproduction/summary.json`). O passo regrava `results/reproduction/`; para manter o registro de 15/11, descarte depois com `git restore results/reproduction`.
+
 ### Como ler um `run.json`
 
 Abra, por exemplo, `results/eda/eda.run.json`:
@@ -946,6 +1010,7 @@ Cada conclusão abaixo tem a evidência, onde ela está e como conferir.
 | 21 | Importância não é dependência: sem `Number`, o atributo mais importante, o MCC não muda (0,831 contra 0,832; p = 0,12 depois de Holm) | `ablation_tests.csv` | Abra o arquivo |
 | 22 | H3: o TTL sozinho repete em M o padrão de E (MCC 0,460, TFP 0,25), mas separa quase só as inundações. A parte do sistema operacional não é testável com estes dados | `single_feature_summary.csv`, `q3_h3.json` | Abra os arquivos |
 | 23 | *Leave-capture-out*: nenhum dos 16 tipos agrupados por captura colapsa. Os 16 são de janela 100, e o resultado não diz nada sobre os ataques difíceis | `results/capture/summary.json`, `recall_by_type.csv` | Abra os arquivos |
+| 24 | O pipeline se reproduz: num clone novo, com ambiente criado do zero, o `make all` deu os mesmos arquivos byte a byte (224 de 262; os outros 38 guardam tempos de relógio), incluindo o modelo final | `results/reproduction/summary.json`, `files.csv` | Nível 6 |
 
 **Consequência para o trabalho:** um modelo pode ter MCC alto aprendendo só "janela grande = ataque". A Etapa 9 mostrou que o LightGBM não precisa do atributo `Number` para isso. Mas, neste dataset, janela de 100 pacotes e ataque de DDoS, DoS ou Mirai são a mesma coisa, e nenhuma análise com estes dados separa as duas leituras. Por isso:
 - todas as métricas são reportadas separadamente para os ataques de janela 10, em que benigno e ataque têm a mesma janela. Essa é a comparação mais honesta;
@@ -987,21 +1052,20 @@ Regras que valem sempre (estão no `CLAUDE.md`):
 
 ## 10. O que vem a seguir e o que está pendente
 
-**Próximas etapas** (cronograma do PLANO §8; em 13/11, a Etapa 9 terminou dentro do previsto):
+**Próximas etapas** (cronograma do PLANO §8; em 15/11, a Etapa 10 terminou dentro do previsto):
 
 | Etapa | Previsto no plano | O que será feito |
 |---|---|---|
-| 10 | 13–15/11 | `make all` funcionando; notas de reprodução e mapa das figuras e tabelas do artigo no README. O modelo final já foi treinado na Etapa 9 |
-| 11 | 14–19/11 | Artigo completo e revisado; reprodução num clone novo, com ambiente criado do zero |
+| 11 | 14–19/11 | Artigo completo e revisado |
 
 **Pendências (desde 12/11, o trabalho é individual; ver o diário):**
 - decidir a P8: o que fazer com as configurações do MLP e da Random Forest que ficaram na borda do espaço de busca (entrada "2026-11-07 — Etapa 7" do diário);
 - preencher, no `docs/IA_LOG.md`, os campos "O que foi aproveitado" e "O que foi rejeitado" de cada entrada, e registrar as conversas de planejamento no claude.ai;
 - baixar a pasta *Supplementary material* do dataset (o formulário pede nome, e-mail e instituição) para confirmar se as linhas estão em ordem cronológica. Isso só importa se for preciso reabrir a análise complementar (b) da D8, de blocos contíguos, que não foi adotada;
-- escolher a licença do repositório;
+- decidir, para a entrega, a licença do repositório, se ele fica público (tag `v1.0`) e se o modelo final (20 MB) é versionado;
 - confirmar com a professora que o trabalho pode ser concluído individualmente (o enunciado pede dupla);
 - decidir se o `HTTPS`, segundo atributo mais importante e fora da lista de candidatos, ganha uma ablação própria (com pré-registro) ou fica só como ameaça à validade (entrada "2026-11-13 — Etapa 9" do diário);
-- antes de execuções longas, deixar o notebook na tomada com a tampa aberta, ou mudar a ação de fechar a tampa para "Não fazer nada" com o carregador ligado (seção 11). Somando os tempos registrados, o `make all` completo passa de 14 h nesta máquina.
+- antes de execuções longas, deixar o notebook na tomada com a tampa aberta, ou mudar a ação de fechar a tampa para "Não fazer nada" com o carregador ligado (seção 11). Sem concorrência, o `make all` completo leva 11,5 h nesta máquina (seção 6, Etapa 10).
 
 ---
 
@@ -1012,8 +1076,10 @@ Regras que valem sempre (estão no `CLAUDE.md`):
 | `make: command not found` / `make : O termo 'make' não é reconhecido` | O terminal foi aberto antes da instalação do Make. Feche e abra outro terminal |
 | `pip install` falha com caminho longo | Limite de 260 caracteres do Windows. Use um ambiente num caminho curto (`local.mk`) |
 | `... not found; run make ingest first` | O Parquet da ingestão não existe nesta máquina (não é versionado). Rode `make ingest` |
-| `ModuleNotFoundError: No module named 'src'` | O Python foi aberto fora da raiz do repositório. Use `cd` até `TrabalhoPratico-CPM263` |
+| `ModuleNotFoundError: No module named 'src'` | O Python foi aberto fora da raiz do repositório. Use `cd` até `TrabalhoPratico-CMP263` |
 | `git status` mostra resultados modificados além dos `.run.json` | Algo mudou (dados, código, configuração ou versão de biblioteca). **Não commite.** Veja o que mudou com `git diff` e registre no diário antes de qualquer coisa |
 | Números estranhos ao abrir CSV no Excel | Ponto decimal lido como separador de milhar. Abra no VS Code ou no polars |
 | O Kaggle não está nesta máquina | `make check-mirror` e `make check-ingest` são opcionais; o resto do pipeline não depende deles |
 | Um `fold<k>_timing.json` ou `elapsed_s` com horas a mais que o normal | O notebook suspendeu durante a execução (tampa fechada ou botão de energia). O cálculo só pausa: os resultados não mudam, só o tempo de relógio. Para ver as suspensões: `Get-WinEvent -FilterHashtable @{LogName='System'; Id=42,107}` no PowerShell. Para evitar: tampa aberta, ou "Ao fechar a tampa: Não fazer nada" com o carregador ligado, nas Opções de Energia do Windows |
+| `make tune` ou `make ablation` termina em segundos, sem treinar nada | Os dois retomam execuções interrompidas pulando os folds que já têm `fold<k>.json`, e esses arquivos são versionados. Para recalcular, apague antes `results/nested/` ou `results/ablation/` (nível 6) |
+| `UnicodeEncodeError: 'charmap' codec` ao rodar um script fora do `make` | O console do Windows usa cp1252. O `Makefile` já liga o modo UTF-8 do Python; fora dele, rode antes `$env:PYTHONUTF8 = "1"` |

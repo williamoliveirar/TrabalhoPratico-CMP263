@@ -42,12 +42,14 @@ def make_targets(makefile: Path) -> dict[str, str]:
     for line in makefile.read_text(encoding="utf-8").splitlines():
         if m := re.match(r"^([a-z][\w-]*):", line):
             current = m.group(1)
-        elif current and (m := re.search(r"-m\s+([\w.]+)", line)):
+        elif current and (m := re.search(r"-m\s+([\w.]+)", line)):  # first target that runs a module keeps it
             targets.setdefault(m.group(1), current)
     return targets
 
 
 def figure_index(results: Path, makefile: Path) -> pl.DataFrame:
+    """One row per PNG under results/ with its title, script, make target and SHA-256; stops at a PNG whose current
+    hash no run.json records."""
     recorded = {}  # (file, sha256) -> run record
     for record in sorted(results.rglob("*.run.json")):
         d = json.loads(record.read_text(encoding="utf-8"))
@@ -67,6 +69,7 @@ def figure_index(results: Path, makefile: Path) -> pl.DataFrame:
 
 
 def main() -> None:
+    """Write results/figures/index.csv inside a recorded run."""
     cfg = load_config()
     results = path(cfg, "results_dir")
     out_dir = results / "figures"

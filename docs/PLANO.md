@@ -1,54 +1,12 @@
 # Trabalho Final CMP263 — Detecção binária de ataques em redes IoT com o CICIoT2023
 
-**Documento de contexto e plano de execução** · versão 1.1 · 05/11/2026
-Disciplina: CMP263 – Aprendizagem de Máquina (PPGC/UFRGS), Profa. Mariana Recamonde Mendoza · Trabalho em dupla
-Entrega do artigo e do código: **22/11/2026, 23h59** (meta interna: **20/11/2026**)
-
-> **Versão 1.1 (05/11/2026):** a terminologia foi alinhada à das aulas, e as seções 1.3 e 1.4 foram acrescentadas: o mapa das etapas formais do treinamento de modelos e o glossário. A Etapa 4 foi reescrita a partir da D13. As etapas e decisões posteriores agora citam os nomes das colunas da versão usada (D15). O estado vigente de cada decisão está no quadro "Decisões vigentes" de `docs/DIARIO.md`. Fontes da terminologia: os slides da disciplina, sobretudo "Avaliação de modelos — Divisão de dados" (Aula 08), "Método holdout" (Aula 04), "Métricas de desempenho" (Aula 09), "Nested Cross-Validation & Data Leakage" (Aula 04, material extra), "Limpeza e transformação" e "Desbalanceamento de classes" (Aulas 13–14) e "Redução de dimensionalidade" (Aulas 15–16).
-
 ---
 
 ## 0. Como usar este documento
 
-### 0.1 Para a dupla
+### 0.1 Para o grupo
 
-Este arquivo reúne o que é preciso para executar o trabalho do início ao fim: o que o enunciado exige, o problema escolhido, o dataset, as decisões metodológicas, a estrutura do repositório, as etapas com critérios de conclusão, o cronograma e a estrutura do artigo. Ele é o **plano**. O registro do que de fato aconteceu fica no **diário** (seção 6), que é a matéria-prima do artigo.
-
-Para usar com o Claude Code:
-
-1. Salve este arquivo como `docs/PLANO.md` dentro do repositório.
-2. Crie na raiz do repositório um `CLAUDE.md` curto, como o modelo da seção 0.2. O Claude Code carrega o `CLAUDE.md` da raiz no início de cada sessão, e o conteúdo dele ocupa contexto em todas as sessões. Por isso ele deve ser curto e apenas apontar para este plano. Não use a sintaxe de importação `@docs/PLANO.md` dentro do `CLAUDE.md`, porque isso carregaria o plano inteiro em toda sessão.
-3. Copie o PDF do enunciado para `docs/enunciado.pdf`.
-4. Mantenha este plano, o diário e o registro de IA no controle de versão.
-
-### 0.2 Modelo de `CLAUDE.md` (raiz do repositório)
-
-```markdown
-# CLAUDE.md — Trabalho final CMP263 (UFRGS): detecção binária de ataques IoT no CICIoT2023
-
-Contexto e plano completos: docs/PLANO.md. Antes de começar, leia a seção da etapa atual
-e as últimas entradas de docs/DIARIO.md.
-
-## Regras permanentes
-- Converse e escreva o diário em português (pt-BR). Código, comentários, figuras e artigo em inglês.
-- Ao concluir uma etapa, tomar uma decisão, encontrar algo inesperado ou encerrar uma sessão,
-  acrescente uma entrada em docs/DIARIO.md (modelo na seção 6 do plano). Nunca edite entradas antigas.
-- Registre em docs/IA_LOG.md os pedidos relevantes feitos à IA na sessão (exigência do enunciado).
-- Os folds externos de teste nunca informam decisões (pré-processamento, atributos, hiperparâmetros, limiar).
-- Sementes, caminhos e tamanhos vêm de configs/*.yaml. Nada de números mágicos no código.
-- Todo número citado no diário ou no artigo aponta para o arquivo de resultado que o gerou.
-- Tabelas e figuras do artigo são geradas por script (src/reporting), nunca copiadas à mão.
-- Itens [verificar] do plano só viram fato depois de confirmados na fonte primária; registre a confirmação no diário.
-- Pergunte antes de apagar dados brutos ou sobrescrever resultados já registrados.
-- Seja crítico: aponte problemas metodológicos sem rodeios; não concorde só por concordar.
-```
-
-### 0.3 Para o Claude Code
-
-- Na primeira sessão, leia este plano inteiro. Nas seguintes, leia a seção da etapa em andamento e as últimas entradas do diário.
-- Cada etapa da seção 7 tem objetivo, tarefas, saídas e critério de pronto. Não avance para a etapa seguinte sem cumprir o critério de pronto e registrar a entrada correspondente no diário.
-- Quando os dados reais contradisserem algo deste plano, os dados vencem. Registre a divergência no diário como `[DESCOBERTA]` e proponha o ajuste à dupla antes de seguir.
-- Convenção: **[verificar]** marca informação que veio de memória e ainda não foi confirmada na fonte primária (artigo do dataset, página oficial ou os próprios CSVs).
+Este arquivo reúne o que é preciso para executar o trabalho do início ao fim: o que o enunciado exige, o problema escolhido, o dataset, as decisões metodológicas, a estrutura do repositório, as etapas com critérios de conclusão, o cronograma e a estrutura do artigo. Ele é o **plano**, a ser usado como referência para o progresso e andamento do trabalho.
 
 ---
 
@@ -241,10 +199,10 @@ As hipóteses ficam como foram escritas antes de olhar os dados, para não ajust
 
 ### 3.2 Como foi gerado
 
-- Topologia com 105 dispositivos IoT reais **[verificar]**.
+- Topologia com 105 dispositivos IoT reais.
 - 33 ataques em 7 categorias, executados por dispositivos IoT maliciosos contra outros dispositivos IoT.
-- Processamento: Mergecap, TCPDump, DPKT para extração de atributos e PySpark **[verificar]**.
-- O rótulo parece ser atribuído por captura **[verificar]**. Se for o caso, tráfego de fundo dentro de uma captura de ataque pode estar rotulado como ataque (ruído de rótulo). Isso deve ser registrado como limitação.
+- Processamento: Mergecap, TCPDump, DPKT para extração de atributos e PySpark.
+- O rótulo parece ser atribuído por captura. Se for o caso, tráfego de fundo dentro de uma captura de ataque pode estar rotulado como ataque (ruído de rótulo). Isso deve ser registrado como limitação.
 
 ### 3.3 Os 33 ataques por categoria
 
@@ -258,7 +216,7 @@ As hipóteses ficam como foram escritas antes de olhar os dados, para não ajust
 | Spoofing (2) | ARP spoofing, DNS spoofing |
 | Mirai (3) | GREIP flood, Greeth flood, UDPPlain |
 
-A grafia exata dos rótulos nos CSVs (por exemplo, `BenignTraffic`, `DDoS-ICMP_Flood`) precisa ser confirmada na Etapa 1 **[verificar]**. O mapeamento `label34 → category8 → y` deve ser escrito a partir dos rótulos reais, versionado em `src/data/labels.py` e registrado no diário.
+A grafia exata dos rótulos nos CSVs (por exemplo, `BenignTraffic`, `DDoS-ICMP_Flood`) precisa ser confirmada na Etapa 1. O mapeamento `label34 → category8 → y` deve ser escrito a partir dos rótulos reais, versionado em `src/data/labels.py` e registrado no diário.
 
 ### 3.4 Estrutura de diretórios
 
@@ -271,7 +229,7 @@ A grafia exata dos rótulos nos CSVs (por exemplo, `BenignTraffic`, `DDoS-ICMP_F
 
 > **Correção (Etapa 1, ver `docs/DIARIO.md`, 2026-10-25):** a versão usada (CSVs por captura, D15) tem 39 colunas, e não os 46 atributos abaixo, que são os da versão misturada. `Duration` chama-se `Time_To_Live`; não existem `flow_duration`, `Srate`, `Drate`, `urg_count`, `Magnitue`, `Radius`, `Covariance` e `Weight`; existe `IGMP`. Os nomes exatos estão em `results/inspection/schema.json`.
 
-Nomes exatos a confirmar no cabeçalho dos CSVs **[verificar]**.
+Nomes exatos a confirmar no cabeçalho dos CSVs.
 
 | Grupo | Atributos |
 |---|---|
@@ -283,7 +241,7 @@ Nomes exatos a confirmar no cabeçalho dos CSVs **[verificar]**.
 | Tempo | `IAT` |
 | Entrada × saída | `Number`, `Magnitue` (grafado assim), `Radius`, `Covariance`, `Variance`, `Weight` |
 
-Segundo o artigo, `Duration` é o TTL dos pacotes **[verificar]**. Valores fracionários em contagens indicam que os atributos são médias sobre janelas de pacotes **[verificar]**.
+Segundo o artigo, `Duration` é o TTL dos pacotes. Valores fracionários em contagens indicam que os atributos são médias sobre janelas de pacotes.
 
 ### 3.6 Observações prévias (a confirmar na EDA)
 
@@ -769,7 +727,7 @@ for k, (train_idx, test_idx) in enumerate(outer_folds(assign)):   # laço extern
 4. **Reprodução cruzada:** cada integrante da dupla clona o repositório num ambiente limpo e roda `make all`. Com o trabalho individual (12/11), a reprodução é feita por William num clone novo, com um ambiente virtual criado do zero, de preferência em outra máquina ou sistema operacional. Comparar hashes e métricas. Diferenças (por exemplo, não determinismo com várias threads) são corrigidas ou documentadas. Esse teste vale um parágrafo no artigo.
 5. **Publicação:** tornar o repositório público, criar a tag `v1.0` na entrega e, opcionalmente, gerar um DOI no Zenodo.
 
-**Pronto quando:** a reprodução cruzada chega aos mesmos números.
+**Pronto quando:** a reprodução cruzada chega aos mesmos números. Concluído em 15/11: `make all` num clone novo, com ambiente criado do zero, deu os mesmos arquivos byte a byte, exceto os de tempo (`results/reproduction/`, commit `f1cf531`; diário, entrada "2026-11-15 — Etapa 10 — Reprodução num clone novo"). Mesma máquina e mesmo sistema operacional, porque não havia outra disponível. A tarefa 5 (publicação) fica para a entrega.
 
 **Diário:** `[ENTREGA]` e `[PROBLEMA]` para qualquer divergência encontrada.
 
@@ -802,7 +760,7 @@ for k, (train_idx, test_idx) in enumerate(outer_folds(assign)):   # laço extern
 
 Hoje é **25/10/2026 (domingo)**. Restam quatro semanas até a meta interna de entrega (20/11, sexta-feira), com dois dias de folga antes do prazo oficial (22/11, 23h59).
 
-> **Situação em 13/11/2026:** Etapas 0 a 9 concluídas. As Etapas 4 e 5 terminaram em 05/11 (previsto: 01–02/11), a 6 em 06/11 (previsto: 03–04/11), a 7 em 07/11 (previsto: 04–08/11), a 8 em 12/11 (previsto: 08–10/11) e a 9 em 13/11 (previsto: 10–13/11). O atraso de cerca de 2 dias foi absorvido na Etapa 9, com as execuções longas rodando em paralelo durante a noite. Desde 12/11, o trabalho é individual. A validação cruzada aninhada levou cerca de 5,4 h de cálculo, o dobro do estimado, e a ablação, cerca de 5,8 h. O plano de contingência (§8.2) continua valendo; o primeiro corte não foi necessário. O cronograma da disciplina (v2) confirma a revisão por pares em 24/11 e a apresentação em 01/12.
+> **Situação em 15/11/2026:** Etapas 0 a 10 concluídas. As Etapas 4 e 5 terminaram em 05/11 (previsto: 01–02/11), a 6 em 06/11 (previsto: 03–04/11), a 7 em 07/11 (previsto: 04–08/11), a 8 em 12/11 (previsto: 08–10/11), a 9 em 13/11 (previsto: 10–13/11) e a 10 em 15/11 (previsto: 13–15/11). O atraso de cerca de 2 dias foi absorvido na Etapa 9, com as execuções longas rodando em paralelo durante a noite. Desde 12/11, o trabalho é individual. A validação cruzada aninhada levou cerca de 5,4 h de cálculo, o dobro do estimado, e a ablação, cerca de 5,8 h, com execuções simultâneas. Sem concorrência, na reprodução num clone novo, o `make all` inteiro levou 11,5 h. O plano de contingência (§8.2) continua valendo; o primeiro corte não foi necessário. O cronograma da disciplina (v2) confirma a revisão por pares em 24/11 e a apresentação em 01/12.
 
 | Período | Etapa(s) | Marco (pronto quando) |
 |---|---|---|
@@ -930,7 +888,7 @@ Os espaços de busca e os hiperparâmetros escolhidos em cada fold podem ir para
 | L1.3 | Seleção de atributos no conjunto completo | Remoção de atributos (D13) | Remoção sem uso do atributo alvo, decidida em E (disjunta de M); nenhuma seleção supervisionada |
 | L1.4 | Duplicatas entre treino e teste | Janelas idênticas | Deduplicação antes da divisão (D4); nenhum vetor de atributos se repete em E ∪ M |
 | L2 | Atributos ilegítimos (*proxies* do atributo alvo) | `Number` (tamanho da janela) e `Time_To_Live` | Análise de atalhos: modelos de um atributo e ablação (D12, Etapa 9) |
-| L3.1 | Data leakage temporal | Ordem das janelas desconhecida **[verificar]** | Nenhum atributo de tempo absoluto; blocos contíguos de `row_idx` como análise complementar (D8) |
+| L3.1 | Data leakage temporal | Ordem das janelas desconhecida | Nenhum atributo de tempo absoluto; blocos contíguos de `row_idx` como análise complementar (D8) |
 | L3.2 | Dependência entre instâncias (a mesma origem no treino e no teste) | Janelas da mesma captura no treino e no teste | Inevitável com 15 tipos de uma só captura (D8). *Leave-capture-out* como análise complementar; limitação no artigo |
 | L3.3 | Viés de amostragem no conjunto de teste | Folds de teste 50/50 e com tipos igualados (D3) | Métricas independentes da prevalência; D16 (P1, adotada em 07/11): métricas reponderadas para a distribuição original e precisão projetada para outras prevalências (Etapa 8) |
 
@@ -952,46 +910,3 @@ Os espaços de busca e os hiperparâmetros escolhidos em cada fold podem ir para
 - [ ] Reprodução cruzada feita pelos dois integrantes.
 - [ ] Uso de IA citado no artigo e material suplementar com os prompts pronto.
 - [ ] Até 20 páginas, template correto, em inglês.
-- [ ] Todos os itens `[verificar]` resolvidos ou removidos do texto.
-
----
-
-## 11. Referências
-
-Todas vieram de memória e devem ser **conferidas antes de citar [verificar]**. As marcadas "(slides)" são citadas nos slides da disciplina, mas os dados bibliográficos ainda precisam ser conferidos na fonte.
-
-**Material da disciplina** (fonte da terminologia, §1.3 e §1.4)
-
-- Recamonde-Mendoza, M. Slides de CMP263 – Aprendizagem de Máquina, PPGC/UFRGS, 2026/2: Aula 04 (*Método holdout*) e material extra (*Nested Cross-Validation & Data Leakage in Predictive Modeling*, baseado em Kapoor & Narayanan, 2023); Aula 08 (*Avaliação de modelos — Divisão de dados*); Aula 09 (*Métricas de desempenho*); Aulas 02b e 13–14 (*Pré-processamento: normalização e codificação; limpeza e transformação; desbalanceamento de classes*); Aulas 15–16 (*Redução de dimensionalidade*).
-
-**Dataset**
-
-- Neto, E. C. P.; Dadkhah, S.; Ferreira, R.; Zohourian, A.; Lu, R.; Ghorbani, A. A. *CICIoT2023: A Real-Time Dataset and Benchmark for Large-Scale Attacks in IoT Environment*. Sensors, 23(13), 5941, 2023. DOI: 10.3390/s23135941.
-
-**Metodologia em segurança e problemas de datasets**
-
-- Arp, D. et al. *Dos and Don'ts of Machine Learning in Computer Security*. USENIX Security Symposium, 2022.
-- Engelen, G.; Rimmer, V.; Joosen, W. *Troubleshooting an Intrusion Detection Dataset: the CICIDS2017 Case Study*. IEEE Security and Privacy Workshops, 2021.
-- Geirhos, R. et al. *Shortcut Learning in Deep Neural Networks*. Nature Machine Intelligence, 2, 665–673, 2020.
-- Kapoor, S.; Narayanan, A. *Leakage and the Reproducibility Crisis in Machine-Learning-Based Science*. Patterns, 4(9), 2023.
-
-**Avaliação e comparação de modelos**
-
-- Cawley, G. C.; Talbot, N. L. C. *On Over-fitting in Model Selection and Subsequent Selection Bias in Performance Evaluation*. JMLR, 11, 2079–2107, 2010.
-- Varma, S.; Simon, R. *Bias in Error Estimation When Using Cross-Validation for Model Selection*. BMC Bioinformatics, 7, 91, 2006.
-- Nadeau, C.; Bengio, Y. *Inference for the Generalization Error*. Machine Learning, 52, 239–281, 2003.
-- Holm, S. *A Simple Sequentially Rejective Multiple Test Procedure*. Scandinavian Journal of Statistics, 6(2), 65–70, 1979.
-- Chicco, D.; Jurman, G. *The Advantages of the Matthews Correlation Coefficient (MCC) over F1 Score and Accuracy in Binary Classification Evaluation*. BMC Genomics, 21, 6, 2020.
-- Dietterich, T. G. *Approximate Statistical Tests for Comparing Supervised Classification Learning Algorithms*. Neural Computation, 10(7), 1895–1923, 1998 (slides).
-- Demšar, J. *Statistical Comparisons of Classifiers over Multiple Data Sets*. JMLR, 7, 1–30, 2006 (slides).
-- Efron, B. *Better Bootstrap Confidence Intervals*. Journal of the American Statistical Association, 82(397), 1987. DOI: 10.2307/2289144 (slides).
-- Kuncheva, L. I.; Rodríguez, J. J. *On Feature Selection Protocols for Very Low-Sample-Size Data*. Pattern Recognition, 81, 660–673, 2018 (slides).
-
-**Interpretabilidade**
-
-- Breiman, L. *Random Forests*. Machine Learning, 45, 5–32, 2001 (importância por permutação).
-- Lundberg, S. M.; Lee, S.-I. *A Unified Approach to Interpreting Model Predictions*. NeurIPS, 2017.
-
-**Reprodutibilidade**
-
-- Pineau, J. et al. *Improving Reproducibility in Machine Learning Research*. JMLR, 22, 2021.
