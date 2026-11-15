@@ -95,6 +95,10 @@ ablation:  # Etapa 9 (D12, Q3, H3): Etapa 7 repeated for the best model of Etapa
   single_features: [Number, Time_To_Live, IAT]   # one-feature trees (depth eda.single_feature_depth) on M
   mcc_drop: {small: 0.01, large: 0.05}           # size of a significant MCC drop: small < 0.01 <= moderate < 0.05 <= large
   type_collapse: 0.10                            # per-type sensitivity drop with non-overlapping Wilson intervals
+  h3:  # first part of H3 holds if the TTL-only tree on M repeats sample E (pre-registered 2026-11-12)
+    mcc_tolerance: 0.02                          # |MCC on M - MCC on E| at most this
+    tpr_window100_min: 0.90                      # "high" sensitivity on 100-packet windows (fixed in code before the first run)
+    fpr_min: 0.20                                # false positive rate at least this
 
 final:  # Etapa 10 task 1 (also feeds the leave-capture-out of Etapa 9): search on all of M, never re-evaluated
   cv_splits: 3                                   # stratified by label34, like the inner loop

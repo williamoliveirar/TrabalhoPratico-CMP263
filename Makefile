@@ -64,7 +64,7 @@ final:          ## Etapa 10 — final model trained on all of M; Etapa 9 leave-c
 	$(PY) -m src.experiments.final_model
 	$(PY) -m src.experiments.leave_capture_out
 
-report:         ## Etapa 10 — paper tables (CSV/LaTeX) and figures
+report:         ## Etapa 10 — summary tables (CSV and Markdown) and the index of the figures
 	$(PY) -m src.reporting.tables
 	$(PY) -m src.reporting.figures
 

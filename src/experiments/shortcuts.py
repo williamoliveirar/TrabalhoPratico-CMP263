@@ -38,7 +38,6 @@ TTL = "Time_To_Live"
 # H3, first part: the pattern of E (Etapa 3) is repeated on M if the TTL-only model has an MCC within 0.02 of E's,
 # a high sensitivity on 100-packet attacks and a false positive rate of at least 0.20 (pre-registered); "high" is
 # made operational as at least 0.90 (E: 0.955), fixed here before this script first ran.
-H3_MCC_TOLERANCE, H3_TPR100_MIN, H3_FPR_MIN = 0.02, 0.90, 0.20
 
 
 def single_feature_models(cfg: dict, feature_cfg: dict) -> pl.DataFrame:
@@ -172,8 +171,9 @@ def main() -> None:
         collapsed = recall.filter((pl.col("feature_set") == primary["feature_set"]) & pl.col("collapses"))
         depends = (primary["significant_drop"] and primary["reading"] in ("moderate", "large")) or collapsed.height > 0
         ttl = single_summary.filter(pl.col("feature") == TTL).row(0, named=True)
-        repeats = (abs(ttl["mcc_mean"] - ttl["mcc_E"]) <= H3_MCC_TOLERANCE and ttl["tpr_window100"] >= H3_TPR100_MIN
-                   and ttl["fpr"] >= H3_FPR_MIN)
+        h3 = acfg["h3"]
+        repeats = (abs(ttl["mcc_mean"] - ttl["mcc_E"]) <= float(h3["mcc_tolerance"])
+                   and ttl["tpr_window100"] >= float(h3["tpr_window100_min"]) and ttl["fpr"] >= float(h3["fpr_min"]))
         no_ttl = tests.filter(pl.col("feature_set") == "no_ttl")
         interp = results / "interpretation"
         perm, shap_rank = (pl.read_csv(interp / f"{n}_summary.csv").select("feature", pl.col("mean").alias(n))
