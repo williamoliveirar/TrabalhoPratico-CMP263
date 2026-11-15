@@ -350,3 +350,5 @@ Antes disso, na mesma sessão, a dupla autorizou o push dos commits da Etapa 5 (
 **Limitações ou potencialidades observadas:**
 - *Limitação:* edições feitas com Python no Windows trocaram o fim de linha de quatro arquivos para CRLF. Foram convertidos de volta para LF antes do commit.
 - *Limitação:* a primeira versão do índice das figuras incluía o commit de cada execução, o que impediria comparar o índice entre a cópia original e a reprodução. A coluna foi retirada; o commit continua no `run.json`.
+- *Limitação:* o primeiro script de reprodução não levou em conta que `make tune` e `make ablation` pulam os folds já versionados. Por isso, a primeira tentativa não recalculou a validação cruzada aninhada.
+- *Limitação:* a primeira correção da codificação foi conferida com `make -n`, que não executa o Python, e falhou na execução real. Depois foi conferida rodando o `make` de fato.
