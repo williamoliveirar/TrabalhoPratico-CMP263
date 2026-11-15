@@ -2,6 +2,7 @@
 # Skeleton: most modules are created in the stage named next to the target.
 
 -include local.mk  # optional, not versioned; e.g. `VENV := C:/Users/me/.venvs/cmp263` (short path, Windows MAX_PATH)
+export PYTHONUTF8 := 1  # UTF-8 output on Windows consoles: printed tables would fail under cp1252
 VENV ?= .venv
 ifeq ($(OS),Windows_NT)
   VENV_PY := "$(VENV)/Scripts/python.exe"
