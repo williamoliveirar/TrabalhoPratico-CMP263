@@ -6,7 +6,7 @@ Final project for **CMP263 – Machine Learning** (PPGC/UFRGS, 2026/2). We build
 - **Q2 (where it fails):** which attack types escape the best model (sensitivity per attack type), and what is its false positive rate on benign traffic?
 - **Q3 (shortcuts):** does performance rely on features that identify the capture environment or the data processing (TTL, packet-window size) rather than the attack itself?
 
-> **Status:** work in progress (Etapas 0–9 done; next: Etapa 10, `make all` and a reproduction from a fresh clone, then the paper). The full plan is in [`docs/PLANO.md`](docs/PLANO.md), the logbook with every decision and number is in [`docs/DIARIO.md`](docs/DIARIO.md), and a hands-on guide to running and validating everything is in [`docs/GUIA.md`](docs/GUIA.md). All three are in Portuguese and use the terminology of the course (glossary in `docs/PLANO.md` §1.4). Code, figures and the paper are in English.
+> **Status:** work in progress (Etapas 0–9 done; Etapa 10, reproducibility, in progress: `make report` is in place and a reproduction from a fresh clone is running). The full plan is in [`docs/PLANO.md`](docs/PLANO.md), the logbook with every decision and number is in [`docs/DIARIO.md`](docs/DIARIO.md), and a hands-on guide to running and validating everything is in [`docs/GUIA.md`](docs/GUIA.md). All three are in Portuguese and use the terminology of the course (glossary in `docs/PLANO.md` §1.4). Code and figures are in English.
 
 ## Machine learning workflow
 
@@ -67,7 +67,7 @@ The raw data is **not** redistributed here. To reproduce:
 | `make interpret` | 9 | Permutation importance and SHAP of the best model in each outer test fold; local explanations of typical errors |
 | `make ablation` | 9 | Shortcut ablation (nested CV of the best model without the candidates), one-feature models on M, answer to Q3 and verdict on H3 (run after `make interpret`) |
 | `make final` | 10 (and 9) | Final model searched and trained on all of M (never re-evaluated); leave-capture-out with its configuration |
-| `make report` | 10 | Every table and figure of the paper |
+| `make report` | 10 | Summary tables (CSV and Markdown) in `results/tables/`, read from the recorded results; a checked index of every figure in `results/figures/index.csv` |
 | `make all` | — | Everything above, from the raw CSVs |
 | `make test` | — | Ingestion, sampling, EDA, data-leakage, split, spot-checking, nested-CV, evaluation, interpretation and shortcut tests |
 | `make check-mirror` / `make check-ingest` | — | Optional cross-checks against the Kaggle mirror |
@@ -95,9 +95,11 @@ tests/        ingestion, sampling, EDA, data-leakage, split, spot-checking, nest
 docs/         PLANO.md, DIARIO.md, IA_LOG.md, enunciado.pdf, artigo/
 ```
 
-## Paper figures and tables
+## Figures and tables
 
-A map from each figure and table of the paper to the script that generates it will be added in Etapa 10.
+- `results/tables/index.csv` lists every summary table, its title, the result files it was built from and the SHA-256 of its CSV.
+- `results/figures/index.csv` lists every figure with the script and the `make` target that drew it. `make report` stops if a figure does not match the hash recorded in the `run.json` of the run that drew it, so no figure can be edited by hand.
+- Nothing in `make report` is recomputed: the numbers are those of the stage that produced them.
 
 ## AI usage
 

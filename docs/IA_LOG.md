@@ -328,3 +328,25 @@ Antes disso, na mesma sessão, a dupla autorizou o push dos commits da Etapa 5 (
 - *Limitação:* a ferramenta fez commits enquanto a ablação rodava. Por isso os `run.json` dos três conjuntos registram commits diferentes, e foi preciso conferir pelo `git diff` que nada do que a ablação importa tinha mudado.
 - *Limitação:* o pré-registro escrito com a ferramenta deixou "sensibilidade alta" sem número. O limiar (0,90) foi fixado no código antes da execução, mas depois do pré-registro.
 - *Potencialidade:* a ferramenta apontou, antes de ver os resultados, que importância não é dependência e que só a ablação responde a Q3. Depois, apontou a confusão total entre janela de 100 pacotes e ataques de DDoS, DoS e Mirai, e o `HTTPS` como possível atalho fora da lista pré-registrada.
+
+## 2026-11-15 — Claude Code (Claude Opus 5.5, app desktop) — Etapa 10
+
+**Finalidade:** iniciar a Etapa 10 (modelo final e reprodutibilidade).
+
+**Prompt (trecho referente ao repositório):**
+
+> Iniciar Etapa 10.
+
+**O que a ferramenta produziu:**
+- o passo `make report`: tabelas-resumo lidas dos resultados registrados e um índice das figuras conferido pelos hashes dos `run.json`, com 4 testes novos;
+- os limiares da H3 movidos do código para a configuração, com os mesmos valores, conferido rodando a síntese de novo;
+- o script de reprodução num clone novo, com ambiente criado do zero e `make all` completo, rodando em segundo plano;
+- a entrada do diário e a atualização do README.
+
+**O que foi aproveitado:** [a preencher por William]
+
+**O que foi rejeitado ou corrigido, e por quê:** [a preencher por William]
+
+**Limitações ou potencialidades observadas:**
+- *Limitação:* edições feitas com Python no Windows trocaram o fim de linha de quatro arquivos para CRLF. Foram convertidos de volta para LF antes do commit.
+- *Limitação:* a primeira versão do índice das figuras incluía o commit de cada execução, o que impediria comparar o índice entre a cópia original e a reprodução. A coluna foi retirada; o commit continua no `run.json`.
