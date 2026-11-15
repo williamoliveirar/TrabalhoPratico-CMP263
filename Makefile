@@ -14,7 +14,7 @@ endif
 PY ?= $(VENV_PY)
 BOOTSTRAP_PY ?= python
 
-.PHONY: env lock check-mirror ingest inspect check-ingest sample eda splits spotcheck tune evaluate interpret ablation final report test all
+.PHONY: env lock check-mirror ingest inspect check-ingest sample eda splits spotcheck tune evaluate interpret ablation final report compare-reproduction test all
 
 env:            ## Etapa 0 — create the virtual env and install the pinned requirements
 	$(BOOTSTRAP_PY) -m venv $(VENV)
@@ -70,6 +70,9 @@ final:          ## Etapa 10 — final model trained on all of M; Etapa 9 leave-c
 report:         ## Etapa 10 — summary tables (CSV and Markdown) and the index of the figures
 	$(PY) -m src.reporting.tables
 	$(PY) -m src.reporting.figures
+
+compare-reproduction:  ## Etapa 10 — compare a fresh clone where make all ran (CLONE=<its folder>) with the recorded results
+	$(PY) -m src.reporting.reproduction "$(CLONE)"
 
 test:
 	$(PY) -m pytest -q tests
