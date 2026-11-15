@@ -1,0 +1,12 @@
+**Samples E and M by category (after deduplication)**
+
+| category8 | types | n_unique | n_E | n_M |
+|---|---|---|---|---|
+| Benign | 1 | 162133 | 24052 | 96275 |
+| BruteForce | 1 | 4917 | 757 | 3030 |
+| DDoS | 12 | 56213 | 9084 | 36360 |
+| DoS | 4 | 18274 | 3028 | 12120 |
+| Mirai | 3 | 14767 | 2271 | 9090 |
+| Recon | 5 | 21815 | 3480 | 13930 |
+| Spoofing | 2 | 9472 | 1514 | 6060 |
+| Web | 6 | 22943 | 3918 | 15685 |

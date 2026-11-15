@@ -1,0 +1,13 @@
+attribute,reason
+Tot size,identical to AVG in every row (correlated_pairs.csv; also schema.json over the whole dataset)
+LLC,identical to IPv (correlated_pairs.csv)
+IPv,equals 1 - ARP up to rounding (structural_checks.json); ARP is kept
+Variance,equals Std squared (structural_checks.json); Std is kept
+ack_count,equals ack_flag_number × Number (structural_checks.json); window-scaled copy (D12)
+syn_count,equals syn_flag_number × Number (structural_checks.json); window-scaled copy (D12)
+fin_count,equals fin_flag_number × Number (structural_checks.json); window-scaled copy (D12)
+rst_count,equals rst_flag_number × Number (structural_checks.json); window-scaled copy (D12)
+Tot sum,equals AVG × Number (structural_checks.json); window-scaled copy (D12)
+Rate,Spearman -0.994 with IAT (correlated_pairs.csv) and the only column with infinite values; IAT is kept
+Telnet,"quasi-constant, 0 in 99.97% of rows (feature_summary.csv, threshold eda.quasi_constant_share)"
+SMTP,"quasi-constant, 0 in 99.95% of rows (feature_summary.csv, threshold eda.quasi_constant_share)"

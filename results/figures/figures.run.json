@@ -1,0 +1,28 @@
+{
+  "script": "src.reporting.figures",
+  "started_at": "2026-11-15T03:49:30+00:00",
+  "git_commit": "e119e929483e32a12738d3dc386d02626db3fe0a",
+  "git_dirty": false,
+  "config_sha256": "75cf2f6bf9c1baeeca7805e22b647a7fc4669d7e57a399b6948bc500a43f1e45",
+  "seed": 42,
+  "n_jobs": 6,
+  "python": "3.12.7",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "libraries": {
+    "numpy": "2.5.4",
+    "pandas": "3.1.0",
+    "pyarrow": "26.0.0",
+    "polars": "2.1.0",
+    "scikit-learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "shap": "0.54.1",
+    "scipy": "1.18.1",
+    "matplotlib": "3.11.2",
+    "PyYAML": "6.0.3",
+    "joblib": "1.6.0"
+  },
+  "outputs": {
+    "results/figures/index.csv": "434e55f6d1b82d4b3c2b05f564e6980e365f6413e79ae09347980502b4829447"
+  },
+  "elapsed_s": 0.1
+}

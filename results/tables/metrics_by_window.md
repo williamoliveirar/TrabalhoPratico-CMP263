@@ -1,0 +1,12 @@
+**MCC with benign traffic and the attacks of one window group only (mean and std over 5 folds)**
+
+| model | attack_window | mcc_mean | mcc_std |
+|---|---|---|---|
+| lightgbm | 10 | 0.6947 | 0.0037 |
+| lightgbm | 100 | 0.9307 | 0.0013 |
+| random_forest | 10 | 0.6797 | 0.004 |
+| random_forest | 100 | 0.9263 | 0.0018 |
+| mlp | 10 | 0.6361 | 0.006 |
+| mlp | 100 | 0.9143 | 0.0047 |
+| decision_tree | 10 | 0.6186 | 0.0061 |
+| decision_tree | 100 | 0.916 | 0.0082 |

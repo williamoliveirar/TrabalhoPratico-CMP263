@@ -1,0 +1,7 @@
+**Metrics of lightgbm re-weighted to the original distribution of the dataset**
+
+| statistic | mcc | f1_attack | f1_benign | balanced_accuracy | auprc | roc_auc | sensitivity | specificity | fpr |
+|---|---|---|---|---|---|---|---|---|---|
+| fold_mean | 0.8403 | 0.9956 | 0.839 | 0.969 | 1.0 | 0.9981 | 0.9926 | 0.9453 | 0.0547 |
+| fold_std | 0.0026 | 0.0001 | 0.0027 | 0.0006 | 0.0 | 0.0001 | 0.0001 | 0.0011 | 0.0011 |
+| pooled | 0.8403 | 0.9956 | 0.839 | 0.969 | 1.0 | 0.9981 | 0.9926 | 0.9453 | 0.0547 |

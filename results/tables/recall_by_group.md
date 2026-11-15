@@ -1,0 +1,14 @@
+**Sensitivity of the best model (lightgbm) by window group and category, with Wilson 95% intervals**
+
+| level | group | n | missed | sensitivity | ci_low | ci_high | missed_share | instance_share |
+|---|---|---|---|---|---|---|---|---|
+| all | all attacks | 96275 | 11062 | 0.8851 | 0.8831 | 0.8871 | 1.0 | 1.0 |
+| window | 10 | 38705 | 11062 | 0.7142 | 0.7097 | 0.7187 | 1.0 | 0.402 |
+| window | 100 | 57570 | 0 | 1.0 | 0.9999 | 1.0 | 0.0 | 0.598 |
+| category8 | Recon | 13930 | 5235 | 0.6242 | 0.6161 | 0.6322 | 0.4732 | 0.1447 |
+| category8 | BruteForce | 3030 | 1094 | 0.6389 | 0.6217 | 0.6559 | 0.0989 | 0.0315 |
+| category8 | Web | 15685 | 3965 | 0.7472 | 0.7403 | 0.754 | 0.3584 | 0.1629 |
+| category8 | Spoofing | 6060 | 768 | 0.8733 | 0.8647 | 0.8814 | 0.0694 | 0.0629 |
+| category8 | DDoS | 36360 | 0 | 1.0 | 0.9999 | 1.0 | 0.0 | 0.3777 |
+| category8 | DoS | 12120 | 0 | 1.0 | 0.9997 | 1.0 | 0.0 | 0.1259 |
+| category8 | Mirai | 9090 | 0 | 1.0 | 0.9996 | 1.0 | 0.0 | 0.0944 |

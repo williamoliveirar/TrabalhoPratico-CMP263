@@ -1,0 +1,16 @@
+figure,title,script,make_target,sha256
+results/capture/fig_capture_recall.png,Leave-capture-out: sensitivity per attack type,src.experiments.leave_capture_out,final,524fd152f79ba889fb3ac47736d30f91f583543a4c61869547c5a34732a3af41
+results/eda/fig_by_type.png,"Attributes by attack type, sample E",src.data.eda,eda,3309da5f9a45e212accf01e270862ec9753b0e638f9598de76d734cafcbe3545
+results/eda/fig_distributions.png,"Distributions of the attributes by class, sample E",src.data.eda,eda,82b28235d93a2b9a44b8b29daf195e243bdc9857de303773409fc88687858d3d
+results/eda/fig_number_by_type.png,"Number (packets per window) by attack type, sample E",src.data.eda,eda,3e2169087b2684d99c793b9c2825bc5bad84ea1ec543cc8e376f66575bcb956f
+results/eda/fig_single_feature_mcc.png,"MCC of one-attribute trees, sample E",src.data.eda,eda,19e11d157ec44136ccb02226960514181b5ceb7509db330e24980a34c7aa4bcc
+results/eda/fig_spearman.png,"Spearman correlation between attributes, sample E",src.data.eda,eda,78d5457b738212a3a389b77509909fc093762769e23490fc560722a3dffe3bf6
+results/evaluation/fig_mcc_per_fold.png,"MCC per outer test fold, sample M",src.evaluation.evaluate,evaluate,8591b550e841ed73a2c5262ed9f7d9aa26846c1a26fd548042ca0845f75c2414
+results/evaluation/fig_pr_roc.png,"Precision-recall and ROC curves, best model",src.evaluation.evaluate,evaluate,e789cc1ba31a0c022e9f5cbc956fb956729e0b770a1ba00a8fca4695e7eb1a80
+results/evaluation/fig_recall_by_type.png,"Sensitivity per attack type, best model",src.evaluation.evaluate,evaluate,0dcfd060e64f767c5ce60440959c541c95025878545f975b473c029fb38c67e8
+results/interpretation/fig_permutation_importance.png,"Permutation importance, best model",src.interpretation.permutation,interpret,812c4231d0fa93b75005e5b1159057e0a4e7ce8bfcc837d7697a1898ac7cf254
+results/interpretation/fig_shap_dependence.png,"SHAP dependence of Number, Time_To_Live and IAT",src.interpretation.shap_analysis,interpret,b4288d7ac00114d321db7576d731118c894ed031ee2e40f15dec6d39d1d3b3c2
+results/interpretation/fig_shap_local.png,Local SHAP explanations of typical errors,src.interpretation.shap_analysis,interpret,9f1b2774075fbf2363a72b4f095da9acb16af10e5e30eea7fc10ade6bb1bc752
+results/interpretation/fig_shap_summary.png,"SHAP summary, best model",src.interpretation.shap_analysis,interpret,bc5f16e9fefb8392d13b5aaafb66f28605d38408e4e7b291be12933eadd7003e
+results/shortcuts/fig_ablation_recall_by_type.png,Shortcut ablation: sensitivity per attack type,src.experiments.shortcuts,ablation,9962e30933a832f5d360a5d7e4af6bfc737ccd9621e90a02f16755038d9e69c4
+results/spotcheck/fig_spotcheck_mcc.png,"Spot-checking: validation MCC per algorithm, sample E",src.experiments.spotcheck,spotcheck,b5307329fdfbf87c50b2255e1b0ea0b798af2b47867287f6a30e77542d2889fa

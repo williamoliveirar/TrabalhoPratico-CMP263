@@ -1,0 +1,14 @@
+**Top 10 attributes of lightgbm: permutation importance and mean |SHAP|**
+
+| rank | permutation_feature | mcc_drop_mean | mcc_drop_std | shap_feature | mean_abs_shap | mean_abs_shap_std |
+|---|---|---|---|---|---|---|
+| 1 | Number | 0.2468 | 0.0149 | Number | 3.0185 | 0.2302 |
+| 2 | HTTPS | 0.2229 | 0.0139 | HTTPS | 0.8118 | 0.0187 |
+| 3 | Header_Length | 0.1346 | 0.0119 | Max | 0.422 | 0.0274 |
+| 4 | Max | 0.0861 | 0.0168 | IAT | 0.3279 | 0.0182 |
+| 5 | Time_To_Live | 0.0655 | 0.0056 | Header_Length | 0.2983 | 0.0117 |
+| 6 | IAT | 0.0593 | 0.0043 | syn_flag_number | 0.2979 | 0.0118 |
+| 7 | syn_flag_number | 0.0499 | 0.0047 | Time_To_Live | 0.2808 | 0.015 |
+| 8 | HTTP | 0.031 | 0.0056 | AVG | 0.1638 | 0.008 |
+| 9 | Std | 0.0249 | 0.0034 | ack_flag_number | 0.1459 | 0.0568 |
+| 10 | AVG | 0.0228 | 0.0089 | Std | 0.1433 | 0.005 |

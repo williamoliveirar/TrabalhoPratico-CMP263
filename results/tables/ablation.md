@@ -1,0 +1,8 @@
+**Shortcut ablation of lightgbm: MCC drop against the full attribute set, and metrics by window group**
+
+| feature_set | mcc_reference | mcc_ablated | drop_mean | folds_with_drop | t | p_holm | ci_low | ci_high | reading | mcc_window10 | sensitivity_window10 | fpr | mcc_window100 | sensitivity_window100 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| full |  |  |  |  |  |  |  |  |  | 0.6947 | 0.7142 | 0.0547 | 0.9307 | 1.0 |
+| no_shortcut | 0.8319 | 0.8246 | 0.0074 | 5 | 15.7424 | 0.00029 | 0.0061 | 0.0087 | small | 0.68 | 0.6926 | 0.0535 | 0.9315 | 0.9993 |
+| no_window | 0.8319 | 0.8311 | 0.0008 | 5 | 1.9612 | 0.12 | 0.0 | 0.0017 | not significant | 0.6939 | 0.7143 | 0.0552 | 0.9295 | 0.9994 |
+| no_ttl | 0.8319 | 0.8256 | 0.0064 | 5 | 10.0197 | 0.0011 | 0.0051 | 0.0076 | small | 0.6809 | 0.6924 | 0.0528 | 0.9329 | 1.0 |
